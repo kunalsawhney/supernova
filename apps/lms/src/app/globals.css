@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🌞 Light Mode (Default) */
+:root {
+  --color-background: #ffffff;
+  --color-background-secondary: rgba(142, 202, 230, 0.1); /* Sky blue at 10% opacity */
+  --color-text-primary: #023047; /* Prussian blue */
+  --color-text-secondary: #219ebc; /* Blue green */
+  --color-button-primary: #fb8500; /* UT orange */
+  --color-button-secondary: #219ebc; /* Blue green */
+  --color-accent: #ffb703; /* Selective yellow */
+  --color-highlight: rgba(142, 202, 230, 0.3); /* Sky blue at 30% opacity */
+  --color-border: rgba(2, 48, 71, 0.1); /* Prussian blue at 10% opacity */
+  --color-link: #219ebc; /* Blue green */
+}
+
+/* 🌙 Dark Mode */
+.dark {
+  --color-background: #023047; /* Prussian blue */
+  --color-background-secondary: #011a27; /* Darker than Prussian blue */
+  --color-text-primary: #f0f0f0; /* Off-white */
+  --color-text-secondary: #8ecae6; /* Sky blue */
+  --color-button-primary: #fb8500; /* UT orange */
+  --color-button-secondary: #219ebc; /* Blue green */
+  --color-accent: #ffb703; /* Selective yellow */
+  --color-highlight: rgba(33, 158, 188, 0.3); /* Blue green at 30% opacity */
+  --color-border: rgba(142, 202, 230, 0.2); /* Sky blue at 20% opacity */
+  --color-link: #8ecae6; /* Sky blue */
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Apply background and text colors globally */
+body {
+  @apply bg-background text-text-primary transition-colors duration-300;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-button-primary);
+  border-radius: 10px;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-button-primary);
+}
+
+/* Base styles */
+@layer base {
+  h1 {
+    @apply text-4xl font-bold text-text-primary;
+  }
+  h2 {
+    @apply text-3xl font-semibold text-text-primary;
+  }
+  h3 {
+    @apply text-2xl font-semibold text-text-primary;
+  }
+  a {
+    @apply text-link hover:opacity-80 transition-opacity;
+  }
+}
+
+/* Component styles */
+@layer components {
+  .section-container {
+    @apply px-8 sm:px-8 md:px-16 lg:px-24 xl:px-32 pb-8 sm:pb-12 md:pb-16 lg:pb-20 pt-8 sm:pt-12 md:pt-16 lg:pt-20;
+  }
+
+  .section-title {
+    @apply text-5xl font-bold leading-tight mb-6 text-text-primary;
+  }
+
+  .section-subtitle {
+    @apply text-xl font-medium leading-tight mb-6 text-text-secondary;
+  }
+
+  .section-text {
+    @apply text-xl font-medium leading-relaxed text-text-primary;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-opacity-90 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-background border border-border rounded-lg hover:bg-background-secondary transition-colors;
+  }
+
+  .nav-link {
+    @apply text-text-secondary hover:text-text-primary transition-colors;
+  }
+
+  .card {
+    @apply bg-background-secondary rounded-lg p-6 border border-border;
+  }
+}

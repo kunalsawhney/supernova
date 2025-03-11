@@ -1,84 +1,94 @@
-# Turborepo starter
+# Supernova LMS
 
-This Turborepo starter is maintained by the Turborepo core team.
+A modern Learning Management System built with FastAPI, SQLAlchemy, and PostgreSQL.
 
-## Using this example
+## Features
 
-Run the following command:
+- Multi-tenant architecture with school-based isolation
+- Role-based access control (Super Admin, School Admin, Teacher, Student)
+- Course management with enrollment system
+- Modern async API with FastAPI
+- PostgreSQL database with SQLAlchemy and Alembic migrations
 
-```sh
-npx create-turbo@latest
-```
+## Prerequisites
 
-## What's inside?
+- Python 3.11 or higher
+- PostgreSQL 12 or higher
+- Poetry for dependency management
 
-This Turborepo includes the following packages/apps:
+## Installation
 
-### Apps and Packages
+1. Install Poetry (if not already installed):
+   ```bash
+   curl -sSL https://install.python-poetry.org | python3 -
+   ```
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+2. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd supernova
+   ```
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+3. Install dependencies:
+   ```bash
+   poetry install
+   ```
 
-### Utilities
+4. Create a `.env` file in the `apps/backend` directory:
+   ```bash
+   cd apps/backend
+   cp .env.example .env
+   ```
 
-This Turborepo has some additional tools already setup for you:
+5. Update the `.env` file with your PostgreSQL credentials and other settings:
+   ```env
+   POSTGRES_SERVER=localhost
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your_password
+   POSTGRES_DB=supernova
+   
+   # Security
+   SECRET_KEY=your-secret-key-here
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   REFRESH_TOKEN_EXPIRE_DAYS=7
+   ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+6. Create the database:
+   ```bash
+   createdb supernova
+   ```
 
-### Build
+7. Run database migrations:
+   ```bash
+   poetry run alembic upgrade head
+   ```
 
-To build all apps and packages, run the following command:
+8. Start the development server:
+   ```bash
+   poetry run uvicorn app.main:app --reload
+   ```
 
-```
-cd my-turborepo
-pnpm build
-```
+The API will be available at `http://localhost:8000`. The interactive API documentation (Swagger UI) can be accessed at `http://localhost:8000/docs`.
 
-### Develop
+## Development
 
-To develop all apps and packages, run the following command:
+- Format code:
+  ```bash
+  poetry run black .
+  poetry run isort .
+  ```
 
-```
-cd my-turborepo
-pnpm dev
-```
+- Run linters:
+  ```bash
+  poetry run flake8
+  poetry run mypy .
+  ```
 
-### Remote Caching
+- Run tests:
+  ```bash
+  poetry run pytest
+  ```
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## License
 
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+MIT
