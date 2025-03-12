@@ -26,9 +26,9 @@ class AuthService:
         user = await db.scalar(select(User).where(User.email == email))
         if not user:
             return None
-        if not verify_password(password, user.hashed_password):
+        if not verify_password(password, user.password):
             return None
-        if user.status != UserStatus.ACTIVE:
+        if user.is_active == False:
             return None
         return user
 
@@ -92,7 +92,7 @@ class AuthService:
         user = await db.scalar(select(User).where(User.id == user_id))
         if not user:
             raise credentials_exception
-        if user.status != UserStatus.ACTIVE:
+        if user.is_active == False:
             raise credentials_exception
         return user
 

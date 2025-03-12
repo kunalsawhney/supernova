@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeProvider } from "@/context/ThemeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { RoleProvider } from '@/contexts/RoleContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 

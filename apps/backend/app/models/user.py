@@ -18,14 +18,10 @@ class User(BaseModel):
     
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     role: Mapped[str] = mapped_column(
         ENUM(*[e.value for e in UserRole], name="user_role", create_type=False),
         nullable=False,

@@ -15,7 +15,6 @@ class UserBase(BaseModel):
     first_name: str
     last_name: str
     role: str
-    avatar_url: Optional[str] = None
     settings: Optional[Dict[str, Any]] = None
 
 

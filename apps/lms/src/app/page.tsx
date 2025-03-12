@@ -3,18 +3,30 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthPage() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, directly navigate to the dashboard
-    router.push('/dashboard');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await signIn(email, password);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to sign in. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -32,38 +44,36 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-2">
-                Full Name
+              <label htmlFor="name" className="block text-sm font-medium text-text-primary">
+                Name
               </label>
               <input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 rounded-md border border-border bg-background text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-button-primary"
-                placeholder="John Doe"
+                className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-primary shadow-sm focus:border-button-primary focus:outline-none focus:ring-1 focus:ring-button-primary"
                 required
               />
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
-              Email Address
+            <label htmlFor="email" className="block text-sm font-medium text-text-primary">
+              Email
             </label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border border-border bg-background text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-button-primary"
-              placeholder="you@example.com"
+              className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-primary shadow-sm focus:border-button-primary focus:outline-none focus:ring-1 focus:ring-button-primary"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary">
               Password
             </label>
             <input
@@ -71,33 +81,30 @@ export default function AuthPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-md border border-border bg-background text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-button-primary"
-              placeholder="••••••••"
+              className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-text-primary shadow-sm focus:border-button-primary focus:outline-none focus:ring-1 focus:ring-button-primary"
               required
             />
           </div>
 
-          {isLogin && (
-            <div className="text-right">
-              <Link href="/forgot-password" className="text-sm text-link hover:opacity-80">
-                Forgot your password?
-              </Link>
-            </div>
+          {error && (
+            <div className="text-red-500 text-sm">{error}</div>
           )}
 
-          <button type="submit" className="w-full btn-primary">
-            {isLogin ? 'Sign In' : 'Create Account'}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-button-primary hover:bg-button-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-button-primary disabled:opacity-50"
+          >
+            {isLoading ? 'Signing in...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-link hover:opacity-80 text-sm"
+            className="text-button-primary hover:text-button-primary-hover"
           >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : 'Already have an account? Sign in'}
+            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
 

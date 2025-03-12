@@ -18,8 +18,8 @@
 
 /* 🌙 Dark Mode */
 .dark {
-  --color-background: #023047; /* Prussian blue */
-  --color-background-secondary: #011a27; /* Darker than Prussian blue */
+  --color-background: #011a27; /* Prussian blue */
+  --color-background-secondary: #023047; /* Darker than Prussian blue */
   --color-text-primary: #f0f0f0; /* Off-white */
   --color-text-secondary: #8ecae6; /* Sky blue */
   --color-button-primary: #fb8500; /* UT orange */
@@ -91,6 +91,10 @@ body {
 
   .section-text {
     @apply text-xl font-medium leading-relaxed text-text-primary;
+  }
+
+  .section-text-small {
+    @apply text-lg font-medium leading-relaxed text-text-primary;
   }
 
   .btn-primary {

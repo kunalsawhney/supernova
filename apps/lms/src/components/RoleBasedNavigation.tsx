@@ -17,17 +17,36 @@ const navigationConfig = {
     { label: 'Analytics', href: '/dashboard/instructor/analytics', icon: 'ChartPieIcon' },
   ],
   admin: [
-    { label: 'Dashboard', href: '/dashboard/admin', icon: 'HomeIcon' },
+    { label: 'Overview', href: '/dashboard/admin', icon: 'HomeIcon' },
     { label: 'Users', href: '/dashboard/admin/users', icon: 'UsersIcon' },
+    { label: 'Schools', href: '/dashboard/admin/schools', icon: 'BuildingOfficeIcon' },
     { label: 'Courses', href: '/dashboard/admin/courses', icon: 'BookOpenIcon' },
     { label: 'Analytics', href: '/dashboard/admin/analytics', icon: 'ChartPieIcon' },
     { label: 'Settings', href: '/dashboard/admin/settings', icon: 'CogIcon' },
   ],
-};
+  super_admin: [
+    { label: 'Overview', href: '/dashboard/admin', icon: 'HomeIcon' },
+    { label: 'Users', href: '/dashboard/admin/users', icon: 'UsersIcon' },
+    { label: 'Schools', href: '/dashboard/admin/schools', icon: 'BuildingOfficeIcon' },
+    { label: 'Courses', href: '/dashboard/admin/courses', icon: 'BookOpenIcon' },
+    { label: 'Analytics', href: '/dashboard/admin/analytics', icon: 'ChartPieIcon' },
+    { label: 'Settings', href: '/dashboard/admin/settings', icon: 'CogIcon' },
+  ],
+  school_admin: [
+    { label: 'Overview', href: '/dashboard/admin', icon: 'HomeIcon' },
+    { label: 'Users', href: '/dashboard/admin/users', icon: 'UsersIcon' },
+    { label: 'Schools', href: '/dashboard/admin/schools', icon: 'BuildingOfficeIcon' },
+    { label: 'Courses', href: '/dashboard/admin/courses', icon: 'BookOpenIcon' },
+    { label: 'Analytics', href: '/dashboard/admin/analytics', icon: 'ChartPieIcon' },
+    { label: 'Settings', href: '/dashboard/admin/settings', icon: 'CogIcon' },
+  ],
+} as const;
 
 export default function RoleBasedNavigation() {
   const { role } = useRole();
-  const navigation = navigationConfig[role];
+  // Map super_admin and school_admin to admin navigation
+  const effectiveRole = (role === 'super_admin' || role === 'school_admin') ? 'admin' : role;
+  const navigation = navigationConfig[effectiveRole];
 
   return (
     <nav className="space-y-1">
@@ -35,7 +54,7 @@ export default function RoleBasedNavigation() {
         <Link
           key={item.href}
           href={item.href}
-          className="flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-background-secondary"
+          className="flex items-center px-4 py-2 section-text text-text-secondary rounded-md hover:bg-background-secondary"
         >
           {/* Icon would be imported and rendered here */}
           <span className="ml-3">{item.label}</span>

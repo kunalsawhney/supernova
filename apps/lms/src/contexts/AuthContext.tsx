@@ -2,14 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: 'student' | 'instructor' | 'admin';
-  avatar: string;
-};
+import { auth, users, User } from '@/lib/api';
 
 type AuthContextType = {
   user: User | null;
@@ -20,15 +13,6 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data - replace with actual authentication in production
-const mockUser: User = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'student',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,13 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session
     const checkAuth = async () => {
       try {
-        // In production, this would verify the session with your backend
-        const isAuthenticated = localStorage.getItem('isAuthenticated');
-        if (isAuthenticated) {
-          setUser(mockUser);
+        const token = localStorage.getItem('token');
+        if (token) {
+          const userData = await users.me();
+          setUser(userData);
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
@@ -55,9 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // In production, this would make an API call to your backend
-      setUser(mockUser);
-      localStorage.setItem('isAuthenticated', 'true');
+      const { access_token, refresh_token } = await auth.login(email, password);
+      
+      // Store in localStorage for API requests
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      
+      // Store in cookies for middleware
+      document.cookie = `token=${access_token}; path=/`;
+      document.cookie = `refresh_token=${refresh_token}; path=/`;
+      
+      const userData = await users.me();
+      setUser(userData);
       router.push('/dashboard');
     } catch (error) {
       console.error('Sign in failed:', error);
@@ -67,9 +61,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // In production, this would make an API call to your backend
       setUser(null);
-      localStorage.removeItem('isAuthenticated');
+      
+      // Clear localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      
+      // Clear cookies
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+      document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+      
       router.push('/');
     } catch (error) {
       console.error('Sign out failed:', error);

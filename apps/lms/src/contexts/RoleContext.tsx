@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Role = 'student' | 'instructor' | 'admin';
+type Role = 'student' | 'instructor' | 'admin' | 'super_admin' | 'school_admin';
 
 interface RoleContextType {
   role: Role;
@@ -39,12 +39,31 @@ const rolePermissions: Record<Role, string[]> = {
     'manage_platform_settings',
     'manage_integrations',
   ],
+  super_admin: [
+    'manage_courses',
+    'view_all_analytics',
+    'manage_schools',
+    'manage_users',
+    'view_financial_reports',
+    'manage_platform_settings',
+    'manage_integrations',
+    'manage_super_admin',
+  ],
+  school_admin: [
+    'manage_school_courses',
+    'view_school_analytics',
+    'manage_school_users',
+    'view_school_reports',
+    'manage_school_settings',
+  ],
 };
 
 const roleDashboardPaths: Record<Role, string> = {
   student: '/dashboard/student',
   instructor: '/dashboard/instructor',
   admin: '/dashboard/admin',
+  super_admin: '/dashboard/admin',
+  school_admin: '/dashboard/admin',
 };
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -63,7 +82,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     setRoleState(newRole);
     if (process.env.NODE_ENV === 'development') {
       localStorage.setItem('devRole', newRole);
-      router.push(roleDashboardPaths[newRole]);
+      // Only redirect if we're at the root dashboard
+      if (window.location.pathname === '/dashboard') {
+        router.push(roleDashboardPaths[newRole]);
+      }
     }
   };
 
@@ -73,7 +95,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       const savedRole = localStorage.getItem('devRole') as Role;
       if (savedRole && savedRole !== role) {
         setRoleState(savedRole);
-        router.push(roleDashboardPaths[savedRole]);
+        // Only redirect if we're at the root dashboard
+        if (window.location.pathname === '/dashboard') {
+          router.push(roleDashboardPaths[savedRole]);
+        }
       }
     }
   }, []);

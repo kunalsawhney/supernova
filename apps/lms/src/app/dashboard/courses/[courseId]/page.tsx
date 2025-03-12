@@ -204,7 +204,7 @@ const courseData: Course = {
   ],
 };
 
-export default function CoursePage({ params }: { params: { id: string } }) {
+export default function CoursePage({ params }: { params: { courseId: string } }) {
   const [activeTab, setActiveTab] = useState('curriculum');
 
   const completedLessons = courseData.modules.reduce((acc, module) => {
@@ -357,7 +357,7 @@ export default function CoursePage({ params }: { params: { id: string } }) {
                         </div>
                         {lesson.unlocked && (
                           <Link
-                            href={`/dashboard/courses/${params.id}/lessons/${lesson.id}`}
+                            href={`/dashboard/courses/${params.courseId}/lessons/${lesson.id}`}
                             className={`text-sm ${
                               lesson.completed
                                 ? 'text-button-primary hover:opacity-80'

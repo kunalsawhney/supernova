@@ -7,20 +7,27 @@ from uuid import UUID
 from pydantic import BaseModel, constr, Field
 
 from app.schemas.shared import BaseSchema
-
+from app.models.school import SubscriptionStatus
 
 class SchoolBase(BaseModel):
     """Base schema for school data."""
     name: str
-    domain: constr(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$")
-    logo_url: Optional[str] = None
-    settings: Optional[Dict[str, Any]] = None
-
+    domain: str
+    subscription_status: SubscriptionStatus
+    max_students: int
+    max_teachers: int
+    contact_email: str
 
 class SchoolCreate(SchoolBase):
     """Schema for creating a new school."""
     admin: Dict[str, Any]  # Will contain UserCreate data
-
+    code: str
+    description: Optional[str] = None
+    contact_phone: Optional[str] = None
+    timezone: str
+    address: Optional[str] = None
+    settings: Optional[dict] = None
+    logo_url: Optional[str] = None
 
 class SchoolUpdate(SchoolBase):
     """Schema for updating a school."""
