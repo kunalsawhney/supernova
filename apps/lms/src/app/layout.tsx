@@ -2,7 +2,13 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import RootLayoutClient from './RootLayoutClient';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
+  adjustFontFallback: true,
+});
 
 export const metadata = {
   title: 'Supernova LMS',
@@ -16,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased min-h-screen bg-white text-black`}>
+      <body className={`${inter.className} antialiased min-h-screen bg-background text-text-primary`}>
         <RootLayoutClient>
           {children}
         </RootLayoutClient>

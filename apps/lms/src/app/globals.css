@@ -33,11 +33,15 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Apply background and text colors globally */
 body {
   @apply bg-background text-text-primary transition-colors duration-300;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Custom scrollbar styling */
@@ -77,26 +81,6 @@ body {
 
 /* Component styles */
 @layer components {
-  .section-container {
-    @apply px-8 sm:px-8 md:px-16 lg:px-24 xl:px-32 pb-8 sm:pb-12 md:pb-16 lg:pb-20 pt-8 sm:pt-12 md:pt-16 lg:pt-20;
-  }
-
-  .section-title {
-    @apply text-5xl font-bold leading-tight mb-6 text-text-primary;
-  }
-
-  .section-subtitle {
-    @apply text-xl font-medium leading-tight mb-6 text-text-secondary;
-  }
-
-  .section-text {
-    @apply text-xl font-medium leading-relaxed text-text-primary;
-  }
-
-  .section-text-small {
-    @apply text-lg font-medium leading-relaxed text-text-primary;
-  }
-
   .btn-primary {
     @apply px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-opacity-90 transition-colors;
   }
@@ -111,5 +95,117 @@ body {
 
   .card {
     @apply bg-background-secondary rounded-lg p-6 border border-border;
+  }
+
+  .heading-xs {
+    @apply text-sm font-semibold leading-tight text-text-primary;
+  }
+
+  .heading-sm {
+    @apply text-base font-semibold leading-tight text-text-primary;
+  }
+
+  .heading-md {
+    @apply text-lg font-semibold leading-tight text-text-primary;
+  }
+
+  .heading-lg {
+    @apply text-xl font-bold leading-tight text-text-primary;
+  }
+
+  .heading-xl {
+    @apply text-2xl font-bold leading-tight text-text-primary;
+  }
+
+  .heading-2xl {
+    @apply text-3xl font-bold leading-tight text-text-primary;
+  }
+
+  .heading-3xl {
+    @apply text-4xl font-bold leading-tight text-text-primary;
+  }
+
+  .heading-4xl {
+    @apply text-5xl font-bold leading-tight text-text-primary;
+  }
+
+  .text-xs {
+    @apply font-normal leading-relaxed text-text-primary;
+    font-size: 0.75rem; /* 12px */
+  }
+
+  .text-xs-medium {
+    @apply text-xs font-medium leading-relaxed text-text-primary;
+  }
+
+  .text-sm {
+    @apply font-normal leading-relaxed text-text-primary;
+    font-size: 0.875rem; /* 14px */
+  }
+
+  .text-sm-medium {
+    @apply font-medium leading-relaxed text-text-primary;
+    font-size: 0.875rem; /* 14px */
+  }
+
+  .text-md {
+    @apply font-normal leading-relaxed text-text-primary;
+    font-size: 1rem; /* 16px */
+  }
+
+  .text-md-medium {
+    @apply font-medium leading-relaxed text-text-primary;
+    font-size: 1rem; /* 16px */
+  }
+
+  .text-lg {
+    @apply font-normal leading-relaxed text-text-primary;
+    font-size: 1.125rem; /* 18px */
+  }
+
+  .text-lg-medium {
+    @apply font-medium leading-relaxed text-text-primary;
+    font-size: 1.125rem; /* 18px */
+  }
+
+  .text-xl {
+    @apply font-normal leading-relaxed text-text-primary;
+    font-size: 1.25rem; /* 20px */
+  }
+
+  .text-xl-medium {
+    @apply font-medium leading-relaxed text-text-primary;
+    font-size: 1.25rem; /* 20px */
+  }
+
+  .display-sm {
+    @apply text-3xl font-bold leading-tight text-text-primary tracking-tight;
+  }
+
+  .display-md {
+    @apply text-4xl font-bold leading-tight text-text-primary tracking-tight;
+  }
+
+  .display-lg {
+    @apply text-5xl font-bold leading-tight text-text-primary tracking-tight;
+  }
+
+  .display-xl {
+    @apply text-6xl font-bold leading-tight text-text-primary tracking-tight;
+  }
+
+  .text-secondary-xs {
+    @apply font-normal leading-relaxed text-text-secondary;
+    font-size: 0.75rem; /* 12px */
+  }
+
+  .text-secondary-sm {
+    @apply font-normal leading-relaxed text-text-secondary;
+    font-size: 0.875rem; /* 14px */
+  }
+
+  .text-secondary-md {
+    @apply font-normal leading-relaxed text-text-secondary;
+    font-size: 1rem; /* 16px */
   }
 }

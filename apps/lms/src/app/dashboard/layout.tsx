@@ -3,8 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/contexts/RoleContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import RoleBasedNavigation from '@/components/RoleBasedNavigation';
 import DashboardHeader from '@/components/DashboardHeader';
+import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6';
 
 export default function DashboardLayout({
   children,
@@ -13,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const { role } = useRole();
   const router = useRouter();
+  const { sidebarCollapsed, toggleSidebar } = useSidebar();
 
   useEffect(() => {
     // Redirect to role-specific dashboard if at root dashboard
@@ -22,32 +25,40 @@ export default function DashboardLayout({
   }, [role, router]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background">
       <DashboardHeader />
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
-        <div className="hidden md:flex md:flex-shrink-0">
-          <div className="flex flex-col w-64 border-r border-border">
-            <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <h1 className="text-xl font-bold text-text-primary">LMS Platform</h1>
-              </div>
-              <div className="mt-5 flex-grow">
-                <RoleBasedNavigation />
-              </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className={`transition-all duration-300 ease-in-out ${
+          sidebarCollapsed ? 'w-16' : 'w-64'
+        }`}>
+          <div className={`h-full border-r-2 border-border rounded-r-xl ${
+            sidebarCollapsed ? 'w-16' : 'w-64'
+          }`}>
+            <div className="h-full pt-5 pb-4 relative">
+              {/* Toggle button */}
+              <button 
+                onClick={toggleSidebar}
+                className="absolute -right-3 top-5 bg-background border border-border rounded-full p-1.5 z-10 hover:bg-background-secondary shadow-sm transition-colors duration-200"
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? (
+                  <FaAnglesRight className="text-text-secondary hover:text-button-primary" />
+                ) : (
+                  <FaAnglesLeft className="text-text-secondary hover:text-button-primary" />
+                )}
+              </button>
+              <RoleBasedNavigation collapsed={sidebarCollapsed} />
             </div>
           </div>
         </div>
 
-        {/* Main content */}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 relative overflow-y-auto focus:outline-none">
-            <div className="py-6">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                {children}
-              </div>
-            </div>
-          </main>
+        {/* Main content - ONLY scrollable container */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="py-6 px-4 sm:px-6 md:px-8">
+            {children}
+          </div>
         </div>
       </div>
     </div>

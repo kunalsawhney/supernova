@@ -2,21 +2,53 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, users, User } from '@/lib/api';
+import { authService } from '@/services';
+import { userService } from '@/services';
+import { UserViewModel } from '@/types';
 
 type AuthContextType = {
-  user: User | null;
+  user: UserViewModel | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshSession: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserViewModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  // Function to refresh the user session
+  const refreshSession = async (): Promise<boolean> => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        return false;
+      }
+
+      const { access_token, refresh_token } = await authService.refreshToken(refreshToken);
+      
+      // Store in localStorage for API requests
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      
+      // Store in cookies for middleware
+      document.cookie = `token=${access_token}; path=/`;
+      document.cookie = `refresh_token=${refresh_token}; path=/`;
+      
+      // Get user profile with new token
+      const userData = await userService.getProfile();
+      setUser(userData);
+      
+      return true;
+    } catch (error) {
+      console.error('Session refresh failed:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     // Check for existing session
@@ -24,12 +56,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          const userData = await users.me();
-          setUser(userData);
+          try {
+            const userData = await userService.getProfile();
+            setUser(userData);
+          } catch (error) {
+            // If profile fetch fails, try to refresh the token
+            const refreshSuccess = await refreshSession();
+            if (!refreshSuccess) {
+              // If refresh fails, clear tokens
+              localStorage.removeItem('token');
+              localStorage.removeItem('refresh_token');
+              document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+              document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+            }
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
@@ -40,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { access_token, refresh_token } = await auth.login(email, password);
+      const { access_token, refresh_token } = await authService.login(email, password);
       
       // Store in localStorage for API requests
       localStorage.setItem('token', access_token);
@@ -50,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `token=${access_token}; path=/`;
       document.cookie = `refresh_token=${refresh_token}; path=/`;
       
-      const userData = await users.me();
+      const userData = await userService.getProfile();
       setUser(userData);
       router.push('/dashboard');
     } catch (error) {
@@ -61,16 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      await authService.logout();
       setUser(null);
-      
-      // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-      
-      // Clear cookies
-      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-      
       router.push('/');
     } catch (error) {
       console.error('Sign out failed:', error);
@@ -79,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, signIn, signOut, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );

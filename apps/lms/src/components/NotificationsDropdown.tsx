@@ -79,10 +79,10 @@ export default function NotificationsDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-background-secondary border border-border rounded-lg shadow-lg z-50">
           <div className="p-4 border-b border-border">
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-text-primary">Notifications</h3>
+              <h3 className="text-lg-medium">Notifications</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
@@ -109,7 +109,7 @@ export default function NotificationsDropdown() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-text-primary">{notification.title}</h4>
+                      <h4 className="text-md-medium text-text-primary">{notification.title}</h4>
                       <p className="text-sm text-text-secondary mt-1">{notification.message}</p>
                       <div className="flex items-center mt-2">
                         <span className={`text-xs px-2 py-1 rounded-full ${getTypeStyles(notification.type)}`}>

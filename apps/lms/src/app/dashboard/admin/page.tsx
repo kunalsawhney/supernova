@@ -63,8 +63,8 @@ export default function AdminOverview() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">👥</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Total Users</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{platformStats.totalUsers}</p>
+              <h3 className="text-lg-medium text-text-secondary">Total Users</h3>
+              <p className="text-lg mt-1">{platformStats.totalUsers}</p>
               <span className="text-green-600 text-sm">↑ 15% this month</span>
             </div>
           </div>
@@ -73,8 +73,8 @@ export default function AdminOverview() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">🏫</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Partner Schools</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{platformStats.totalSchools}</p>
+              <h3 className="text-lg-medium text-text-secondary">Partner Schools</h3>
+              <p className="text-lg mt-1">{platformStats.totalSchools}</p>
               <span className="text-green-600 text-sm">↑ 3 new this month</span>
             </div>
           </div>
@@ -83,8 +83,8 @@ export default function AdminOverview() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">💰</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Total Revenue</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{platformStats.totalRevenue}</p>
+              <h3 className="text-lg-medium text-text-secondary">Total Revenue</h3>
+              <p className="text-lg mt-1">{platformStats.totalRevenue}</p>
               <span className="text-green-600 text-sm">↑ 8% this month</span>
             </div>
           </div>
@@ -93,8 +93,8 @@ export default function AdminOverview() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">📈</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Active Users</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{platformStats.activeUsers}</p>
+              <h3 className="text-lg-medium text-text-secondary">Active Users</h3>
+              <p className="text-lg mt-1">{platformStats.activeUsers}</p>
               <span className="text-green-600 text-sm">↑ 5% this month</span>
             </div>
           </div>
@@ -103,11 +103,11 @@ export default function AdminOverview() {
 
       {/* System Health */}
       <div className="card p-6 mt-6">
-        <h2 className="text-lg font-semibold mb-4">System Health</h2>
+        <h2 className="text-lg-medium text-text-secondary mb-4">System Health</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Server Status</h3>
-            <p className="text-lg font-semibold mt-1">
+            <h3 className="text-md-medium text-text-secondary">Server Status</h3>
+            <p className="text-lg mt-1">
               <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
                 systemHealth.serverStatus === 'Operational' ? 'bg-green-500' : 'bg-red-500'
               }`}></span>
@@ -115,19 +115,19 @@ export default function AdminOverview() {
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Uptime</h3>
-            <p className="text-lg font-semibold mt-1">{systemHealth.uptime}</p>
+            <h3 className="text-md-medium text-text-secondary">Uptime</h3>
+            <p className="text-lg mt-1">{systemHealth.uptime}</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Response Time</h3>
-            <p className="text-lg font-semibold mt-1">{systemHealth.responseTime}</p>
+            <h3 className="text-md-medium text-text-secondary">Response Time</h3>
+            <p className="text-lg mt-1">{systemHealth.responseTime}</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Active Connections</h3>
-            <p className="text-lg font-semibold mt-1">{systemHealth.activeConnections}</p>
+            <h3 className="text-md-medium text-text-secondary">Active Connections</h3>
+            <p className="text-lg mt-1">{systemHealth.activeConnections}</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">CPU Usage</h3>
+            <h3 className="text-md-medium text-text-secondary">CPU Usage</h3>
             <div className="mt-1">
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
@@ -139,7 +139,7 @@ export default function AdminOverview() {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Memory Usage</h3>
+            <h3 className="text-md-medium text-text-secondary">Memory Usage</h3>
             <div className="mt-1">
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
@@ -151,7 +151,7 @@ export default function AdminOverview() {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Storage Used</h3>
+            <h3 className="text-md-medium text-text-secondary">Storage Used</h3>
             <div className="mt-1">
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
@@ -163,8 +163,8 @@ export default function AdminOverview() {
             </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-secondary">Last Backup</h3>
-            <p className="text-lg font-semibold mt-1">{systemHealth.lastBackup}</p>
+            <h3 className="text-md-medium text-text-secondary">Last Backup</h3>
+            <p className="text-lg mt-1">{systemHealth.lastBackup}</p>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-8 h-full">
       <Breadcrumbs />
       
       {/* Header */}

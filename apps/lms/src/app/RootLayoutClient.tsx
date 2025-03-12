@@ -3,6 +3,7 @@
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { RoleProvider } from '@/contexts/RoleContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SidebarProvider } from '@/contexts/SidebarContext';
 
 export default function RootLayoutClient({
   children,
@@ -13,7 +14,9 @@ export default function RootLayoutClient({
     <AuthProvider>
       <RoleProvider>
         <ThemeProvider>
-          {children}
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
         </ThemeProvider>
       </RoleProvider>
     </AuthProvider>

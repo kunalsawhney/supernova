@@ -6,7 +6,6 @@ type UserRole = 'student' | 'instructor' | 'admin' | 'super_admin' | 'school_adm
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  console.log('Middleware - Current path:', path);
   
   // Allow access to the login page and API routes
   if (path === '/' || path.startsWith('/api/')) {
@@ -16,11 +15,9 @@ export function middleware(request: NextRequest) {
   // Get the token from the request
   const token = request.cookies.get('token')?.value;
   const userRole = token ? getUserRole(request) : null;
-  console.log('Middleware - User role:', userRole);
 
   // If accessing dashboard routes without authentication, redirect to login
   if (path.startsWith('/dashboard') && !token) {
-    console.log('Middleware - No token, redirecting to login');
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -28,32 +25,25 @@ export function middleware(request: NextRequest) {
   if (path.startsWith('/dashboard') && userRole) {
     // Get the base dashboard path for the user's role
     const baseDashboardPath = getDashboardPath(userRole);
-    console.log('Middleware - Base dashboard path:', baseDashboardPath);
-
+    
     // Redirect to role-specific dashboard if accessing generic /dashboard
     if (path === '/dashboard') {
-      console.log('Middleware - Redirecting to role dashboard:', baseDashboardPath);
       return NextResponse.redirect(new URL(baseDashboardPath, request.url));
     }
 
     // Check if user has access to the current route
     const allowedPaths = getAllowedPaths(userRole);
-    console.log('Middleware - Allowed paths:', allowedPaths);
-    console.log('Middleware - Checking access for path:', path);
-    
+
     const hasAccess = allowedPaths.some(allowedPath => {
       const matches = path.startsWith(allowedPath);
-      console.log(`Middleware - Checking ${path} against ${allowedPath}:`, matches);
       return matches;
     });
 
     if (!hasAccess) {
-      console.log('Middleware - Access denied, redirecting to:', baseDashboardPath);
       return NextResponse.redirect(new URL(baseDashboardPath, request.url));
     }
   }
 
-  console.log('Middleware - Allowing access to:', path);
   return NextResponse.next();
 }
 
@@ -67,7 +57,6 @@ function getUserRole(request: NextRequest): UserRole {
     // For now, we'll check for a role cookie as a temporary solution
     // const role = request.cookies.get('role')?.value;
     const role = 'super_admin';
-    console.log('Middleware - Role from cookie:', role);
     
     if (role === 'super_admin') return 'super_admin';
     if (role === 'school_admin') return 'school_admin';
@@ -77,7 +66,6 @@ function getUserRole(request: NextRequest): UserRole {
     // Default to student if role is not recognized
     return 'student';
   } catch (error) {
-    console.error('Middleware - Error getting user role:', error);
     return 'student';
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import UsersTab from '../components/UsersTab';
+import UsersTab from '@/app/dashboard/admin/components/UsersTab';
 
 export default function UsersPage() {
   return <UsersTab />;

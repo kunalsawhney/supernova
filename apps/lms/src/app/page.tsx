@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthPage() {
-  const router = useRouter();
   const { signIn } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -31,12 +29,12 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full px-6 py-8 bg-background-secondary rounded-lg shadow-lg border border-border">
+      <div className="max-w-lg w-full px-6 py-8 bg-background-secondary rounded-lg shadow-lg border border-border">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
+          <h1 className="heading-2xl mb-2">
             Welcome to Supernova LMS
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-secondary-md">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </p>
         </div>
@@ -44,7 +42,7 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-text-primary">
+              <label htmlFor="name" className="text-lg-medium">
                 Name
               </label>
               <input
@@ -93,7 +91,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-button-primary hover:bg-button-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-button-primary disabled:opacity-50"
+            className="text-md-medium w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm bg-button-primary hover:bg-button-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-button-primary disabled:opacity-50"
           >
             {isLoading ? 'Signing in...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
@@ -102,14 +100,14 @@ export default function AuthPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-button-primary hover:text-button-primary-hover"
+            className="text-md text-button-primary"
           >
             {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
           </button>
         </div>
 
         <div className="mt-8 pt-6 border-t border-border">
-          <p className="text-center text-sm text-text-secondary">
+          <p className="text-center text-secondary-sm">
             By continuing, you agree to our{' '}
             <Link href="/terms" className="text-link hover:opacity-80">
               Terms of Service

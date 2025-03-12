@@ -27,13 +27,11 @@ async def get_platform_stats(
     users_query = select(func.count()).select_from(User)
     users_result = await db.execute(users_query)
     total_users = users_result.scalar()
-    # print(f"Total users: {total_users}")
     
     # Get total schools
     schools_query = select(func.count()).select_from(School)
     schools_result = await db.execute(schools_query)
     total_schools = schools_result.scalar()
-    print(f"Total schools: {total_schools}")
 
     # # Get total revenue (from course purchases)
     # revenue_query = select(func.sum(CoursePurchase.amount_paid)).select_from(CoursePurchase).where(
@@ -47,14 +45,12 @@ async def get_platform_stats(
     active_users_result = await db.execute(active_users_query)
     active_users = active_users_result.scalar()
     active_users_percentage = round((active_users / total_users * 100) if total_users > 0 else 0, 1)
-    print(f"Active users: {active_users}")
-    print(f"Active users percentage: {active_users_percentage}")
     
     return {
         "totalUsers": total_users,
         "totalSchools": total_schools,
         # "totalRevenue": f"${total_revenue:,.2f}",
-        "totalRevenue": "1,000,000.00",
+        "totalRevenue": "$ 1,000,000.00",
         "activeUsers": f"{active_users_percentage}%",
     }
 

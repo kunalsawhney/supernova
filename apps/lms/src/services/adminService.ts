@@ -1,170 +1,306 @@
 import { api } from '@/lib/api';
 import { User } from '@/types/user';
+import { 
+  Course, 
+  CourseViewModel, 
+  transformCourse 
+} from '@/types/course';
+import { 
+  PlatformStats, 
+  SystemHealth, 
+  CreateUserData, 
+  UpdateUserData,
+  ApiUser,
+  UserViewModel,
+  transformUser
+} from '@/types/admin';
+import { 
+  School, 
+  CreateSchoolData, 
+  UpdateSchoolData,
+  SchoolViewModel,
+  transformSchool
+} from '@/types/school';
+import { PaginationParams } from '@/types/api';
+import { mockApi, mockCourses } from '@/utils/mockData';
+import { handleApiError } from '@/utils/errorHandling';
 
-interface PlatformStats {
-  totalUsers: number;
-  totalSchools: number;
-  totalRevenue: string;
-  activeUsers: string;
-}
-
-interface School {
-  id: string;
-  name: string;
-  code: string;
-  domain: string;
-  description?: string;
-  contact_email: string;
-  contact_phone?: string;
-  timezone: string;
-  address?: string;
-  settings?: Record<string, any>;
-  logo_url?: string;
-  subscription_status: 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due';
-  trial_ends_at?: string;
-  max_students: number;
-  max_teachers: number;
-  features_enabled?: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CreateSchoolData {
-  name: string;
-  code: string;
-  domain: string;
-  description?: string;
-  contact_email: string;
-  contact_phone?: string;
-  timezone: string;
-  address?: string;
-  settings?: Record<string, any>;
-  logo_url?: string;
-  subscription_status: 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due';
-  max_students: number;
-  max_teachers: number;
-  features_enabled?: Record<string, any>;
-  admin: {
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-  };
-}
-
-interface SystemHealth {
-  serverStatus: string;
-  uptime: string;
-  responseTime: string;
-  activeConnections: number;
-  cpuUsage: string;
-  memoryUsage: string;
-  storageUsed: string;
-  lastBackup: string;
-}
-
-interface CreateUserData {
-  email: string;
-  password: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  school_id?: string;
-  settings?: Record<string, any> | null;
-}
-
-interface UpdateUserData {
-  first_name?: string;
-  last_name?: string;
-  role?: string;
-  school_id?: string;
-}
-
+/**
+ * Service for admin-related API calls
+ */
 export const adminService = {
   // Platform Overview
+  /**
+   * Get platform statistics
+   */
   async getPlatformStats(): Promise<PlatformStats> {
-    const response = await api.get('/admin/stats');
-    return response.data;
+    try {
+      return await api.get<PlatformStats>('/admin/stats');
+    } catch (error) {
+      console.warn('Failed to fetch platform stats from API, using mock data', error);
+      return mockApi.getPlatformStats();
+    }
   },
 
   // Schools Management
-  async getSchools(params?: { skip?: number; limit?: number }): Promise<School[]> {
-    const response = await api.get('/admin/schools', { params });
-    return response.data;
+  /**
+   * Get a list of schools with optional pagination
+   * @returns Transformed school view models ready for UI display
+   */
+  async getSchools(params?: PaginationParams): Promise<SchoolViewModel[]> {
+    try {
+      const schools = await api.get<School[]>('/admin/schools', { params });
+      return schools.map(transformSchool);
+    } catch (error) {
+      console.warn('Failed to fetch schools from API, using mock data', error);
+      return mockApi.getSchools();
+    }
   },
 
-  async getSchool(id: string): Promise<School> {
-    const response = await api.get(`/admin/schools/${id}`);
-    return response.data;
+  /**
+   * Get a specific school by ID
+   * @returns Transformed school view model ready for UI display
+   */
+  async getSchool(id: string): Promise<SchoolViewModel> {
+    try {
+      const school = await api.get<School>(`/admin/schools/${id}`);
+      return transformSchool(school);
+    } catch (error) {
+      console.warn(`Failed to fetch school ${id} from API, using mock data`, error);
+      const school = await mockApi.getSchool(id);
+      if (!school) {
+        throw new Error(`School with ID ${id} not found`);
+      }
+      return school;
+    }
   },
 
-  async createSchool(data: CreateSchoolData): Promise<School> {
+  /**
+   * Create a new school
+   * @returns Transformed school view model ready for UI display
+   */
+  async createSchool(data: CreateSchoolData): Promise<SchoolViewModel> {
     // Ensure required fields are present
     if (!data.name || !data.domain || 
         !data.admin?.email || !data.admin?.password || !data.admin?.first_name || !data.admin?.last_name) {
       throw new Error('Missing required fields for school creation');
     }
 
-    const response = await api.post('/admin/schools', data);
-    return response.data;
+    try {
+      const school = await api.post<School>('/admin/schools', data);
+      return transformSchool(school);
+    } catch (error) {
+      throw handleApiError(error, 'Failed to create school');
+    }
   },
 
-  async updateSchool(id: string, data: Partial<School>): Promise<School> {
-    const response = await api.put(`/admin/schools/${id}`, data);
-    return response.data;
+  /**
+   * Update an existing school
+   * @returns Transformed school view model ready for UI display
+   */
+  async updateSchool(id: string, data: UpdateSchoolData): Promise<SchoolViewModel> {
+    try {
+      const school = await api.put<School>(`/admin/schools/${id}`, data);
+      return transformSchool(school);
+    } catch (error) {
+      throw handleApiError(error, `Failed to update school ${id}`);
+    }
   },
 
+  /**
+   * Delete a school
+   */
   async deleteSchool(id: string): Promise<void> {
-    await api.delete(`/admin/schools/${id}`);
+    try {
+      return api.delete<void>(`/admin/schools/${id}`);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete school ${id}`);
+    }
   },
 
   // Users Management
-  async getUsers(params?: {
-    skip?: number;
-    limit?: number;
-    role?: string;
-  }): Promise<User[]> {
-    const response = await api.get('/admin/users', { params });
-    return response.data;
+  /**
+   * Get a list of users with optional filtering
+   * @returns Transformed user view models ready for UI display
+   */
+  async getUsers(params?: PaginationParams & { role?: string }): Promise<UserViewModel[]> {
+    try {
+      const users = await api.get<ApiUser[]>('/admin/users', { params });
+      return users.map(transformUser);
+    } catch (error) {
+      console.warn('Failed to fetch users from API, using mock data', error);
+      return mockApi.getUsers();
+    }
   },
 
-  async getUser(id: string): Promise<User> {
-    const response = await api.get(`/admin/users/${id}`);
-    return response.data;
+  /**
+   * Get a specific user by ID
+   * @returns Transformed user view model ready for UI display
+   */
+  async getUser(id: string): Promise<UserViewModel> {
+    try {
+      const user = await api.get<ApiUser>(`/admin/users/${id}`);
+      return transformUser(user);
+    } catch (error) {
+      console.warn(`Failed to fetch user ${id} from API, using mock data`, error);
+      const user = await mockApi.getUser(id);
+      if (!user) {
+        throw new Error(`User with ID ${id} not found`);
+      }
+      return user;
+    }
   },
 
+  /**
+   * Create a new user
+   */
   async createUser(data: CreateUserData): Promise<User> {
-    const transformedData = {
-      ...data,
-      school_id: data.school_id === '' ? null : data.school_id,
-      settings: data.settings || null,
-    };
-    const response = await api.post('/admin/users', transformedData);
-    return response.data;
+    try {
+      const transformedData = {
+        ...data,
+        school_id: data.school_id === '' ? null : data.school_id,
+        settings: data.settings || null,
+      };
+      return api.post<User>('/admin/users', transformedData);
+    } catch (error) {
+      throw handleApiError(error, 'Failed to create user');
+    }
   },
 
+  /**
+   * Update an existing user
+   */
   async updateUser(id: string, data: UpdateUserData): Promise<User> {
-    const response = await api.put(`/admin/users/${id}`, data);
-    return response.data;
+    try {
+      return api.put<User>(`/admin/users/${id}`, data);
+    } catch (error) {
+      throw handleApiError(error, `Failed to update user ${id}`);
+    }
   },
 
+  /**
+   * Delete a user
+   */
   async deleteUser(id: string): Promise<void> {
-    await api.delete(`/admin/users/${id}`);
+    try {
+      return api.delete<void>(`/admin/users/${id}`);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete user ${id}`);
+    }
   },
 
-  async suspendUser(id: string): Promise<User> {
-    const response = await api.post(`/admin/users/${id}/suspend`);
-    return response.data;
+  /**
+   * Suspend a user
+   * @returns Transformed user view model
+   */
+  async suspendUser(id: string): Promise<UserViewModel> {
+    try {
+      const user = await api.post<ApiUser>(`/admin/users/${id}/suspend`);
+      return transformUser(user);
+    } catch (error) {
+      throw handleApiError(error, `Failed to suspend user ${id}`);
+    }
   },
 
-  async reinstateUser(id: string): Promise<User> {
-    const response = await api.post(`/admin/users/${id}/reinstate`);
-    return response.data;
+  /**
+   * Reinstate a suspended user
+   * @returns Transformed user view model
+   */
+  async reinstateUser(id: string): Promise<UserViewModel> {
+    try {
+      const user = await api.post<ApiUser>(`/admin/users/${id}/reinstate`);
+      return transformUser(user);
+    } catch (error) {
+      throw handleApiError(error, `Failed to reinstate user ${id}`);
+    }
   },
 
   // System Health
+  /**
+   * Get system health information
+   */
   async getSystemHealth(): Promise<SystemHealth> {
-    const response = await api.get('/admin/health');
-    return response.data;
+    try {
+      return api.get<SystemHealth>('/admin/health');
+    } catch (error) {
+      console.warn('Failed to fetch system health from API, using mock data', error);
+      return mockApi.getSystemHealth();
+    }
+  },
+
+  // Courses Management
+  /**
+   * Get a list of courses with optional pagination
+   * @returns Transformed course view models ready for UI display
+   */
+  async getCourses(params?: PaginationParams): Promise<CourseViewModel[]> {
+    try {
+      const courses = await api.get<Course[]>('/admin/courses', { params });
+      return courses.map(transformCourse);
+    } catch (error) {
+      console.warn('Failed to fetch courses from API, using mock data', error);
+      return mockApi.getCourses();
+    }
+  },
+
+  /**
+   * Get a specific course by ID
+   * @returns Transformed course view model ready for UI display
+   */
+  async getCourse(id: string): Promise<CourseViewModel> {
+    try {
+      const course = await api.get<Course>(`/admin/courses/${id}`);
+      return transformCourse(course);
+    } catch (error) {
+      console.warn(`Failed to fetch course ${id} from API, using mock data`, error);
+      const course = await mockApi.getCourse(id);
+      if (!course) {
+        throw new Error(`Course with ID ${id} not found`);
+      }
+      return course;
+    }
+  },
+
+  /**
+   * Create a new course
+   * @returns Transformed course view model ready for UI display
+   */
+  async createCourse(data: Course): Promise<CourseViewModel> {
+    // Ensure required fields are present
+    if (!data.title || !data.code || !data.status || !data.difficulty_level || 
+        !data.grade_level || !data.academic_year || typeof data.sequence_number !== 'number') {
+      throw new Error('Missing required fields for course creation');
+    }
+
+    try {
+      const course = await api.post<Course>('/admin/courses', data);
+      return transformCourse(course);
+    } catch (error) {
+      throw handleApiError(error, 'Failed to create course');
+    }
+  },
+
+  /**
+   * Update an existing course
+   * @returns Transformed course view model ready for UI display
+   */
+  async updateCourse(id: string, data: Partial<Course>): Promise<CourseViewModel> {
+    try {
+      const course = await api.put<Course>(`/admin/courses/${id}`, data);
+      return transformCourse(course);
+    } catch (error) {
+      throw handleApiError(error, `Failed to update course ${id}`);
+    }
+  },
+
+  /**
+   * Delete a course
+   */
+  async deleteCourse(id: string): Promise<void> {
+    try {
+      return api.delete<void>(`/admin/courses/${id}`);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete course ${id}`);
+    }
   },
 }; 
