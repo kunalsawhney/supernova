@@ -1,4 +1,7 @@
+'use client';
+
 import { useRole } from '@/contexts/RoleContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,6 +11,7 @@ import {
   FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare,
   FiChevronDown, FiChevronRight
 } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Navigation items grouped by category
 const navigationConfig = {
@@ -151,13 +155,10 @@ const icons = {
   FiMessageSquare: <FiMessageSquare />
 };
 
-interface RoleBasedNavigationProps {
-  collapsed?: boolean;
-}
-
-export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavigationProps) {
+export function DashboardNavigation() {
   const pathname = usePathname();
   const { role } = useRole();
+  const { collapsed, closeSidebar } = useSidebar();
   
   // Map super_admin and school_admin to admin navigation
   const effectiveRole = (role === 'super_admin' || role === 'school_admin') ? 'admin' : role;
@@ -192,32 +193,47 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
     return pathname.startsWith(href);
   };
 
+  // Handle link click - close sidebar on mobile
+  const handleLinkClick = () => {
+    // Close sidebar on mobile view when clicking a link
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      closeSidebar();
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto px-2">
       {navigationGroups.map((group, groupIndex) => (
         <div key={`${group.category}-${groupIndex}`} className="mb-4">
           {/* Category Header - show only if not collapsed */}
-          {!collapsed && (
-            <div 
-              onClick={() => toggleCategory(group.category)}
-              className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary/50"
-            >
-              <h3 className="text-xs font-medium uppercase tracking-wider">
-                {group.category}
-              </h3>
-              <div className="text-text-secondary opacity-70 group-hover:opacity-100 transition-opacity">
-                {expandedCategories[group.category] ? 
-                  <FiChevronDown className="h-3 w-3" /> : 
-                  <FiChevronRight className="h-3 w-3" />
-                }
-              </div>
-            </div>
-          )}
+          <AnimatePresence initial={false}>
+            {!collapsed && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => toggleCategory(group.category)}
+                className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary/50 overflow-hidden"
+              >
+                <h3 className="text-xs font-medium uppercase tracking-wider">
+                  {group.category}
+                </h3>
+                <motion.div 
+                  animate={{ 
+                    rotate: expandedCategories[group.category] ? 0 : -90 
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="text-text-secondary opacity-70 group-hover:opacity-100 transition-opacity"
+                >
+                  <FiChevronDown className="h-3 w-3" />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Navigation Items */}
-          <div 
-            className={`space-y-1 ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}`}
-          >
+          <div className="space-y-1">
             {group.items.map((item) => {
               const active = isActive(item.href);
               
@@ -225,6 +241,7 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={handleLinkClick}
                   className={`
                     flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} 
                     py-2.5 rounded-md transition-all duration-200 relative
@@ -232,12 +249,17 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
                       ? 'bg-orange-100 text-button-primary font-medium shadow-sm dark:bg-button-primary/20' 
                       : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
                     }
+                    ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}
                   `}
                   title={collapsed ? item.label : ''}
                 >
                   {/* Active indicator bar */}
                   {active && (
-                    <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-button-primary rounded-r-md"></span>
+                    <motion.span 
+                      layoutId="activeIndicator"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-button-primary rounded-r-md"
+                    ></motion.span>
                   )}
                   
                   {/* Icon with active styling */}
@@ -246,16 +268,20 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
                   </span>
                   
                   {/* Label - shown only when not collapsed */}
-                  {!collapsed && (
-                    <span className="ml-3 text-sm">
-                      {item.label}
-                    </span>
-                  )}
-                  
-                  {/* Active indicator dot for collapsed state */}
-                  {collapsed && active && (
-                    <span className="absolute w-1.5 h-1.5 rounded-full bg-button-primary right-1"></span>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.span 
+                        key="label"
+                        initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+                        animate={{ opacity: 1, width: 'auto', marginLeft: 12 }}
+                        exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-sm overflow-hidden whitespace-nowrap"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </Link>
               );
             })}

@@ -82,10 +82,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     setRoleState(newRole);
     if (process.env.NODE_ENV === 'development') {
       localStorage.setItem('devRole', newRole);
-      // Only redirect if we're at the root dashboard
-      if (window.location.pathname === '/dashboard') {
-        router.push(roleDashboardPaths[newRole]);
-      }
+      
+      // The navigation will be handled by the DevRoleSwitcher component
+      // to avoid duplicate navigation when both context and component
+      // try to navigate at the same time
     }
   };
 

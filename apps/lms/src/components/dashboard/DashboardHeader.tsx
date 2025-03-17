@@ -1,22 +1,19 @@
 'use client';
 
-import { useState, useRef, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import NotificationsDropdown from './NotificationsDropdown';
-import DevRoleSwitcher from './DevRoleSwitcher';
+import NotificationsDropdown from '../NotificationsDropdown';
+import DevRoleSwitcher from '../DevRoleSwitcher';
 import { FiSun, FiMoon, FiUser, FiSettings, FiLogOut, FiTarget, FiEye, FiMenu, FiX } from 'react-icons/fi';
 
-interface DashboardHeaderProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
-}
-
-export default function DashboardHeader({ sidebarOpen, setSidebarOpen }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [focusMode, setFocusMode] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -43,6 +40,11 @@ export default function DashboardHeader({ sidebarOpen, setSidebarOpen }: Dashboa
     }
   };
 
+  // Toggle sidebar visibility
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   // Generate initials for avatar if no profile image
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -58,34 +60,31 @@ export default function DashboardHeader({ sidebarOpen, setSidebarOpen }: Dashboa
           {/* Mobile menu toggle button with animation */}
           <button 
             className="lg:hidden p-2 rounded-full hover:bg-background-secondary transition-colors"
-            onClick={() => setSidebarOpen(prev => !prev)}
+            onClick={toggleSidebar}
             aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
             {sidebarOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
           </button>
-          
-          {/* Page title */}
-          {/* <h1 className="heading-md hidden sm:block">Dashboard</h1> */}
         </div>
 
         {/* Center Section with Role Switcher */}
-        <div className="hidden md:flex flex-1 justify-center max-w-md mx-auto">
+        <div className="flex-1 flex items-center justify-center max-w-md mx-auto">
           <DevRoleSwitcher />
         </div>
 
         {/* Right Section */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Notifications */}
+          <NotificationsDropdown />
+
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full text-text-primary hover:bg-background-secondary transition-colors"
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {theme === 'dark' ? <FiSun className="w-4.5 h-4.5" /> : <FiMoon className="w-4.5 h-4.5" />}
+            {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
           </button>
-
-          {/* Notifications */}
-          <NotificationsDropdown />
 
           {/* Focus Mode Toggle */}
           <button
@@ -97,7 +96,7 @@ export default function DashboardHeader({ sidebarOpen, setSidebarOpen }: Dashboa
             }`}
             aria-label={focusMode ? 'Disable focus mode' : 'Enable focus mode'}
           >
-            {focusMode ? <FiTarget className="w-4.5 h-4.5" /> : <FiEye className="w-4.5 h-4.5" />}
+            {focusMode ? <FiTarget className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
           </button>
 
           {/* Profile Menu */}

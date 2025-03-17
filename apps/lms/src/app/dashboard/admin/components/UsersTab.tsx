@@ -28,7 +28,10 @@ import {
   Trash2,
   AlertCircle,
   RefreshCcw,
-  UserCheck
+  UserCheck,
+  FileText,
+  ChevronDown,
+  Download
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -206,16 +209,37 @@ export default function UsersTab() {
             Manage users and their access to the platform
           </p>
         </div>
-        <Link href="/dashboard/admin/users/add">
-          <Button
-            variant="default"
-            size="default"
-            className="gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            Add New User
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Export
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover border shadow-md">
+              <DropdownMenuItem className="cursor-pointer">
+                <Download className="mr-2 h-4 w-4" />
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                <Download className="mr-2 h-4 w-4" />
+                Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Link href="/dashboard/admin/users/add">
+            <Button
+              variant="default"
+              size="default"
+              className="gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Add New User
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}

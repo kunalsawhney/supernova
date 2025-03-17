@@ -114,3 +114,13 @@ async def refresh_token(
             detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         ) 
+    
+
+@router.post("/logout")
+async def logout() -> Any:
+    """
+    Logout endpoint.
+    """
+    return {
+        "message": "Logged out successfully",
+    }
