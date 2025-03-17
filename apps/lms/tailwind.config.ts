@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
     darkMode: ["class"],
@@ -63,7 +64,73 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function({ addUtilities }) {
+      const customColors = [
+        'button-primary',
+        'button-secondary',
+        'background-secondary',
+        'text-primary',
+        'text-secondary',
+        'accent',
+        'border'
+      ];
+      
+      // Generate opacity variants for custom colors
+      // Properly type opacityUtilities object to fix TypeScript errors
+      const opacityUtilities: Record<string, Record<string, string>> = {};
+      
+      customColors.forEach(colorName => {
+        // Extract the color name without the prefix for CSS variable names
+        const cssVarName = colorName
+          .replace('button-', '')
+          .replace('text-', '')
+          .replace('background-', '');
+        
+        // Background color with opacity
+        [10, 20, 30, 40, 50, 60, 70, 80, 90].forEach(opacity => {
+          // Background colors
+          const bgClassName = `.bg-${colorName}\\/${opacity}`;
+          opacityUtilities[bgClassName] = {
+            'background-color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+          
+          // Hover background colors
+          const bgHoverClassName = `.hover\\:bg-${colorName}\\/${opacity}:hover`;
+          opacityUtilities[bgHoverClassName] = {
+            'background-color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+          
+          // Text colors
+          const textClassName = `.text-${colorName}\\/${opacity}`;
+          opacityUtilities[textClassName] = {
+            'color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+          
+          // Hover text colors
+          const textHoverClassName = `.hover\\:text-${colorName}\\/${opacity}:hover`;
+          opacityUtilities[textHoverClassName] = {
+            'color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+          
+          // Border colors
+          const borderClassName = `.border-${colorName}\\/${opacity}`;
+          opacityUtilities[borderClassName] = {
+            'border-color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+          
+          // Hover border colors
+          const borderHoverClassName = `.hover\\:border-${colorName}\\/${opacity}:hover`;
+          opacityUtilities[borderHoverClassName] = {
+            'border-color': `color-mix(in srgb, var(--color-${cssVarName}) ${opacity}%, transparent)`,
+          };
+        });
+      });
+      
+      addUtilities(opacityUtilities);
+    }),
+  ],
 };
 
 export default config;

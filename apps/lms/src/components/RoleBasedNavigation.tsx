@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { 
   FiHome, FiUsers, FiBook, FiClipboard, FiBarChart2, 
   FiPieChart, FiAward, FiSettings, FiBox, FiServer,
-  FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare
+  FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare,
+  FiChevronDown, FiChevronRight
 } from 'react-icons/fi';
 
 // Navigation items grouped by category
@@ -192,29 +193,31 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-border">
+    <div className="flex flex-col h-full overflow-y-auto px-2">
       {navigationGroups.map((group, groupIndex) => (
-        <div key={`${group.category}-${groupIndex}`} className="mb-6">
+        <div key={`${group.category}-${groupIndex}`} className="mb-4">
           {/* Category Header - show only if not collapsed */}
           {!collapsed && (
             <div 
               onClick={() => toggleCategory(group.category)}
-              className="flex items-center justify-between px-4 mb-2 cursor-pointer group"
+              className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary/50"
             >
-              <h3 className="text-lg font-semibold uppercase tracking-wider text-text-secondary group-hover:text-text-primary transition-colors">
+              <h3 className="text-xs font-medium uppercase tracking-wider">
                 {group.category}
               </h3>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="text-text-secondary opacity-70 group-hover:opacity-100 transition-opacity">
                 {expandedCategories[group.category] ? 
-                  <span className="text-xs">▼</span> : 
-                  <span className="text-xs">▶</span>
+                  <FiChevronDown className="h-3 w-3" /> : 
+                  <FiChevronRight className="h-3 w-3" />
                 }
               </div>
             </div>
           )}
           
           {/* Navigation Items */}
-          <div className={`space-y-1 ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}`}>
+          <div 
+            className={`space-y-1 ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}`}
+          >
             {group.items.map((item) => {
               const active = isActive(item.href);
               
@@ -223,28 +226,33 @@ export default function RoleBasedNavigation({ collapsed = false }: RoleBasedNavi
                   key={item.href}
                   href={item.href}
                   className={`
-                    flex items-center ${collapsed ? 'justify-center mx-2' : 'px-4 mx-2'} 
-                    py-2.5 rounded-lg transition-all duration-200
+                    flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} 
+                    py-2.5 rounded-md transition-all duration-200 relative
                     ${active 
-                      ? 'bg-button-primary/10 text-button-primary font-medium' 
+                      ? 'bg-orange-100 text-button-primary font-medium shadow-sm dark:bg-button-primary/20' 
                       : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
                     }
                   `}
                   title={collapsed ? item.label : ''}
                 >
+                  {/* Active indicator bar */}
+                  {active && (
+                    <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-button-primary rounded-r-md"></span>
+                  )}
+                  
                   {/* Icon with active styling */}
-                  <span className={`flex-shrink-0 ${active ? 'text-button-primary' : 'text-text-secondary'}`}>
+                  <span className={`flex-shrink-0 ${active ? 'text-button-primary' : ''}`}>
                     {icons[item.icon as keyof typeof icons]}
                   </span>
                   
                   {/* Label - shown only when not collapsed */}
                   {!collapsed && (
-                    <span className="ml-3 text-md truncate">
+                    <span className="ml-3 text-sm">
                       {item.label}
                     </span>
                   )}
                   
-                  {/* Active indicator - small dot for collapsed state */}
+                  {/* Active indicator dot for collapsed state */}
                   {collapsed && active && (
                     <span className="absolute w-1.5 h-1.5 rounded-full bg-button-primary right-1"></span>
                   )}
