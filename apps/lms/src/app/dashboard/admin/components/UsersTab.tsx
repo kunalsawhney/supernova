@@ -3,6 +3,8 @@ import { adminService } from '@/services';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserViewModel, ApiUser } from '@/types/admin';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function UsersTab() {
   const router = useRouter();
@@ -76,37 +78,44 @@ export default function UsersTab() {
     <div className="space-y-6">
       <div className="flex justify-end">
         <Link href="/dashboard/admin/users/add">
-          <button
-            className="text-md-medium px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90"
+          <Button
+            variant="default"
+            size="lg"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-plus">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7.5" r="4"/>
+              <path d="M20 8v6"/>
+              <path d="M23 11h-6"/>
+            </svg>
             Add User
-          </button>
+          </Button>
         </Link>
       </div>
 
       {/* Users Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left py-3 px-4 text-text-secondary text-lg-medium">Name</th>
-              <th className="text-left py-3 px-4 text-text-secondary text-lg-medium">Email</th>
-              <th className="text-left py-3 px-4 text-text-secondary text-lg-medium">Role</th>
-              {/* <th className="text-left py-3 px-4 text-text-secondary section-text-small">School</th> */}
-              <th className="text-left py-3 px-4 text-text-secondary text-lg-medium">Status</th>
-              <th className="text-left py-3 px-4 text-text-secondary text-lg-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-lg font-medium">Name</TableHead>
+              <TableHead className="text-lg font-medium">Email</TableHead>
+              <TableHead className="text-lg font-medium">Role</TableHead>
+              {/* <th className="text-left py-3 px-4 text-secondary-md">School</th> */}
+              <TableHead className="text-lg font-medium">Status</TableHead>
+              <TableHead className="text-lg font-medium">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-border">
-                <td className="py-3 px-4 text-md">
+              <TableRow key={user.id} className="border-b border-border">
+                <TableCell className="text-md">
                   {user.firstName} {user.lastName}
-                </td>
-                <td className="py-3 px-4 text-md">{user.email}</td>
-                <td className="py-3 px-4 text-md">
+                </TableCell>
+                <TableCell className="text-md">{user.email}</TableCell>
+                <TableCell className="text-md">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs ${
+                    className={`px-2 py-1 rounded-full text-sm ${
                       user.role === 'super_admin'
                         ? 'bg-purple-100 text-purple-800'
                         : user.role === 'school_admin'
@@ -118,9 +127,9 @@ export default function UsersTab() {
                   >
                     {user.role}
                   </span>
-                </td>
+                </TableCell>
                 {/* <td className="py-3 px-4 section-text-small">{user.schoolId || '-'}</td> */}
-                <td className="py-3 px-4 text-md">
+                <TableCell className="text-md">
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${
                       user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -128,32 +137,94 @@ export default function UsersTab() {
                   >
                     {user.isActive ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-                <td className="py-3 px-4 text-md">
-                  <button
+                </TableCell>
+                <TableCell className="text-md">
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => handleEditUser(user)}
-                    className="text-button-primary hover:underline mr-3"
                   >
-                    Edit
-                  </button>
-                  <span className="text-md">|</span>
-                  <button
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      className="lucide lucide-pencil"
+                    >
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5 11.5-11.5Z"/>
+                    </svg>
+                  </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => handleToggleStatus(user)}
-                    className="text-button-primary hover:underline mx-3"
                   >
-                    {user.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <span className="text-md">|</span>
-                  <button 
+                    {user.isActive ? 
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="lucide lucide-x"
+                      >
+                        <path d="M18 6 6 18"/>
+                        <path d="m6 6 12 12"/>
+                      </svg>
+                    : <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        // fill="none" 
+                        // stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="lucide lucide-check"
+                        style={{ fill: 'red-500' }}
+                      >
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    }
+                  </Button>
+                  <Button 
+                    variant="link"
+                    size="sm"
                     // onClick={() => handleDeleteUser(user)}
-                    className="text-red-600 hover:underline ml-3">
-                      Delete
-                    </button>
-                </td>
-              </tr>
+                    className="text-red-600"
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="24" 
+                      height="24" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      className="lucide lucide-trash-2"
+                    >
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

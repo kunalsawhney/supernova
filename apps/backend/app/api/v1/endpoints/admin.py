@@ -50,7 +50,7 @@ async def get_platform_stats(
         "totalUsers": total_users,
         "totalSchools": total_schools,
         # "totalRevenue": f"${total_revenue:,.2f}",
-        "totalRevenue": "$ 1,000,000.00",
+        "totalRevenue": "$ 100,000.00",
         "activeUsers": f"{active_users_percentage}%",
     }
 

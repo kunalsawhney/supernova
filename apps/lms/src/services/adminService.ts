@@ -3,7 +3,8 @@ import { User } from '@/types/user';
 import { 
   Course, 
   CourseViewModel, 
-  transformCourse 
+  transformCourse,
+  CreateCourseData
 } from '@/types/course';
 import { 
   PlatformStats, 
@@ -21,7 +22,7 @@ import {
   SchoolViewModel,
   transformSchool
 } from '@/types/school';
-import { PaginationParams } from '@/types/api';
+import { PaginationParams, ApiError } from '@/types/api';
 import { mockApi, mockCourses } from '@/utils/mockData';
 import { handleApiError } from '@/utils/errorHandling';
 
@@ -265,7 +266,7 @@ export const adminService = {
    * Create a new course
    * @returns Transformed course view model ready for UI display
    */
-  async createCourse(data: Course): Promise<CourseViewModel> {
+  async createCourse(data: CreateCourseData): Promise<CourseViewModel> {
     // Ensure required fields are present
     if (!data.title || !data.code || !data.status || !data.difficulty_level || 
         !data.grade_level || !data.academic_year || typeof data.sequence_number !== 'number') {

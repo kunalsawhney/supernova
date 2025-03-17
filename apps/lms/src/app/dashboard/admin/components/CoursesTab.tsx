@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { CourseViewModel } from '@/types/course';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 const CourseCard = ({ course, onEdit }: { course: CourseViewModel; onEdit: (course: CourseViewModel) => void }) => {
   return (
@@ -19,16 +20,16 @@ const CourseCard = ({ course, onEdit }: { course: CourseViewModel; onEdit: (cour
         />
       </div>
       <div className="flex flex-col gap-2 mt-4">
-        <h3 className="text-md-medium">{course.title}</h3>
-        <p className="text-md text-text-secondary line-clamp-2">{course.description || ''}</p>
+        <h3 className="text-md font-medium">{course.title}</h3>
+        <p className="text-secondary-md">{course.description || ''}</p>
         <div className="flex justify-between w-full">
-          <p className="text-md text-text-secondary">{course.durationMinutes ? `${Math.round(course.durationMinutes / 60)} hours` : 'Duration N/A'}</p>
-          <span className={`text-md rounded-full px-2 outline outline-1 ${
+          <p className="text-secondary-md">{course.durationMinutes ? `${Math.round(course.durationMinutes / 60)} hours` : 'Duration N/A'}</p>
+          <span className={`text-sm rounded-full px-2 outline outline-1 ${
             course.status === 'published' ? 'text-green-500 outline-green-500' : 
             course.status === 'draft' ? 'text-yellow-500 outline-yellow-500' : 
             'text-red-500 outline-red-500'
           }`}>
-            <p className={`text-md ${
+            <p className={`text-sm ${
               course.status === 'published' ? 'text-green-500' : 
               course.status === 'draft' ? 'text-yellow-500' : 
               'text-red-500'
@@ -36,10 +37,10 @@ const CourseCard = ({ course, onEdit }: { course: CourseViewModel; onEdit: (cour
           </span>
         </div>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-md text-text-secondary">{course.difficultyLevel}</span>
+          <span className="text-secondary-md">{course.difficultyLevel}</span>
           <button 
             onClick={() => onEdit(course)}
-            className="text-button-primary hover:underline text-md"
+            className="text-button-primary hover:underline text-sm"
           >
             Edit
           </button>
@@ -101,38 +102,41 @@ export default function CoursesTab() {
 
   return (
     <div>
-      <div className="flex justify-end mb-6">
-        <Link href="/dashboard/admin/courses/add">
-          <button
-            className="text-md-medium px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90"
-          >
-            Add Course
-          </button>
-        </Link>
-      </div>
-
-      {courses.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-text-secondary mb-4">No courses found</p>
+      <div className="space-y-6">
+        <div className="flex justify-end">
           <Link href="/dashboard/admin/courses/add">
-            <button
-              className="text-md-medium px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90"
+            <Button
+              variant="default"
+              size="md"
             >
-              Create Your First Course
-            </button>
+              Add Course
+            </Button>
           </Link>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
-            <CourseCard 
-              key={course.id} 
-              course={course} 
-              onEdit={handleEditCourse}
-            />
-          ))}
-        </div>
-      )}
+
+        {courses.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-text-secondary mb-4">No courses found</p>
+            <Link href="/dashboard/admin/courses/add">
+              <button
+                className="text-md-medium px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90"
+              >
+                Create Your First Course
+              </button>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {courses.map((course) => (
+              <CourseCard 
+                key={course.id} 
+                course={course} 
+                onEdit={handleEditCourse}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

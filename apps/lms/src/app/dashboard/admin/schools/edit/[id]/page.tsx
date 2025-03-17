@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminService } from '@/services/adminService';
+import { SchoolViewModel } from '@/types/school';
 
 type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due';
 
@@ -12,15 +13,15 @@ interface School {
   code: string;
   domain: string;
   description?: string;
-  contact_email: string;
-  contact_phone?: string;
+  contactEmail: string;
+  contactPhone?: string;
   timezone: string;
   address?: string;
-  subscription_status: SubscriptionStatus;
-  max_students: number;
-  max_teachers: number;
-  created_at: string;
-  updated_at: string;
+  subscriptionStatus: SubscriptionStatus;
+  maxStudents: number;
+  maxTeachers: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function EditSchoolPage() {
@@ -30,18 +31,22 @@ export default function EditSchoolPage() {
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [toggleStatusLoading, setToggleStatusLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
     domain: '',
     description: '',
-    contact_email: '',
-    contact_phone: '',
+    contactEmail: '',
+    contactPhone: '',
     timezone: 'UTC',
     address: '',
-    subscription_status: 'trial' as SubscriptionStatus,
-    max_students: 100,
-    max_teachers: 10,
+    subscriptionStatus: 'trial' as SubscriptionStatus,
+    maxStudents: 100,
+    maxTeachers: 10,
     settings: {},
   });
 
@@ -57,13 +62,13 @@ export default function EditSchoolPage() {
             code: school.code || '',
             domain: school.domain || '',
             description: school.description || '',
-            contact_email: school.contact_email || '',
-            contact_phone: school.contact_phone || '',
+            contactEmail: school.contactEmail || '',
+            contactPhone: school.contactPhone || '',
             timezone: school.timezone || 'UTC',
             address: school.address || '',
-            subscription_status: school.subscription_status || 'trial',
-            max_students: school.max_students || 100,
-            max_teachers: school.max_teachers || 10,
+            subscriptionStatus: school.subscriptionStatus || 'trial',
+            maxStudents: school.maxStudents || 100,
+            maxTeachers: school.maxTeachers || 10,
             settings: {},
           });
         }
@@ -86,13 +91,13 @@ export default function EditSchoolPage() {
         code: school.code || '',
         domain: school.domain || '',
         description: school.description || '',
-        contact_email: school.contact_email || '',
-        contact_phone: school.contact_phone || '',
+        contactEmail: school.contactEmail || '',
+        contactPhone: school.contactPhone || '',
         timezone: school.timezone || 'UTC',
         address: school.address || '',
-        subscription_status: school.subscription_status || 'trial',
-        max_students: school.max_students || 100,
-        max_teachers: school.max_teachers || 10,
+        subscriptionStatus: school.subscriptionStatus || 'trial',
+        maxStudents: school.maxStudents || 100,
+        maxTeachers: school.maxTeachers || 10,
         settings: school.settings || {},
       });
     } catch (err) {
@@ -120,6 +125,43 @@ export default function EditSchoolPage() {
     }
   };
 
+  const handleDeleteSchool = async () => {
+    try {
+      setDeleteLoading(true);
+      await adminService.deleteSchool(schoolId);
+      router.push('/dashboard/admin/schools');
+    } catch (err) {
+      console.error('Error deleting school:', err);
+      setError('Failed to delete school');
+      setShowDeleteModal(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    try {
+      setToggleStatusLoading(true);
+      if (formData.subscriptionStatus === 'cancelled') {
+        await adminService.updateSchool(schoolId, {
+          subscription_status: 'active'
+        });
+        setFormData({ ...formData, subscriptionStatus: 'active' });
+      } else {
+        await adminService.updateSchool(schoolId, {
+          subscription_status: 'cancelled'
+        });
+        setFormData({ ...formData, subscriptionStatus: 'cancelled' });
+      }
+      setShowSuspendModal(false);
+    } catch (err) {
+      console.error('Error toggling school status:', err);
+      setError('Failed to update school status');
+    } finally {
+      setToggleStatusLoading(false);
+    }
+  };
+
   if (loading && !formData.name) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
@@ -127,10 +169,10 @@ export default function EditSchoolPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Edit School: {formData.name}</h2>
+        <h2 className="heading-lg">Edit School</h2>
         <button
           onClick={() => router.push('/dashboard/admin/schools')}
-          className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
+          className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
         >
           Back to Schools
         </button>
@@ -142,85 +184,80 @@ export default function EditSchoolPage() {
         </div>
       )}
 
-      <div className="bg-background rounded-lg p-6 border border-text-secondary">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Basic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-background rounded-lg p-6 border border-border">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="heading-md">Basic Information</h3>
               <div>
-                <label className="section-text-small mb-1 block">School Name</label>
+                <label className="text-secondary-sm mb-1 block font-medium">School Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">School Code</label>
+                <label className="text-secondary-sm mb-1 block font-medium">School Code</label>
                 <input
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Domain</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Domain</label>
                 <input
                   type="text"
                   value={formData.domain}
                   onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
-                  placeholder="example.edu"
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Description</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  rows={3}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary h-20"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Contact Information */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="heading-md">Contact Information</h3>
               <div>
-                <label className="section-text-small mb-1 block">Contact Email</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Contact Email</label>
                 <input
                   type="email"
-                  value={formData.contact_email}
-                  onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  value={formData.contactEmail}
+                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Contact Phone</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Contact Phone</label>
                 <input
                   type="tel"
-                  value={formData.contact_phone}
-                  onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  placeholder="+1 (123) 456-7890"
+                  value={formData.contactPhone}
+                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Timezone</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Timezone</label>
                 <select
                   value={formData.timezone}
                   onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 >
                   <option value="UTC">UTC</option>
@@ -228,35 +265,30 @@ export default function EditSchoolPage() {
                   <option value="America/Chicago">Central Time (CT)</option>
                   <option value="America/Denver">Mountain Time (MT)</option>
                   <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                  <option value="Europe/London">London</option>
-                  <option value="Europe/Paris">Paris</option>
-                  <option value="Asia/Tokyo">Tokyo</option>
-                  <option value="Asia/Shanghai">Shanghai</option>
-                  <option value="Australia/Sydney">Sydney</option>
+                  <option value="Asia/Kolkata">Indian Standard Time (IST)</option>
                 </select>
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Address</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Address</label>
                 <textarea
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  rows={3}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary h-20"
                 />
               </div>
             </div>
           </div>
 
-          {/* Subscription Details */}
-          <div>
-            <h3 className="text-lg font-medium mb-4">Subscription Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {/* Subscription Details */}
+            <div className="space-y-4">
+              <h3 className="heading-md">Subscription Details</h3>
               <div>
-                <label className="section-text-small mb-1 block">Subscription Status</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Status</label>
                 <select
-                  value={formData.subscription_status}
-                  onChange={(e) => setFormData({ ...formData, subscription_status: e.target.value as SubscriptionStatus })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  value={formData.subscriptionStatus}
+                  onChange={(e) => setFormData({ ...formData, subscriptionStatus: e.target.value as SubscriptionStatus })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 >
                   <option value="trial">Trial</option>
@@ -267,49 +299,137 @@ export default function EditSchoolPage() {
                 </select>
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Max Students</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Max Students</label>
                 <input
                   type="number"
-                  value={formData.max_students}
-                  onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) || 0 })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  min="0"
+                  value={formData.maxStudents}
+                  onChange={(e) => setFormData({ ...formData, maxStudents: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                  min="1"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Max Teachers</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Max Teachers</label>
                 <input
                   type="number"
-                  value={formData.max_teachers}
-                  onChange={(e) => setFormData({ ...formData, max_teachers: parseInt(e.target.value) || 0 })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  min="0"
+                  value={formData.maxTeachers}
+                  onChange={(e) => setFormData({ ...formData, maxTeachers: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                  min="1"
                   required
                 />
               </div>
             </div>
+
+            {/* Management Options */}
+            <div className="space-y-4">
+              <h3 className="heading-md">Management Options</h3>
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 className="text-md font-medium text-yellow-800 mb-2">Danger Zone</h4>
+                <p className="text-secondary-sm mb-4">These actions may have significant consequences.</p>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowSuspendModal(true)}
+                    className="w-full px-4 py-2 border border-yellow-300 rounded bg-yellow-50 hover:bg-yellow-100 text-sm text-yellow-800"
+                  >
+                    {formData.subscriptionStatus === 'cancelled' ? 'Restore School Access' : 'Suspend School Access'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full px-4 py-2 border border-red-300 rounded bg-red-50 hover:bg-red-100 text-sm text-red-800"
+                  >
+                    Delete School
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-text-secondary">
+          <div className="flex justify-end space-x-4 mt-8">
             <button
               type="button"
               onClick={() => router.push('/dashboard/admin/schools')}
-              className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
-              disabled={loading}
+              className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-button-primary rounded hover:bg-button-primary/90 section-text-small text-white"
+              className="px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90 text-md"
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Update School'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="heading-md mb-4">Confirm Deletion</h3>
+            <p className="text-md mb-6">
+              Are you sure you want to delete this school? This action cannot be undone and will remove all associated data.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-100 text-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSchool}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-md"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Confirmation Modal */}
+      {showSuspendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="heading-md mb-4">
+              {formData.subscriptionStatus === 'cancelled' ? 'Restore School Access' : 'Suspend School Access'}
+            </h3>
+            <p className="text-md mb-6">
+              {formData.subscriptionStatus === 'cancelled'
+                ? 'Are you sure you want to restore access for this school? This will reactivate all accounts associated with this school.'
+                : 'Are you sure you want to suspend access for this school? This will prevent all users from accessing their accounts.'}
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowSuspendModal(false)}
+                className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-100 text-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleToggleStatus}
+                className={`${
+                  formData.subscriptionStatus === 'cancelled' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'
+                } text-white px-4 py-2 rounded text-md`}
+                disabled={toggleStatusLoading}
+              >
+                {toggleStatusLoading
+                  ? 'Processing...'
+                  : formData.subscriptionStatus === 'cancelled'
+                  ? 'Restore'
+                  : 'Suspend'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

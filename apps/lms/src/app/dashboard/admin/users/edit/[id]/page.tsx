@@ -12,6 +12,8 @@ export default function EditUserPage() {
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -86,17 +88,35 @@ export default function EditUserPage() {
     }
   };
 
-  if (loading && !formData.email) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  const handleDeleteUser = async () => {
+    try {
+      setDeleteLoading(true);
+      await adminService.deleteUser(userId);
+      router.push('/dashboard/admin/users');
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError('Failed to delete user');
+      setShowDeleteModal(false);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  if (loading && !formData.first_name) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-md">Loading user data...</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Edit User: {formData.first_name} {formData.last_name}</h2>
+        <h2 className="heading-lg">Edit User</h2>
         <button
           onClick={() => router.push('/dashboard/admin/users')}
-          className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
+          className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
         >
           Back to Users
         </button>
@@ -108,46 +128,48 @@ export default function EditUserPage() {
         </div>
       )}
 
-      <div className="bg-background rounded-lg p-6 border border-text-secondary">
+      <div className="bg-background rounded-lg p-6 border border-border">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="section-text-small mb-1 block">First Name</label>
+              <label className="text-secondary-sm mb-1 block font-medium">First Name</label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 required
               />
             </div>
             <div>
-              <label className="section-text-small mb-1 block">Last Name</label>
+              <label className="text-secondary-sm mb-1 block font-medium">Last Name</label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 required
               />
             </div>
           </div>
+
           <div>
-            <label className="section-text-small mb-1 block">Email</label>
+            <label className="text-secondary-sm mb-1 block font-medium">Email</label>
             <input
               type="email"
               value={formData.email}
-              disabled
-              className="w-full p-2 border rounded border-text-secondary bg-gray-100 text-gray-600"
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
           </div>
+
           <div>
-            <label className="section-text-small mb-1 block">Role</label>
+            <label className="text-secondary-sm mb-1 block font-medium">Role</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
               required
             >
               <option value="student">Student</option>
@@ -156,35 +178,62 @@ export default function EditUserPage() {
               <option value="super_admin">Super Admin</option>
             </select>
           </div>
+
           <div>
-            <label className="section-text-small mb-1 block">School ID (Optional)</label>
+            <label className="text-secondary-sm mb-1 block font-medium">School ID (Optional)</label>
             <input
               type="text"
               value={formData.school_id}
               onChange={(e) => setFormData({ ...formData, school_id: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-              placeholder="Leave empty for platform-wide users"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
             />
           </div>
+
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
-              onClick={() => router.push('/dashboard/admin/users')}
-              className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
-              disabled={loading}
+              onClick={() => setShowDeleteModal(true)}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-md"
             >
-              Cancel
+              Delete User
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-button-primary rounded hover:bg-button-primary/90 section-text-small text-white"
+              className="bg-button-primary text-white px-4 py-2 rounded hover:bg-button-primary/90 text-md"
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Update User'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="heading-md mb-4">Confirm Deletion</h3>
+            <p className="text-md mb-6">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-100 text-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-md"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

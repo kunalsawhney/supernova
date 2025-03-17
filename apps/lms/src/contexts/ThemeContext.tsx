@@ -11,6 +11,28 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Add script to prevent theme flashing during page load
+const ThemeScript = () => {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+          (function() {
+            try {
+              const storedTheme = localStorage.getItem('theme');
+              const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+              const theme = storedTheme || systemTheme;
+              document.documentElement.classList.add(theme);
+            } catch (e) {
+              console.error('Failed to set initial theme', e);
+            }
+          })();
+        `,
+      }}
+    />
+  );
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
@@ -36,6 +58,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <ThemeScript />
       {children}
     </ThemeContext.Provider>
   );

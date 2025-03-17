@@ -35,10 +35,10 @@ export default function AddUserPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Add New User</h2>
+        <h2 className="heading-lg">Add New User</h2>
         <button
           onClick={() => router.back()}
-          className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
+          className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
         >
           Back to Users
         </button>
@@ -50,56 +50,56 @@ export default function AddUserPage() {
         </div>
       )}
 
-      <div className="bg-background rounded-lg p-6 border border-text-secondary">
+      <div className="bg-background rounded-lg p-6 border border-border">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="section-text-small mb-1 block">First Name</label>
+              <label className="text-secondary-sm mb-1 block font-medium">First Name</label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 required
               />
             </div>
             <div>
-              <label className="section-text-small mb-1 block">Last Name</label>
+              <label className="text-secondary-sm mb-1 block font-medium">Last Name</label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 required
               />
             </div>
           </div>
           <div>
-            <label className="section-text-small mb-1 block">Email</label>
+            <label className="text-secondary-sm mb-1 block font-medium">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
               required
             />
           </div>
           <div>
-            <label className="section-text-small mb-1 block">Password</label>
+            <label className="text-secondary-sm mb-1 block font-medium">Password</label>
             <input
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
               required
             />
           </div>
           <div>
-            <label className="section-text-small mb-1 block">Role</label>
+            <label className="text-secondary-sm mb-1 block font-medium">Role</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
               required
             >
               <option value="student">Student</option>
@@ -109,28 +109,20 @@ export default function AddUserPage() {
             </select>
           </div>
           <div>
-            <label className="section-text-small mb-1 block">School ID (Optional)</label>
+            <label className="text-secondary-sm mb-1 block font-medium">School ID (Optional)</label>
             <input
               type="text"
               value={formData.school_id}
               onChange={(e) => setFormData({ ...formData, school_id: e.target.value })}
-              className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-              placeholder="Leave empty for platform-wide users"
+              className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
             />
           </div>
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
-            >
-              Cancel
-            </button>
+          <div className="flex justify-end mt-6">
             <button
               type="submit"
-              className="px-4 py-2 bg-button-primary rounded hover:bg-button-primary/90 section-text-small text-white"
+              className="bg-button-primary text-white px-4 py-2 rounded hover:bg-button-primary/90 text-md"
             >
-              Add User
+              Create User
             </button>
           </div>
         </form>

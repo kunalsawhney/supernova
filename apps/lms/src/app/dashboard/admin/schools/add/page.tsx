@@ -45,10 +45,10 @@ export default function AddSchoolPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Add New School</h2>
+        <h2 className="heading-lg">Add New School</h2>
         <button
           onClick={() => router.back()}
-          className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
+          className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
         >
           Back to Schools
         </button>
@@ -60,105 +60,111 @@ export default function AddSchoolPage() {
         </div>
       )}
 
-      <div className="bg-background rounded-lg p-6 border border-text-secondary">
+      <div className="bg-background rounded-lg p-6 border border-border">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h4 className="font-medium text-lg">Basic Information</h4>
+              <h3 className="heading-md">Basic Information</h3>
               <div>
-                <label className="section-text-small mb-1 block">School Name</label>
+                <label className="text-secondary-sm mb-1 block font-medium">School Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">School Code</label>
+                <label className="text-secondary-sm mb-1 block font-medium">School Code</label>
                 <input
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Domain</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Domain</label>
                 <input
                   type="text"
                   value={formData.domain}
                   onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Description</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  rows={3}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary h-20"
                 />
               </div>
             </div>
 
             {/* Contact Information */}
             <div className="space-y-4">
-              <h4 className="font-medium text-lg">Contact Information</h4>
+              <h3 className="heading-md">Contact Information</h3>
               <div>
-                <label className="section-text-small mb-1 block">Contact Email</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Contact Email</label>
                 <input
                   type="email"
                   value={formData.contact_email}
                   onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Contact Phone</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Contact Phone</label>
                 <input
                   type="tel"
                   value={formData.contact_phone}
                   onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Timezone</label>
-                <input
-                  type="text"
+                <label className="text-secondary-sm mb-1 block font-medium">Timezone</label>
+                <select
                   value={formData.timezone}
                   onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
-                />
+                >
+                  <option value="UTC">UTC</option>
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                  <option value="America/Chicago">Central Time (CT)</option>
+                  <option value="America/Denver">Mountain Time (MT)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="Asia/Kolkata">Indian Standard Time (IST)</option>
+                </select>
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Address</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Address</label>
                 <textarea
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  rows={3}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary h-20"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Subscription Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {/* Subscription Details */}
             <div className="space-y-4">
-              <h4 className="font-medium text-lg">Subscription Information</h4>
+              <h3 className="heading-md">Subscription Details</h3>
               <div>
-                <label className="section-text-small mb-1 block">Subscription Status</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Status</label>
                 <select
                   value={formData.subscription_status}
                   onChange={(e) => setFormData({ ...formData, subscription_status: e.target.value as SubscriptionStatus })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 >
                   <option value="trial">Trial</option>
@@ -169,86 +175,90 @@ export default function AddSchoolPage() {
                 </select>
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Max Students</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Max Students</label>
                 <input
                   type="number"
                   value={formData.max_students}
-                  onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                  min="1"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Max Teachers</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Max Teachers</label>
                 <input
                   type="number"
                   value={formData.max_teachers}
-                  onChange={(e) => setFormData({ ...formData, max_teachers: parseInt(e.target.value) })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  onChange={(e) => setFormData({ ...formData, max_teachers: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                  min="1"
                   required
                 />
               </div>
             </div>
 
-            {/* Admin Information */}
+            {/* Admin Account */}
             <div className="space-y-4">
-              <h4 className="font-medium text-lg">Admin Information</h4>
+              <h3 className="heading-md">Admin Account</h3>
               <div>
-                <label className="section-text-small mb-1 block">Admin Email</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Admin Email</label>
                 <input
                   type="email"
                   value={formData.admin.email}
                   onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, email: e.target.value } })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
               <div>
-                <label className="section-text-small mb-1 block">Admin Password</label>
+                <label className="text-secondary-sm mb-1 block font-medium">Admin Password</label>
                 <input
                   type="password"
                   value={formData.admin.password}
                   onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, password: e.target.value } })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
+                  className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
                   required
                 />
               </div>
-              <div>
-                <label className="section-text-small mb-1 block">Admin First Name</label>
-                <input
-                  type="text"
-                  value={formData.admin.first_name}
-                  onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, first_name: e.target.value } })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  required
-                />
-              </div>
-              <div>
-                <label className="section-text-small mb-1 block">Admin Last Name</label>
-                <input
-                  type="text"
-                  value={formData.admin.last_name}
-                  onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, last_name: e.target.value } })}
-                  className="w-full p-2 border rounded border-text-secondary bg-background-secondary text-text-primary"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-secondary-sm mb-1 block font-medium">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.admin.first_name}
+                    onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, first_name: e.target.value } })}
+                    className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-secondary-sm mb-1 block font-medium">Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.admin.last_name}
+                    onChange={(e) => setFormData({ ...formData, admin: { ...formData.admin, last_name: e.target.value } })}
+                    className="w-full p-2 border rounded border-border bg-background-secondary text-text-primary"
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 mt-6">
+          <div className="flex justify-end space-x-4 mt-8">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 border rounded border-text-secondary bg-background-secondary hover:bg-gray-50 text-text-primary section-text-small"
+              className="px-4 py-2 border rounded border-border bg-background-secondary hover:bg-gray-50 text-md"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-button-primary rounded hover:bg-button-primary/90 section-text-small text-white"
+              className="px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90 text-md"
             >
-              Add School
+              Create School
             </button>
           </div>
         </form>
