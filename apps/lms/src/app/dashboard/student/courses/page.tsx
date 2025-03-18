@@ -14,7 +14,7 @@ export default function StudentCoursesPage() {
   return (
     <div className="p-4">
       <Breadcrumbs />
-      <div className="text-text-secondary">Redirecting to courses...</div>
+      <div className="text-muted-foreground">Redirecting to courses...</div>
     </div>
   );
 } 

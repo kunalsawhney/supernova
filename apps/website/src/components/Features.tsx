@@ -44,7 +44,7 @@ export default function Features() {
                 <div className="absolute -bottom-6 -right-6 z-0 h-full w-full rounded-2xl bg-background-secondary"></div>
               </div>
               <div className="space-y-6">
-                <h2 className="section-title text-text-secondary">What Makes Us Different</h2>
+                <h2 className="section-title text-muted-foreground">What Makes Us Different</h2>
                 <p className="section-subtitle">
                   At MetaMinor, we believe in a holistic approach to technology education that goes beyond just teaching
                   coding. Our unique methodology focuses on developing well-rounded tech innovators.

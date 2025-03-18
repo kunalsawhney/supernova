@@ -96,7 +96,7 @@ const Navbar = () => {
                             {/* BUTTONS */}
 
                             <div className="hidden flex items-center gap-4 lg:block">
-                                <Button text="Dashboard" href="/dashboard" className='!bg-white hover:!shadow-button-primary hover:!text-black' />
+                                <Button text="Dashboard" href="/dashboard" className='!bg-white hover:!shadow-primary hover:!text-black' />
                             </div>
                         </div>
 

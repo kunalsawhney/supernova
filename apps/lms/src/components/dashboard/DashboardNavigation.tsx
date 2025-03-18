@@ -214,7 +214,7 @@ export function DashboardNavigation() {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => toggleCategory(group.category)}
-                className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary/50 overflow-hidden"
+                className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-background-secondary/50 overflow-hidden"
               >
                 <h3 className="text-xs font-medium uppercase tracking-wider">
                   {group.category}
@@ -224,7 +224,7 @@ export function DashboardNavigation() {
                     rotate: expandedCategories[group.category] ? 0 : -90 
                   }}
                   transition={{ duration: 0.2 }}
-                  className="text-text-secondary opacity-70 group-hover:opacity-100 transition-opacity"
+                  className="text-muted-foreground opacity-70 group-hover:opacity-100 transition-opacity"
                 >
                   <FiChevronDown className="h-3 w-3" />
                 </motion.div>
@@ -246,8 +246,8 @@ export function DashboardNavigation() {
                     flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} 
                     py-2.5 rounded-md transition-all duration-200 relative
                     ${active 
-                      ? 'bg-orange-100 text-button-primary font-medium shadow-sm dark:bg-button-primary/20' 
-                      : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
+                      ? 'bg-orange-100 text-primary font-medium shadow-sm dark:bg-primary/20' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background-secondary'
                     }
                     ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}
                   `}
@@ -258,12 +258,12 @@ export function DashboardNavigation() {
                     <motion.span 
                       layoutId="activeIndicator"
                       transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-button-primary rounded-r-md"
+                      className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-primary rounded-r-md"
                     ></motion.span>
                   )}
                   
                   {/* Icon with active styling */}
-                  <span className={`flex-shrink-0 ${active ? 'text-button-primary' : ''}`}>
+                  <span className={`flex-shrink-0 ${active ? 'text-primary' : ''}`}>
                     {icons[item.icon as keyof typeof icons]}
                   </span>
                   

@@ -112,11 +112,11 @@ const userTypesData = [
 const chartConfig = {
   users: {
     label: "Users",
-    color: "var(--color-button-secondary)"
+    color: "var(--color-secondary)"
   },
   revenue: {
     label: "Revenue",
-    color: "var(--color-button-primary)"
+    color: "var(--color-primary)"
   },
 };
 
@@ -349,7 +349,7 @@ export default function AdminOverview() {
                         type="monotone"
                         dataKey="Users"
                         name="Users"
-                        stroke="var(--color-button-secondary)"
+                        stroke="var(--color-secondary)"
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
                       />
@@ -412,7 +412,7 @@ export default function AdminOverview() {
                       <Bar 
                         dataKey="Revenue" 
                         name="Revenue"
-                        fill="var(--color-button-primary)" 
+                        fill="var(--color-primary)" 
                         radius={[4, 4, 0, 0]} 
                       />
                     </BarChart>
@@ -447,7 +447,7 @@ export default function AdminOverview() {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-text-secondary" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-secondary-md">Uptime</span>
                   </div>
                   <span className="font-medium">{systemHealth.uptime}</span>
@@ -455,7 +455,7 @@ export default function AdminOverview() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-text-secondary" />
+                    <Zap className="h-4 w-4 text-muted-foreground" />
                     <span className="text-secondary-md">Response Time</span>
                   </div>
                   <span className="font-medium">{systemHealth.responseTime}</span>
@@ -463,7 +463,7 @@ export default function AdminOverview() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-text-secondary" />
+                    <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-secondary-md">Active Connections</span>
                   </div>
                   <span className="font-medium">{systemHealth.activeConnections}</span>
@@ -471,7 +471,7 @@ export default function AdminOverview() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-text-secondary" />
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-secondary-md">Last Backup</span>
                   </div>
                   <span className="font-medium">
@@ -555,7 +555,7 @@ export default function AdminOverview() {
                       key={activity.id} 
                       className="flex items-start py-3 px-4 hover:bg-background-secondary rounded-md transition-colors duration-200"
                     >
-                      <div className="h-2 w-2 bg-button-primary rounded-full mt-2 mr-3"></div>
+                      <div className="h-2 w-2 bg-primary rounded-full mt-2 mr-3"></div>
                       <div className="flex-1">
                         <div className="flex justify-between">
                           <p className="font-medium text-md">{activity.event}</p>

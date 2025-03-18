@@ -13,7 +13,12 @@ export default function RootLayoutClient({
   return (
     <AuthProvider>
       <RoleProvider>
-        <ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <SidebarProvider>
             {children}
           </SidebarProvider>

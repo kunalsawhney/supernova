@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
+// import { useTheme } from '@/contexts/ThemeContext';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import Link from 'next/link';
@@ -9,9 +10,11 @@ import Image from 'next/image';
 import NotificationsDropdown from '../NotificationsDropdown';
 import DevRoleSwitcher from '../DevRoleSwitcher';
 import { FiSun, FiMoon, FiUser, FiSettings, FiLogOut, FiTarget, FiEye, FiMenu, FiX } from 'react-icons/fi';
+import { Button } from '../ui/button';
 
 export function DashboardHeader() {
-  const { theme, toggleTheme } = useTheme();
+  // const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [focusMode, setFocusMode] = useState(false);
@@ -78,32 +81,34 @@ export function DashboardHeader() {
           <NotificationsDropdown />
 
           {/* Theme Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full text-text-primary hover:bg-background-secondary transition-colors"
+          <Button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            variant="ghost"
+            size="icon"
+            className=""
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-          </button>
+          </Button>
 
           {/* Focus Mode Toggle */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setFocusMode(!focusMode)}
-            className={`hidden md:flex items-center justify-center p-2 rounded-full transition-colors ${
-              focusMode 
-                ? 'bg-button-primary text-white hover:opacity-90' 
-                : 'text-text-primary hover:bg-background-secondary'
-            }`}
+            className=""
             aria-label={focusMode ? 'Disable focus mode' : 'Enable focus mode'}
           >
-            {focusMode ? <FiTarget className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
-          </button>
+            {focusMode ? <FiTarget className="w-5 h-5 text-primary" /> : <FiEye className="w-5 h-5" />}
+          </Button>
 
           {/* Profile Menu */}
           <div className="relative" ref={profileRef}>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center justify-center ml-1 transition-transform focus:outline-none focus:ring-2 focus:ring-button-primary focus:ring-offset-1 focus:ring-offset-background rounded-full"
+              className=""
               aria-label="Open profile menu"
             >
               {user?.profileImageUrl ? (
@@ -117,11 +122,11 @@ export function DashboardHeader() {
                   />
                 </div>
               ) : (
-                <div className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-button-primary to-button-secondary text-white rounded-full font-medium text-sm">
+                <div className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-primary to-secondary text-white rounded-full font-medium text-sm">
                   {getInitials()}
                 </div>
               )}
-            </button>
+            </Button>
 
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-56 origin-top-right bg-card border border-border/30 rounded-xl shadow-lg overflow-hidden z-50">
@@ -138,7 +143,7 @@ export function DashboardHeader() {
                         />
                       </div>
                     ) : (
-                      <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-button-primary to-button-secondary text-white rounded-full font-medium text-sm mr-3">
+                      <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-primary to-secondary text-white rounded-full font-medium text-sm mr-3">
                         {getInitials()}
                       </div>
                     )}
@@ -146,7 +151,7 @@ export function DashboardHeader() {
                       <p className="text-sm font-medium truncate">
                         {user?.firstName} {user?.lastName}
                       </p>
-                      <p className="text-xs text-text-secondary truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {user?.email}
                       </p>
                     </div>
@@ -158,14 +163,14 @@ export function DashboardHeader() {
                     href="/dashboard/profile"
                     className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors"
                   >
-                    <FiUser className="w-4 h-4 mr-3 text-text-secondary" />
+                    <FiUser className="w-4 h-4 mr-3 text-muted-foreground" />
                     My Profile
                   </Link>
                   <Link
                     href="/dashboard/settings"
                     className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors"
                   >
-                    <FiSettings className="w-4 h-4 mr-3 text-text-secondary" />
+                    <FiSettings className="w-4 h-4 mr-3 text-muted-foreground" />
                     Settings
                   </Link>
                 </div>

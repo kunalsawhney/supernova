@@ -104,11 +104,11 @@ export default function InstructorDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Teacher Dashboard</h1>
-          <p className="text-text-secondary mt-1">Manage your classes and track student progress</p>
+          <h1 className="text-2xl font-bold text-foreground">Teacher Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Manage your classes and track student progress</p>
         </div>
         <div className="flex space-x-3">
-          <button className="px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90 flex items-center space-x-2">
+          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center space-x-2">
             <span>📅</span>
             <span>Schedule Class</span>
           </button>
@@ -128,8 +128,8 @@ export default function InstructorDashboard() {
               onClick={() => setSelectedTab(tab.toLowerCase())}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === tab.toLowerCase()
-                  ? 'border-button-primary text-button-primary'
-                  : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               {tab}
@@ -144,9 +144,9 @@ export default function InstructorDashboard() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">👥</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Total Students</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{teachingStats.totalStudents}</p>
-              <span className="text-text-secondary text-sm">Across all classes</span>
+              <h3 className="text-sm font-medium text-muted-foreground">Total Students</h3>
+              <p className="text-2xl font-bold text-foreground mt-1">{teachingStats.totalStudents}</p>
+              <span className="text-muted-foreground text-sm">Across all classes</span>
             </div>
           </div>
         </div>
@@ -154,9 +154,9 @@ export default function InstructorDashboard() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">📚</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Active Classes</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{teachingStats.activeClasses}</p>
-              <span className="text-text-secondary text-sm">Current semester</span>
+              <h3 className="text-sm font-medium text-muted-foreground">Active Classes</h3>
+              <p className="text-2xl font-bold text-foreground mt-1">{teachingStats.activeClasses}</p>
+              <span className="text-muted-foreground text-sm">Current semester</span>
             </div>
           </div>
         </div>
@@ -164,8 +164,8 @@ export default function InstructorDashboard() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">📈</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Completion Rate</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{teachingStats.completionRate}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Completion Rate</h3>
+              <p className="text-2xl font-bold text-foreground mt-1">{teachingStats.completionRate}</p>
               <span className="text-green-600 text-sm">Average across classes</span>
             </div>
           </div>
@@ -174,8 +174,8 @@ export default function InstructorDashboard() {
           <div className="flex items-center space-x-3">
             <span className="text-3xl">📅</span>
             <div>
-              <h3 className="text-sm font-medium text-text-secondary">Upcoming Sessions</h3>
-              <p className="text-2xl font-bold text-text-primary mt-1">{teachingStats.upcomingSessions}</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Upcoming Sessions</h3>
+              <p className="text-2xl font-bold text-foreground mt-1">{teachingStats.upcomingSessions}</p>
               <span className="text-blue-600 text-sm">Next 7 days</span>
             </div>
           </div>
@@ -190,18 +190,18 @@ export default function InstructorDashboard() {
           <div className="card">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-text-primary">My Classes</h2>
-                <p className="text-sm text-text-secondary mt-1">Current teaching assignments</p>
+                <h2 className="text-lg font-semibold text-foreground">My Classes</h2>
+                <p className="text-sm text-muted-foreground mt-1">Current teaching assignments</p>
               </div>
-              <button className="text-button-primary hover:underline">View All Classes</button>
+              <button className="text-primary hover:underline">View All Classes</button>
             </div>
             <div className="space-y-4">
               {myClasses.map((class_) => (
                 <div key={class_.id} className="p-4 rounded-lg bg-background">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-medium text-text-primary">{class_.name}</h3>
-                      <p className="text-sm text-text-secondary mt-1">{class_.subject} • {class_.students} students</p>
+                      <h3 className="font-medium text-foreground">{class_.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{class_.subject} • {class_.students} students</p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       class_.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
@@ -211,21 +211,21 @@ export default function InstructorDashboard() {
                   </div>
                   <div className="mt-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-text-secondary">Syllabus Progress</span>
-                      <span className="text-text-primary font-medium">{class_.progress}%</span>
+                      <span className="text-muted-foreground">Syllabus Progress</span>
+                      <span className="text-foreground font-medium">{class_.progress}%</span>
                     </div>
                     <div className="w-full bg-background-secondary rounded-full h-2">
                       <div
-                        className="bg-button-primary h-2 rounded-full"
+                        className="bg-primary h-2 rounded-full"
                         style={{ width: `${class_.progress}%` }}
                       ></div>
                     </div>
                   </div>
                   <div className="mt-4 flex justify-between items-center text-sm">
-                    <span className="text-text-secondary">Next Session: {class_.nextSession}</span>
+                    <span className="text-muted-foreground">Next Session: {class_.nextSession}</span>
                     <div className="space-x-2">
-                      <button className="text-button-primary hover:underline">View Class</button>
-                      <button className="text-button-primary hover:underline">Take Attendance</button>
+                      <button className="text-primary hover:underline">View Class</button>
+                      <button className="text-primary hover:underline">Take Attendance</button>
                     </div>
                   </div>
                 </div>
@@ -237,18 +237,18 @@ export default function InstructorDashboard() {
           <div className="card">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-text-primary">Student Progress</h2>
-                <p className="text-sm text-text-secondary mt-1">Recent student activities and performance</p>
+                <h2 className="text-lg font-semibold text-foreground">Student Progress</h2>
+                <p className="text-sm text-muted-foreground mt-1">Recent student activities and performance</p>
               </div>
-              <button className="text-button-primary hover:underline">View All Students</button>
+              <button className="text-primary hover:underline">View All Students</button>
             </div>
             <div className="space-y-4">
               {studentProgress.map((student) => (
                 <div key={student.id} className="p-4 rounded-lg bg-background">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-medium text-text-primary">{student.name}</h3>
-                      <p className="text-sm text-text-secondary mt-1">{student.class}</p>
+                      <h3 className="font-medium text-foreground">{student.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{student.class}</p>
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       student.status === 'excellent'
@@ -262,8 +262,8 @@ export default function InstructorDashboard() {
                   </div>
                   <div className="mt-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-text-secondary">Course Progress</span>
-                      <span className="text-text-primary font-medium">{student.progress}%</span>
+                      <span className="text-muted-foreground">Course Progress</span>
+                      <span className="text-foreground font-medium">{student.progress}%</span>
                     </div>
                     <div className="w-full bg-background-secondary rounded-full h-2">
                       <div
@@ -272,7 +272,7 @@ export default function InstructorDashboard() {
                             ? 'bg-green-500'
                             : student.status === 'needs_attention'
                             ? 'bg-red-500'
-                            : 'bg-button-primary'
+                            : 'bg-primary'
                         }`}
                         style={{ width: `${student.progress}%` }}
                       ></div>
@@ -280,10 +280,10 @@ export default function InstructorDashboard() {
                   </div>
                   <div className="mt-4 flex justify-between items-center text-sm">
                     <div className="space-x-4">
-                      <span className="text-text-secondary">Attendance: {student.attendance}</span>
-                      <span className="text-text-secondary">Last active: {student.lastActive}</span>
+                      <span className="text-muted-foreground">Attendance: {student.attendance}</span>
+                      <span className="text-muted-foreground">Last active: {student.lastActive}</span>
                     </div>
-                    <button className="text-button-primary hover:underline">View Details</button>
+                    <button className="text-primary hover:underline">View Details</button>
                   </div>
                 </div>
               ))}
@@ -297,28 +297,28 @@ export default function InstructorDashboard() {
           <div className="card">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-lg font-semibold text-text-primary">Today's Schedule</h2>
-                <p className="text-sm text-text-secondary mt-1">Upcoming classes and sessions</p>
+                <h2 className="text-lg font-semibold text-foreground">Today's Schedule</h2>
+                <p className="text-sm text-muted-foreground mt-1">Upcoming classes and sessions</p>
               </div>
             </div>
             <div className="space-y-4">
               {upcomingSchedule.map((session) => (
                 <div key={session.id} className="p-4 rounded-lg bg-background">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-text-primary">{session.title}</h3>
-                    <span className="text-text-secondary">{session.time}</span>
+                    <h3 className="font-medium text-foreground">{session.title}</h3>
+                    <span className="text-muted-foreground">{session.time}</span>
                   </div>
-                  <p className="text-sm text-text-secondary mt-2">{session.class}</p>
-                  <p className="text-sm text-text-secondary">{session.subject}</p>
-                  <p className="text-sm font-medium text-text-primary mt-2">Topic: {session.topic}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{session.class}</p>
+                  <p className="text-sm text-muted-foreground">{session.subject}</p>
+                  <p className="text-sm font-medium text-foreground mt-2">Topic: {session.topic}</p>
                   <div className="mt-3 flex justify-between items-center text-sm">
-                    <span className="text-text-secondary">{session.attendees} students</span>
+                    <span className="text-muted-foreground">{session.attendees} students</span>
                   </div>
                   <div className="mt-3 flex space-x-2">
-                    <button className="flex-1 px-4 py-2 bg-button-primary text-white rounded-lg hover:bg-button-primary/90">
+                    <button className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
                       Start Class
                     </button>
-                    <button className="px-4 py-2 border border-button-primary text-button-primary rounded-lg hover:bg-button-primary/10">
+                    <button className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/10">
                       View Plan
                     </button>
                   </div>
@@ -329,23 +329,23 @@ export default function InstructorDashboard() {
 
           {/* Quick Actions */}
           <div className="card">
-            <h2 className="text-lg font-semibold text-text-primary mb-4">Quick Actions</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
             <div className="space-y-3">
               <button className="w-full text-left p-3 rounded-lg bg-background hover:bg-background-secondary transition-colors flex items-center space-x-3">
                 <span className="text-2xl">📝</span>
-                <span className="text-text-primary">Take Attendance</span>
+                <span className="text-foreground">Take Attendance</span>
               </button>
               <button className="w-full text-left p-3 rounded-lg bg-background hover:bg-background-secondary transition-colors flex items-center space-x-3">
                 <span className="text-2xl">📊</span>
-                <span className="text-text-primary">Grade Assignments</span>
+                <span className="text-foreground">Grade Assignments</span>
               </button>
               <button className="w-full text-left p-3 rounded-lg bg-background hover:bg-background-secondary transition-colors flex items-center space-x-3">
                 <span className="text-2xl">📚</span>
-                <span className="text-text-primary">Learning Resources</span>
+                <span className="text-foreground">Learning Resources</span>
               </button>
               <button className="w-full text-left p-3 rounded-lg bg-background hover:bg-background-secondary transition-colors flex items-center space-x-3">
                 <span className="text-2xl">💬</span>
-                <span className="text-text-primary">Contact School Admin</span>
+                <span className="text-foreground">Contact School Admin</span>
               </button>
             </div>
           </div>

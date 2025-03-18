@@ -36,12 +36,12 @@ export function DashboardSidebar() {
       }}
     >
       {/* Sidebar header with logo and brand */}
-      <div className="h-16 flex items-center justify-between px-4 opacity-30">
+      <div className="h-16 flex items-center justify-between px-4 opacity-50 mt-6">
         <div className="flex items-center overflow-hidden">
           <div className="relative w-9 h-9">
-            <div className="absolute inset-0 bg-gradient-to-tr from-button-primary to-button-secondary rounded-lg shadow-sm"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary to-secondary rounded-lg shadow-sm"></div>
             <div className="absolute inset-0.5 bg-card rounded-lg flex items-center justify-center">
-              <span className="text-sm font-bold text-button-primary">SN</span>
+              <span className="text-sm font-bold text-primary">SN</span>
             </div>
           </div>
           
@@ -52,10 +52,10 @@ export function DashboardSidebar() {
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="ml-3 overflow-hidden whitespace-nowrap"
+                className="ml-3 overflow-hidden whitespace-nowrap items-center"
               >
-                <span className="font-semibold text-lg block">SuperNova</span>
-                <span className="text-xs text-text-secondary">Learning Management</span>
+                <span className="heading-md block">SuperNova</span>
+                <span className="text-xs text-muted-foreground">Learning Management</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -63,7 +63,7 @@ export function DashboardSidebar() {
         
         {/* Collapse toggle button */}
         <button 
-          className="p-1.5 rounded-md hover:bg-background-secondary hidden lg:flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+          className="p-1.5 rounded-md hover:bg-background-secondary hidden lg:flex items-center justify-center text-foreground hover:text-primary transition-colors"
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >

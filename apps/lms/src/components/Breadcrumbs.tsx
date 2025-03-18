@@ -34,15 +34,15 @@ export default function Breadcrumbs() {
     <nav aria-label="Breadcrumb" className="mb-4">
       <ol className="flex items-center space-x-2 text-sm">
         <li>
-          <span className="text-text-secondary">Home</span>
+          <span className="text-muted-foreground">Home</span>
         </li>
         {breadcrumbs.map((item, index) => (
           <li key={item.href} className="flex items-center">
-            <span className="mx-2 text-text-secondary">/</span>
+            <span className="mx-2 text-muted-foreground">/</span>
             {index === breadcrumbs.length - 1 || item.label.toLowerCase() === currentSection ? (
-              <span className="text-text-primary font-medium">{item.label}</span>
+              <span className="text-foreground font-medium">{item.label}</span>
             ) : (
-              <span className="text-text-secondary">{item.label}</span>
+              <span className="text-muted-foreground">{item.label}</span>
             )}
           </li>
         ))}

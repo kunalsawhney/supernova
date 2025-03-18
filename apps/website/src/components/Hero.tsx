@@ -39,7 +39,7 @@ export default function Hero() {
               </div> */}
               <div className="flex flex-row gap-3">
                 <Button text="Get Started" href="/signup" />
-                <Button text="Watch Demo" href="/demo" className="!bg-button-secondary hover:!shadow-button-secondary"/>
+                <Button text="Watch Demo" href="/demo" className="!bg-secondary hover:!shadow-secondary"/>
               </div>
             </div>
             <div className="relative mx-auto max-w-[500px]">

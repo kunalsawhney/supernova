@@ -14,9 +14,9 @@ const Button: React.FC<ButtonProps> = ({ text, href, onClick, className }) => {
   const buttonContent = (
     <div
       className={clsx(
-        "bg-button-primary text-xl",
+        "bg-primary text-xl",
         "rounded-xl transition-all",
-        "hover:shadow-lg hover:shadow-button-primary hover:text-white",
+        "hover:shadow-lg hover:shadow-primary hover:text-white",
         className
       )}
     >

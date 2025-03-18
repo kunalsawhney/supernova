@@ -59,8 +59,8 @@ export default function Dashboard() {
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Welcome back, John! 👋</h1>
-          <p className="text-text-secondary mt-1">Ready to continue your learning journey?</p>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back, John! 👋</h1>
+          <p className="text-muted-foreground mt-1">Ready to continue your learning journey?</p>
         </div>
         <Link href="/dashboard/courses" className="btn-primary">
           Browse All Courses
@@ -71,31 +71,31 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-text-primary">Weekly Goal</h3>
-            <span className="text-button-primary font-bold">4/5 hrs</span>
+            <h3 className="text-lg font-semibold text-foreground">Weekly Goal</h3>
+            <span className="text-primary font-bold">4/5 hrs</span>
           </div>
           <div className="w-full bg-background rounded-full h-2.5">
-            <div className="bg-button-primary h-2.5 rounded-full" style={{ width: '80%' }}></div>
+            <div className="bg-primary h-2.5 rounded-full" style={{ width: '80%' }}></div>
           </div>
-          <p className="text-text-secondary text-sm mt-2">Keep it up! Almost there!</p>
+          <p className="text-muted-foreground text-sm mt-2">Keep it up! Almost there!</p>
         </div>
         
         <div className="card">
-          <h3 className="text-lg font-semibold text-text-primary mb-2">Assignments</h3>
-          <div className="text-3xl font-bold text-button-primary">3</div>
-          <p className="text-text-secondary text-sm">Pending submissions</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Assignments</h3>
+          <div className="text-3xl font-bold text-primary">3</div>
+          <p className="text-muted-foreground text-sm">Pending submissions</p>
         </div>
 
         <div className="card">
-          <h3 className="text-lg font-semibold text-text-primary mb-2">Next Live Session</h3>
-          <div className="text-button-primary font-medium">2:00 PM Today</div>
-          <p className="text-text-secondary text-sm">Python Programming</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Next Live Session</h3>
+          <div className="text-primary font-medium">2:00 PM Today</div>
+          <p className="text-muted-foreground text-sm">Python Programming</p>
         </div>
       </div>
 
       {/* Current Courses */}
       <div>
-        <h2 className="text-xl font-bold text-text-primary mb-4">Current Courses</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">Current Courses</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {currentCourses.map((course) => (
             <div key={course.id} className="card">
@@ -106,29 +106,29 @@ export default function Dashboard() {
                   className="w-12 h-12 rounded-lg bg-background"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-text-primary">{course.name}</h3>
-                  <p className="text-text-secondary text-sm">{course.instructor}</p>
+                  <h3 className="font-semibold text-foreground">{course.name}</h3>
+                  <p className="text-muted-foreground text-sm">{course.instructor}</p>
                 </div>
               </div>
               
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-text-secondary">Progress</span>
-                  <span className="text-text-primary font-medium">{course.progress}%</span>
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="text-foreground font-medium">{course.progress}%</span>
                 </div>
                 <div className="w-full bg-background rounded-full h-2">
                   <div
-                    className="bg-button-primary h-2 rounded-full"
+                    className="bg-primary h-2 rounded-full"
                     style={{ width: `${course.progress}%` }}
                   ></div>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-sm text-text-secondary">Next: {course.nextLesson}</p>
+                <p className="text-sm text-muted-foreground">Next: {course.nextLesson}</p>
                 <Link
                   href={`/dashboard/courses/${course.id}`}
-                  className="mt-2 text-sm text-button-primary hover:opacity-80 inline-flex items-center"
+                  className="mt-2 text-sm text-primary hover:opacity-80 inline-flex items-center"
                 >
                   Continue Learning
                   <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,18 +143,18 @@ export default function Dashboard() {
 
       {/* Upcoming Schedule */}
       <div>
-        <h2 className="text-xl font-bold text-text-primary mb-4">Upcoming Schedule</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">Upcoming Schedule</h2>
         <div className="card divide-y divide-border">
           {upcomingSchedule.map((item) => (
             <div key={item.id} className="py-4 first:pt-0 last:pb-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-text-primary">{item.title}</h4>
-                  <p className="text-sm text-text-secondary">{item.time}</p>
+                  <h4 className="font-medium text-foreground">{item.title}</h4>
+                  <p className="text-sm text-muted-foreground">{item.time}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-medium text-text-primary">{item.date}</span>
-                  <p className="text-xs text-text-secondary">{item.type}</p>
+                  <span className="text-sm font-medium text-foreground">{item.date}</span>
+                  <p className="text-xs text-muted-foreground">{item.type}</p>
                 </div>
               </div>
             </div>

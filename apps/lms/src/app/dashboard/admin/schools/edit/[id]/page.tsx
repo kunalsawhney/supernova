@@ -233,7 +233,7 @@ export default function EditSchoolPage() {
             <div className="text-red-700">
               <p className="font-medium">Error</p>
               <p>{error}</p>
-            </div>
+        </div>
           </CardContent>
         </Card>
       )}
@@ -335,7 +335,7 @@ export default function EditSchoolPage() {
 
         {/* School Details Form */}
         <div className="space-y-6 lg:col-span-2">
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             {/* Basic Information */}
             <Card className="mb-6">
               <CardHeader>
@@ -351,33 +351,33 @@ export default function EditSchoolPage() {
                     <Input
                       id="name"
                       placeholder="Enter school name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                  </div>
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="code">School Code</Label>
                     <Input
                       id="code"
                       placeholder="Enter school code"
-                      value={formData.code}
-                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      required
-                    />
-                  </div>
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  required
+                />
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="domain">Domain</Label>
                     <Input
                       id="domain"
                       placeholder="example.edu"
-                      value={formData.domain}
-                      onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                      required
-                    />
-                  </div>
+                  value={formData.domain}
+                  onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                  required
+                />
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Timezone</Label>
@@ -404,14 +404,14 @@ export default function EditSchoolPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <textarea
+                <textarea
                     id="description"
                     placeholder="Brief description of the school"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                </div>
+                />
+              </div>
               </CardContent>
             </Card>
 
@@ -429,36 +429,36 @@ export default function EditSchoolPage() {
                     <Label htmlFor="contactEmail">Contact Email</Label>
                     <Input
                       id="contactEmail"
-                      type="email"
+                  type="email"
                       placeholder="contact@school.edu"
-                      value={formData.contactEmail}
-                      onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                      required
-                    />
-                  </div>
+                  value={formData.contactEmail}
+                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                  required
+                />
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="contactPhone">Contact Phone</Label>
                     <Input
                       id="contactPhone"
-                      type="tel"
+                  type="tel"
                       placeholder="+1 (555) 123-4567"
-                      value={formData.contactPhone}
-                      onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                    />
-                  </div>
-                </div>
+                  value={formData.contactPhone}
+                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                />
+              </div>
+              </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
-                  <textarea
+                <textarea
                     id="address"
                     placeholder="Physical address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                </div>
+                />
+              </div>
               </CardContent>
             </Card>
 
@@ -475,7 +475,7 @@ export default function EditSchoolPage() {
                   <div className="space-y-2">
                     <Label htmlFor="subscriptionStatus">Status</Label>
                     <Select
-                      value={formData.subscriptionStatus}
+                  value={formData.subscriptionStatus}
                       onValueChange={(value) => setFormData({ ...formData, subscriptionStatus: value as SubscriptionStatus })}
                     >
                       <SelectTrigger>
@@ -491,31 +491,31 @@ export default function EditSchoolPage() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                  </div>
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="maxStudents">Max Students</Label>
                     <Input
                       id="maxStudents"
-                      type="number"
+                  type="number"
                       min="1"
-                      value={formData.maxStudents}
-                      onChange={(e) => setFormData({ ...formData, maxStudents: parseInt(e.target.value) || 0 })}
-                      required
-                    />
-                  </div>
+                  value={formData.maxStudents}
+                  onChange={(e) => setFormData({ ...formData, maxStudents: parseInt(e.target.value) || 0 })}
+                  required
+                />
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="maxTeachers">Max Teachers</Label>
                     <Input
                       id="maxTeachers"
-                      type="number"
+                  type="number"
                       min="1"
-                      value={formData.maxTeachers}
-                      onChange={(e) => setFormData({ ...formData, maxTeachers: parseInt(e.target.value) || 0 })}
-                      required
-                    />
-                  </div>
+                  value={formData.maxTeachers}
+                  onChange={(e) => setFormData({ ...formData, maxTeachers: parseInt(e.target.value) || 0 })}
+                  required
+                />
+              </div>
                 </div>
               </CardContent>
             </Card>
@@ -523,8 +523,8 @@ export default function EditSchoolPage() {
             <div className="flex justify-end space-x-4">
               <Button
                 variant="outline"
-                type="button"
-                onClick={() => router.push('/dashboard/admin/schools')}
+              type="button"
+              onClick={() => router.push('/dashboard/admin/schools')}
               >
                 Cancel
               </Button>
@@ -598,13 +598,13 @@ export default function EditSchoolPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={toggleStatusLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleToggleStatus}
-              disabled={toggleStatusLoading}
+                onClick={handleToggleStatus}
+                disabled={toggleStatusLoading}
               className={formData.subscriptionStatus !== 'cancelled'
                 ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-600"
                 : "bg-green-600 hover:bg-green-700 focus:ring-green-600"
               }
-            >
+              >
               {toggleStatusLoading ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2"></div>

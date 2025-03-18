@@ -54,9 +54,9 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   useEffect(() => {
-    const fetchCourse = async () => {
+  const fetchCourse = async () => {
       setLoading(true);
       setError(null);
       
@@ -70,7 +70,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         }
         
         // If not in localStorage, get from API
-        const course = await adminService.getCourse(courseId);
+      const course = await adminService.getCourse(courseId);
         if (course) {
           setFormData(course);
         } else {
@@ -79,10 +79,10 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
       } catch (err: any) {
         setError(err.message || 'Failed to load course');
         console.error('Error loading course:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
     
     fetchCourse();
   }, [courseId]);
@@ -222,11 +222,11 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
-            onClick={handleClose}
+          onClick={handleClose}
             className="gap-2"
-          >
+        >
             <ArrowLeft className="h-4 w-4" />
-            Back to Courses
+          Back to Courses
           </Button>
           
           <AlertDialog>
@@ -260,18 +260,18 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {error && (
+        {error && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6">
             <div className="text-red-700">
               <p className="font-medium">Error</p>
               <p>{error}</p>
-            </div>
+          </div>
           </CardContent>
         </Card>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+        )}
+        
+          <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="basic" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Information</TabsTrigger>
@@ -329,7 +329,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                   <div className="space-y-2">
                     <Label htmlFor="status">Status<span className="text-red-500">*</span></Label>
                     <Select
-                      value={formData.status}
+                    value={formData.status}
                       onValueChange={(value) => setFormData({ ...formData, status: value as 'draft' | 'published' | 'archived' })}
                     >
                       <SelectTrigger id="status">
@@ -341,18 +341,18 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                         <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="thumbnailUrl">Cover Image URL</Label>
                     <Input
                       id="thumbnailUrl"
-                      placeholder="https://example.com/image.jpg"
+                    placeholder="https://example.com/image.jpg"
                       value={formData.thumbnailUrl}
                       onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-                    />
-                  </div>
-                  
+                  />
+              </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="difficultyLevel">Difficulty Level<span className="text-red-500">*</span></Label>
                     <Select
@@ -492,15 +492,15 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPrerequisite())}
                   />
                   <Button type="button" onClick={addPrerequisite} variant="secondary">Add</Button>
-                </div>
-                
+            </div>
+
                 {formData.prerequisites && formData.prerequisites.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {formData.prerequisites.map((prereq: string, i: number) => (
                       <div key={i} className="flex items-center justify-between gap-2 rounded-md border p-2">
                         <span>{prereq}</span>
                         <Button 
-                          type="button" 
+                  type="button"
                           onClick={() => removePrerequisite(prereq)} 
                           variant="ghost" 
                           size="sm"
@@ -509,9 +509,9 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                           <X className="h-4 w-4" />
                           <span className="sr-only">Remove</span>
                         </Button>
-                      </div>
+              </div>
                     ))}
-                  </div>
+            </div>
                 )}
               </CardContent>
             </Card>
@@ -530,20 +530,20 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="Add a learning objective..."
-                    value={currentObjective}
-                    onChange={(e) => setCurrentObjective(e.target.value)}
+                  value={currentObjective}
+                  onChange={(e) => setCurrentObjective(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddObjective())}
                   />
                   <Button type="button" onClick={handleAddObjective} variant="secondary">Add</Button>
-                </div>
+              </div>
                 
                 {formData.metadata?.learning_objectives && formData.metadata.learning_objectives.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {formData.metadata.learning_objectives.map((objective: string, i: number) => (
                       <div key={i} className="flex items-center justify-between gap-2 rounded-md border p-2">
-                        <span>{objective}</span>
+                    <span>{objective}</span>
                         <Button 
-                          type="button" 
+                      type="button"
                           onClick={() => handleRemoveObjective(i)} 
                           variant="ghost" 
                           size="sm"
@@ -554,7 +554,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                         </Button>
                       </div>
                     ))}
-                  </div>
+            </div>
                 )}
               </CardContent>
             </Card>
@@ -570,8 +570,8 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="Add target audience..."
-                    value={currentAudience}
-                    onChange={(e) => setCurrentAudience(e.target.value)}
+                  value={currentAudience}
+                  onChange={(e) => setCurrentAudience(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAudience())}
                   />
                   <Button type="button" onClick={handleAddAudience} variant="secondary">Add</Button>
@@ -583,7 +583,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                       <div key={i} className="flex items-center justify-between gap-2 rounded-md border p-2">
                         <span>{audience}</span>
                         <Button 
-                          type="button" 
+                  type="button"
                           onClick={() => handleRemoveAudience(i)} 
                           variant="ghost" 
                           size="sm"
@@ -625,7 +625,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                         } 
                       })}
                     />
-                  </div>
+              </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency</Label>
@@ -650,8 +650,8 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                         <SelectItem value="AUD">AUD</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  
+            </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="pricing_type">Pricing Type</Label>
                     <Select
@@ -674,7 +674,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+            </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -682,15 +682,15 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
         <div className="mt-6 flex justify-end space-x-4">
           <Button
-            type="button"
+                type="button"
             variant="outline"
-            onClick={handleClose}
-          >
-            Cancel
+                onClick={handleClose}
+              >
+                Cancel
           </Button>
           <Button
-            type="submit"
-            disabled={loading}
+                type="submit"
+                disabled={loading}
             className="gap-2"
           >
             {loading ? (

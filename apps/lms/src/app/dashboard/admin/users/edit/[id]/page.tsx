@@ -261,26 +261,26 @@ export default function EditUserPage() {
                     </Label>
                     <Input
                       id="first_name"
-                      type="text"
-                      value={formData.first_name}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      required
-                    />
-                  </div>
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                required
+              />
+            </div>
                   <div className="space-y-2">
                     <Label htmlFor="last_name" className="font-medium">
                       Last Name <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="last_name"
-                      type="text"
-                      value={formData.last_name}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      required
-                    />
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+              />
                   </div>
-                </div>
-              </div>
+            </div>
+          </div>
 
               {/* Account Information */}
               <div className="space-y-4">
@@ -291,18 +291,18 @@ export default function EditUserPage() {
                   </Label>
                   <Input
                     id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
                     disabled
                     className="opacity-70"
-                  />
+            />
                   <p className="text-xs text-muted-foreground">
                     Email address cannot be changed
                   </p>
                 </div>
-              </div>
+          </div>
 
               {/* Role & School */}
               <div className="space-y-4">
@@ -313,7 +313,7 @@ export default function EditUserPage() {
                       User Role <span className="text-red-500">*</span>
                     </Label>
                     <Select 
-                      value={formData.role} 
+              value={formData.role}
                       onValueChange={(value) => setFormData({ ...formData, role: value })}
                     >
                       <SelectTrigger>
@@ -326,7 +326,7 @@ export default function EditUserPage() {
                         <SelectItem value="super_admin">Super Admin</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+          </div>
                   <div className="space-y-2">
                     <Label htmlFor="school_id" className="font-medium">
                       School ID
@@ -335,13 +335,13 @@ export default function EditUserPage() {
                       <School className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="school_id"
-                        type="text"
+              type="text"
                         value={formData.school_id || ''}
-                        onChange={(e) => setFormData({ ...formData, school_id: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, school_id: e.target.value })}
                         placeholder="Optional school identifier"
                         className="pl-10"
-                      />
-                    </div>
+            />
+          </div>
                     <p className="text-xs text-muted-foreground">
                       Leave empty if not associated with a specific school
                     </p>
@@ -380,7 +380,7 @@ export default function EditUserPage() {
                 e.preventDefault();
                 handleDeleteUser();
               }}
-              disabled={deleteLoading}
+                disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteLoading ? (

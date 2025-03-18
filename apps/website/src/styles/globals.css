@@ -63,7 +63,7 @@ html {
 /* Apply background and text colors globally */
 body {
   /* @apply bg-backgroundPrimary text-textPrimary transition-colors duration-300; */
-  @apply bg-background-primary text-text-primary transition-colors duration-300;
+  @apply bg-background-primary text-foreground transition-colors duration-300;
 }
 
 /* Custom scrollbar styling */
