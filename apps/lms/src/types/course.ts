@@ -3,61 +3,113 @@ import { PaginationParams } from './api';
 export interface Course {
   id: string;
   title: string;
-  code: string;
   description: string;
+  code: string;
   status: string;
+  cover_image_url?: string;
+  settings?: Record<string, any>;
   difficulty_level: string;
+  tags?: string[];
+  estimated_duration?: number;
+  learning_objectives?: string[];
+  target_audience?: string[];
+  prerequisites?: string[];
+  completion_criteria?: Record<string, any>;
   grade_level: string;
   academic_year: string;
   sequence_number: number;
+  base_price?: number;
+  currency?: string;
+  pricing_type?: string;
+  created_by_id: string;
+  latest_version_id: string;
   created_at: string;
   updated_at: string;
-  school_id?: string;
-  instructor_id?: string;
-  thumbnail_url?: string;
-  duration_minutes?: number;
-  prerequisites?: string[];
-  tags?: string[];
-  metadata?: Record<string, any>;
+  is_active: boolean;
+  is_deleted: boolean;
+  deleted_at?: string;
+
 }
+
+export type CourseStatus = 'draft' | 'published' | 'archived';
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+export type PricingType = 'one-time' | 'subscription';
 
 export interface CreateCourseData {
   title: string;
-  code: string;
   description: string;
-  status: string;
-  difficulty_level: string;
+  code: string;
+  status: CourseStatus;
+  cover_image_url?: string;
+  settings?: Record<string, any>;
+  difficulty_level: DifficultyLevel;
+  tags?: string[];
+  estimated_duration?: number;  // in hours
+  learning_objectives?: string[];
+  target_audience?: string[];
+  prerequisites?: string[];
+  completion_criteria?: Record<string, any>;
   grade_level: string;
   academic_year: string;
   sequence_number: number;
-  school_id?: string;
-  instructor_id?: string;
-  thumbnail_url?: string;
-  duration_minutes?: number;
-  prerequisites?: string[];
+  base_price?: number;
+  currency?: string;
+  pricing_type?: PricingType;
+}
+
+export interface UpdateCourseData {
+  id: string;
+  title?: string;
+  description?: string;
+  code?: string;
+  status?: CourseStatus;
+  cover_image_url?: string;
+  difficulty_level?: DifficultyLevel;
   tags?: string[];
+  estimated_duration?: number;
+  learning_objectives?: string[];
+  target_audience?: string[];
+  prerequisites?: string[];
+  completion_criteria?: Record<string, any>;
+  grade_level?: string;
+  academic_year?: string;
+  sequence_number?: number;
+  base_price?: number;
+  currency?: string;
+  pricing_type?: PricingType;
   metadata?: Record<string, any>;
 }
+
 
 // View Models for UI
 export interface CourseViewModel {
   id: string;
   title: string;
-  code: string;
   description: string;
+  code: string;
   status: string;
-  difficultyLevel: string;
-  gradeLevel: string;
-  academicYear: string;
-  sequenceNumber: number;
+  coverImageUrl?: string;
+  settings?: Record<string, any>;
+  difficultyLevel?: string;
+  tags?: string[];
+  estimatedDuration?: number;
+  learningObjectives?: string[];
+  targetAudience?: string[];
+  prerequisites?: string[];
+  completionCriteria?: Record<string, any>;
+  gradeLevel?: string;
+  academicYear?: string;
+  sequenceNumber?: number;
+  basePrice?: number;
+  currency?: string;
+  pricingType?: string;
+  createdById: string;
+  latestVersionId: string;
   createdAt: string;
   updatedAt: string;
-  schoolId?: string;
-  instructorId?: string;
-  thumbnailUrl?: string;
-  durationMinutes?: number;
-  prerequisites?: string[];
-  tags?: string[];
+  isActive: boolean;
+  isDeleted: boolean;
+  deletedAt?: string;
   metadata?: Record<string, any>;
 }
 
@@ -109,22 +161,31 @@ export interface CourseReviewViewModel {
 export const transformCourse = (course: Course): CourseViewModel => ({
   id: course.id,
   title: course.title,
-  code: course.code,
   description: course.description,
+  code: course.code,
   status: course.status,
+  coverImageUrl: course.cover_image_url,
+  settings: course.settings,
   difficultyLevel: course.difficulty_level,
+  tags: course.tags,
+  estimatedDuration: course.estimated_duration,
+  learningObjectives: course.learning_objectives,
+  targetAudience: course.target_audience,
+  prerequisites: course.prerequisites,
+  completionCriteria: course.completion_criteria,
   gradeLevel: course.grade_level,
   academicYear: course.academic_year,
   sequenceNumber: course.sequence_number,
+  basePrice: course.base_price,
+  currency: course.currency,
+  pricingType: course.pricing_type,
+  createdById: course.created_by_id,
+  latestVersionId: course.latest_version_id,
   createdAt: course.created_at,
   updatedAt: course.updated_at,
-  schoolId: course.school_id,
-  instructorId: course.instructor_id,
-  thumbnailUrl: course.thumbnail_url,
-  durationMinutes: course.duration_minutes,
-  prerequisites: course.prerequisites,
-  tags: course.tags,
-  metadata: course.metadata,
+  isActive: course.is_active,
+  isDeleted: course.is_deleted,
+  deletedAt: course.deleted_at,
 });
 
 export const transformCourseContent = (content: any): CourseContentViewModel => ({

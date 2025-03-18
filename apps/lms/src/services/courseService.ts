@@ -22,7 +22,7 @@ export const courseService = {
    */
   getCourses: withCache(
     async (params?: SearchParams & { status?: string }): Promise<CourseViewModel[]> => {
-      const courses = await api.get<Course[]>('/courses', { params });
+      const courses = await api.get<Course[]>('/courses/', { params });
       return courses.map(transformCourse);
     },
     (params?: SearchParams & { status?: string }) => {

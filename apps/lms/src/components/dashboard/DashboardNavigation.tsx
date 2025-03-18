@@ -9,7 +9,7 @@ import {
   FiHome, FiUsers, FiBook, FiClipboard, FiBarChart2, 
   FiPieChart, FiAward, FiSettings, FiBox, FiServer,
   FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare,
-  FiChevronDown, FiChevronRight
+  FiChevronDown, FiVideo, FiPlay
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,8 +20,16 @@ const navigationConfig = {
       category: 'Main',
       items: [
         { label: 'Dashboard', href: '/dashboard/student', icon: 'FiHome' },
+        { label: 'Analytics', href: '/dashboard/student/analytics', icon: 'FiPieChart' },
+      ]
+    },
+    {
+      category: 'Learning',
+      items: [
         { label: 'My Courses', href: '/dashboard/student/courses', icon: 'FiBook' },
         { label: 'Assignments', href: '/dashboard/student/assignments', icon: 'FiClipboard' },
+        { label: 'Live Classes', href: '/dashboard/student/live-classes', icon: 'FiVideo' },
+        { label: 'Course Player', href: '/dashboard/student/course-player', icon: 'FiPlay' },
       ]
     },
     {
@@ -76,7 +84,15 @@ const navigationConfig = {
       items: [
         { label: 'Users', href: '/dashboard/admin/users', icon: 'FiUsers' },
         { label: 'Schools', href: '/dashboard/admin/schools', icon: 'FiServer' },
-        { label: 'Courses', href: '/dashboard/admin/courses', icon: 'FiBook' },
+      ]
+    },
+    {
+      category: 'Content',
+      items: [
+        { label: 'Overview', href: '/dashboard/admin/content', icon: 'FiBook' },
+        { label: 'Courses', href: '/dashboard/admin/content/courses', icon: 'FiBookmark' },
+        { label: 'Modules', href: '/dashboard/admin/content/modules', icon: 'FiServer' },
+        { label: 'Lessons', href: '/dashboard/admin/content/lessons', icon: 'FiClipboard' },
       ]
     },
     {
@@ -100,7 +116,15 @@ const navigationConfig = {
       items: [
         { label: 'Users', href: '/dashboard/admin/users', icon: 'FiUsers' },
         { label: 'Schools', href: '/dashboard/admin/schools', icon: 'FiServer' },
-        { label: 'Courses', href: '/dashboard/admin/courses', icon: 'FiBook' },
+      ]
+    },
+    {
+      category: 'Content',
+      items: [
+        { label: 'Overview', href: '/dashboard/admin/content', icon: 'FiBook' },
+        { label: 'Courses', href: '/dashboard/admin/content/courses', icon: 'FiBookmark' },
+        { label: 'Modules', href: '/dashboard/admin/content/modules', icon: 'FiServer' },
+        { label: 'Lessons', href: '/dashboard/admin/content/lessons', icon: 'FiClipboard' },
       ]
     },
     {
@@ -124,7 +148,15 @@ const navigationConfig = {
       items: [
         { label: 'Users', href: '/dashboard/admin/users', icon: 'FiUsers' },
         { label: 'Schools', href: '/dashboard/admin/schools', icon: 'FiServer' },
-        { label: 'Courses', href: '/dashboard/admin/courses', icon: 'FiBook' },
+      ]
+    },
+    {
+      category: 'Content',
+      items: [
+        { label: 'Dashboard', href: '/dashboard/admin/content', icon: 'FiBook' },
+        { label: 'Courses', href: '/dashboard/admin/content/courses', icon: 'FiBookmark' },
+        { label: 'Modules', href: '/dashboard/admin/content/modules', icon: 'FiServer' },
+        { label: 'Lessons', href: '/dashboard/admin/content/lessons', icon: 'FiClipboard' },
       ]
     },
     {
@@ -152,7 +184,9 @@ const icons = {
   FiActivity: <FiActivity />,
   FiBookmark: <FiBookmark />,
   FiHelpCircle: <FiHelpCircle />,
-  FiMessageSquare: <FiMessageSquare />
+  FiMessageSquare: <FiMessageSquare />,
+  FiVideo: <FiVideo />,
+  FiPlay: <FiPlay />
 };
 
 export function DashboardNavigation() {
@@ -187,9 +221,33 @@ export function DashboardNavigation() {
 
   // Check if a nav item is active (or if we're on a child route)
   const isActive = (href: string) => {
+    // Exact match for dashboard routes
     if (href === '/dashboard/student' || href === '/dashboard/instructor' || href === '/dashboard/admin') {
       return pathname === href;
     }
+    
+    // Special handling for content section to avoid multiple highlights
+    if (href === '/dashboard/admin/content') {
+      // Only highlight dashboard when on the exact content path
+      return pathname === href;
+    }
+    
+    if (href === '/dashboard/admin/content/courses') {
+      // Highlight courses for the courses path and its sub-paths
+      return pathname.startsWith(href) && !pathname.includes('/modules') && !pathname.includes('/lessons');
+    }
+    
+    if (href === '/dashboard/admin/content/modules') {
+      // Highlight modules for the modules path and its sub-paths
+      return pathname.startsWith(href);
+    }
+    
+    if (href === '/dashboard/admin/content/lessons') {
+      // Highlight lessons for the lessons path and its sub-paths
+      return pathname.startsWith(href);
+    }
+    
+    // Default behavior for other routes
     return pathname.startsWith(href);
   };
 

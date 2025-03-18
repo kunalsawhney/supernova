@@ -12,27 +12,28 @@ from app.schemas.shared import BaseSchema
 class CourseBase(BaseModel):
     """Base schema for course data."""
     title: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str = Field(..., min_length=1)
     code: constr(min_length=2, max_length=50)
-    grade_level: str = Field(..., max_length=20)
-    academic_year: str = Field(..., max_length=20)
-    difficulty_level: DifficultyLevel
+    status: CourseStatus = Field(..., description="Status of the course: draft, published, or archived")
+    cover_image_url: Optional[str] = Field(None, max_length=255)
+    settings: Optional[Dict[str, Any]] = None
+    difficulty_level: DifficultyLevel = Field(None, description="Difficulty level of the course")
     tags: Optional[List[str]] = None
-    estimated_duration: Optional[int] = Field(None, gt=0)  # in hours
+    estimated_duration: Optional[int] = Field(None, gt=0, description="Estimated duration in hours")
     learning_objectives: Optional[List[str]] = None
     target_audience: Optional[List[str]] = None
-    prerequisites: Optional[List[UUID]] = None
-    completion_criteria: Optional[dict] = None
-    cover_image_url: Optional[str] = None
-    settings: Optional[Dict[str, Any]] = None
+    prerequisites: Optional[List[str]] = None
+    completion_criteria: Optional[Dict[str, Any]] = None
+    grade_level: str = Field(None, max_length=20)
+    academic_year: str = Field(None, max_length=20)
+    sequence_number: int = Field(None, gt=0)
+    base_price: Optional[float] = Field(None, gt=0)
+    currency: Optional[constr(min_length=3, max_length=3)] = None
+    pricing_type: Optional[constr(pattern="^(one-time|subscription)$")] = None
 
 class CourseCreate(CourseBase):
     """Schema for creating a new course."""
-    sequence_number: int = Field(..., gt=0)
-    base_price: Optional[float] = Field(None, gt=0)
-    currency: Optional[str] = Field(None, min_length=3, max_length=3)
-    pricing_type: Optional[str] = Field(None, pattern="^(one-time|subscription)$")
-    school_id: UUID
+    pass
 
 class CourseUpdate(BaseModel):
     """Schema for updating an existing course."""
@@ -54,6 +55,7 @@ class CourseUpdate(BaseModel):
     base_price: Optional[float] = Field(None, gt=0)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     pricing_type: Optional[str] = Field(None, pattern="^(one-time|subscription)$")
+    sequence_number: Optional[int] = Field(None, gt=0)
 
 class CourseInDB(CourseBase, BaseSchema):
     """Schema for course data from database."""
@@ -154,7 +156,6 @@ class CourseContentResponse(CourseContentBase, BaseSchema):
 
 class CourseResponse(CourseBase, BaseSchema):
     """Schema for course response."""
-    school_id: UUID
     status: CourseStatus
     created_by_id: UUID
     sequence_number: int

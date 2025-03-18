@@ -25,6 +25,8 @@ import {
 import { PaginationParams, ApiError } from '@/types/api';
 import { mockApi, mockCourses } from '@/utils/mockData';
 import { handleApiError } from '@/utils/errorHandling';
+import { withCache, clearCacheByPrefix } from '@/utils/caching';
+import { ModuleViewModel } from '@/types/module';
 
 /**
  * Service for admin-related API calls
@@ -230,19 +232,34 @@ export const adminService = {
   },
 
   // Courses Management
+  clearCoursesCache() {
+    clearCacheByPrefix('admin_courses_list');
+  },
+
   /**
-   * Get a list of courses with optional pagination
+   * Get a list of courses with optional pagination and filtering
    * @returns Transformed course view models ready for UI display
    */
-  async getCourses(params?: PaginationParams): Promise<CourseViewModel[]> {
-    try {
-      const courses = await api.get<Course[]>('/admin/courses', { params });
-      return courses.map(transformCourse);
-    } catch (error) {
-      console.warn('Failed to fetch courses from API, using mock data', error);
-      return mockApi.getCourses();
-    }
-  },
+  getCourses: withCache(
+    async (params?: PaginationParams & { status?: string, search?: string }): Promise<CourseViewModel[]> => {
+      try {
+        // Use trailing slash to avoid redirect
+        const courses = await api.get<Course[]>('/courses/', { params });
+        return courses.map(transformCourse);
+      } catch (error) {
+        throw handleApiError(error, 'Failed to fetch courses');
+      }
+    },
+    (params?: PaginationParams & { status?: string, search?: string }) => {
+      // Create a cache key based on the parameters
+      const searchParam = params?.search ? `search_${params.search}` : '';
+      const statusParam = params?.status ? `status_${params.status}` : '';
+      const skipParam = params?.skip ? `skip_${params.skip}` : '';
+      const limitParam = params?.limit ? `limit_${params.limit}` : '';
+      return `admin_courses_list_${searchParam}_${statusParam}_${skipParam}_${limitParam}`.replace(/_{2,}/g, '_');
+    },
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  ),
 
   /**
    * Get a specific course by ID
@@ -250,15 +267,10 @@ export const adminService = {
    */
   async getCourse(id: string): Promise<CourseViewModel> {
     try {
-      const course = await api.get<Course>(`/admin/courses/${id}`);
+      const course = await api.get<Course>(`/courses/${id}/`);
       return transformCourse(course);
     } catch (error) {
-      console.warn(`Failed to fetch course ${id} from API, using mock data`, error);
-      const course = await mockApi.getCourse(id);
-      if (!course) {
-        throw new Error(`Course with ID ${id} not found`);
-      }
-      return course;
+      throw handleApiError(error, `Failed to fetch course ${id}`);
     }
   },
 
@@ -267,14 +279,8 @@ export const adminService = {
    * @returns Transformed course view model ready for UI display
    */
   async createCourse(data: CreateCourseData): Promise<CourseViewModel> {
-    // Ensure required fields are present
-    if (!data.title || !data.code || !data.status || !data.difficulty_level || 
-        !data.grade_level || !data.academic_year || typeof data.sequence_number !== 'number') {
-      throw new Error('Missing required fields for course creation');
-    }
-
     try {
-      const course = await api.post<Course>('/admin/courses', data);
+      const course = await api.post<Course>('/courses/', data);
       return transformCourse(course);
     } catch (error) {
       throw handleApiError(error, 'Failed to create course');
@@ -287,7 +293,7 @@ export const adminService = {
    */
   async updateCourse(id: string, data: Partial<Course>): Promise<CourseViewModel> {
     try {
-      const course = await api.put<Course>(`/admin/courses/${id}`, data);
+      const course = await api.put<Course>(`/courses/${id}/`, data);
       return transformCourse(course);
     } catch (error) {
       throw handleApiError(error, `Failed to update course ${id}`);
@@ -299,9 +305,195 @@ export const adminService = {
    */
   async deleteCourse(id: string): Promise<void> {
     try {
-      return api.delete<void>(`/admin/courses/${id}`);
+      await api.delete<void>(`/courses/${id}/`);
     } catch (error) {
       throw handleApiError(error, `Failed to delete course ${id}`);
+    }
+  },
+
+  // Modules Management
+  /**
+   * Get a list of modules with optional filtering
+   */
+  async getModules(params?: { 
+    skip?: number; 
+    limit?: number; 
+    status?: string; 
+    course_id?: string;
+    search?: string;
+  }): Promise<any[]> {
+    try {
+      const response = await api.get<any[]>('/modules', { params });
+      return response;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch modules');
+    }
+  },
+
+  /**
+   * Get a specific module by ID
+   */
+  async getModule(id: string): Promise<any> {
+    try {
+      const response = await api.get(`/modules/${id}`);
+      return response;
+    } catch (error) {
+      throw handleApiError(error, `Failed to fetch module ${id}`);
+    }
+  },
+
+  /**
+   * Add a module to a course
+   */
+  async addModule(contentId: string, data: any): Promise<any> {
+    try {
+      const response = await api.post(`/courses/content/${contentId}/modules`, data);
+      return response;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to add module');
+    }
+  },
+
+  // Lessons Management
+  /**
+   * Get a list of lessons with optional filtering
+   */
+  async getLessons(params?: { 
+    skip?: number; 
+    limit?: number; 
+    module_id?: string;
+    lesson_type?: string;
+    search?: string;
+  }): Promise<any[]> {
+    try {
+      const response = await api.get<any[]>('/lessons', { params });
+      return response;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch lessons');
+    }
+  },
+
+  /**
+   * Get a specific lesson by ID
+   */
+  async getLesson(id: string): Promise<any> {
+    try {
+      const response = await api.get(`/lessons/${id}`);
+      return response;
+    } catch (error) {
+      throw handleApiError(error, `Failed to fetch lesson ${id}`);
+    }
+  },
+
+  /**
+   * Add a lesson to a module
+   */
+  async addLesson(moduleId: string, data: any): Promise<any> {
+    try {
+      const response = await api.post(`/modules/${moduleId}/lessons`, data);
+      return response;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to add lesson');
+    }
+  },
+
+  /**
+   * Get content statistics for the dashboard
+   */
+  async getContentStats(): Promise<any> {
+    try {
+      const response = await api.get('/admin/content/stats');
+      return response;
+    } catch (error) {
+      throw handleApiError(error, 'Failed to fetch content statistics');
+    }
+  },
+
+  /**
+   * Get modules for a specific course
+   * @returns Transformed module view models ready for UI display
+   */
+  async getCourseModules(courseId: string, params?: { status?: string }): Promise<ModuleViewModel[]> {
+    try {
+      const modules = await api.get<any[]>(`/courses/${courseId}/modules/`, { params });
+      return modules.map(module => ({
+        id: module.id,
+        title: module.title,
+        description: module.description,
+        courseId: courseId,
+        sequenceNumber: module.order,
+        lessonCount: module.lessons?.length || 0,
+        totalDuration: module.lessons?.reduce((total: number, lesson: any) => total + (lesson.duration_minutes || 0), 0) || 0,
+        status: module.status,
+        createdAt: module.created_at,
+        updatedAt: module.updated_at
+      }));
+    } catch (error) {
+      throw handleApiError(error, `Failed to fetch modules for course ${courseId}`);
+    }
+  },
+
+  /**
+   * Get a specific module by ID
+   * @returns Transformed module view model ready for UI display
+   */
+  async getModuleById(moduleId: string): Promise<ModuleViewModel> {
+    try {
+      const module = await api.get<any>(`/modules/${moduleId}/`);
+      return {
+        id: module.id,
+        title: module.title,
+        description: module.description,
+        courseId: '', // This needs to be determined from the content relationship
+        sequenceNumber: module.order,
+        lessonCount: module.lessons?.length || 0,
+        totalDuration: module.lessons?.reduce((total: number, lesson: any) => total + (lesson.duration_minutes || 0), 0) || 0,
+        status: module.status,
+        createdAt: module.created_at,
+        updatedAt: module.updated_at
+      };
+    } catch (error) {
+      throw handleApiError(error, `Failed to fetch module ${moduleId}`);
+    }
+  },
+
+  /**
+   * Update an existing module
+   * @returns Transformed module view model ready for UI display
+   */
+  async updateModule(moduleId: string, data: Partial<{
+    title: string;
+    description?: string;
+    order?: number;
+    status?: string;
+  }>): Promise<ModuleViewModel> {
+    try {
+      const module = await api.put<any>(`/modules/${moduleId}/`, data);
+      return {
+        id: module.id,
+        title: module.title,
+        description: module.description,
+        courseId: '', // This needs to be determined from the content relationship
+        sequenceNumber: module.order,
+        lessonCount: module.lessons?.length || 0,
+        totalDuration: module.lessons?.reduce((total: number, lesson: any) => total + (lesson.duration_minutes || 0), 0) || 0,
+        status: module.status,
+        createdAt: module.created_at,
+        updatedAt: module.updated_at
+      };
+    } catch (error) {
+      throw handleApiError(error, `Failed to update module ${moduleId}`);
+    }
+  },
+  
+  /**
+   * Delete a module
+   */
+  async deleteModule(moduleId: string): Promise<void> {
+    try {
+      await api.delete<void>(`/modules/${moduleId}/`);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete module ${moduleId}`);
     }
   },
 }; 

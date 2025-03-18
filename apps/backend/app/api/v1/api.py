@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, schools, users, courses, enrollments, admin
+from app.api.v1.endpoints import auth, schools, users, courses, enrollments, admin, modules, lessons
 
 api_router = APIRouter()
 
@@ -11,6 +11,18 @@ api_router.include_router(
     courses.router,
     prefix="/courses",
     tags=["courses"],
+    responses={404: {"description": "Not found"}},
+)
+api_router.include_router(
+    modules.router,
+    prefix="/modules",
+    tags=["modules"],
+    responses={404: {"description": "Not found"}},
+)
+api_router.include_router(
+    lessons.router,
+    prefix="/lessons",
+    tags=["lessons"],
     responses={404: {"description": "Not found"}},
 )
 api_router.include_router(

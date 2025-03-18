@@ -13,7 +13,7 @@ import { withCache, clearCacheByPrefix } from '@/utils/caching';
  */
 export const userService = {
   /**
-   * Get the current user's profile
+   * Get current user's profile
    * @returns Transformed user view model ready for UI display
    */
   getProfile: withCache(
@@ -21,8 +21,8 @@ export const userService = {
       const user = await api.get<User>('/users/me');
       return transformUser(user);
     },
-    () => 'user_profile',
-    { ttl: 10 * 60 * 1000 } // 10 minutes cache
+    () => 'current_user_profile',
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
   ),
 
   /**

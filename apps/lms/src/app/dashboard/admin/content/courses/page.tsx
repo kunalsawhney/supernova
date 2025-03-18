@@ -1,6 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { adminService } from '@/services/adminService';
-import Image from 'next/image';
 import { CourseViewModel } from '@/types/course';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,7 +10,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   AlertCircle, 
@@ -18,7 +18,6 @@ import {
   Clock, 
   FileEdit, 
   Filter, 
-  MoreVertical, 
   Pencil, 
   Plus, 
   RefreshCcw,
@@ -27,16 +26,11 @@ import {
   BookOpen
 } from 'lucide-react';
 
-const CourseCard = ({ course, onEdit }: { course: CourseViewModel; onEdit: (course: CourseViewModel) => void }) => {
-  const formatDuration = (minutes: number | undefined) => {
-    if (!minutes) return 'Duration N/A';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours === 0) return `${mins} min`;
-    if (mins === 0) return `${hours} hr`;
-    return `${hours} hr ${mins} min`;
-  };
-
+const CourseCard = ({ course, onEdit, onDelete }: { 
+  course: CourseViewModel; 
+  onEdit: (courseId: string) => void;
+  onDelete: (courseId: string) => void;
+}) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
@@ -51,64 +45,92 @@ const CourseCard = ({ course, onEdit }: { course: CourseViewModel; onEdit: (cour
   };
 
   return (
-    <Card className="overflow-hidden group hover:shadow-md transition-all duration-200">
-      <div className="relative w-full h-36">
-        <Image 
-          src={course.thumbnailUrl || '/placeholder-course.jpg'} 
-          alt={course.title} 
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={false}
-          className="object-cover"
-        />
-        <div className="absolute top-2 right-2">
-          {getStatusBadge(course.status)}
-        </div>
-      </div>
-      <CardContent className="p-4">
-        <h3 className="font-medium text-lg mb-2 line-clamp-1">{course.title}</h3>
-        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{course.description || 'No description provided'}</p>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span>{formatDuration(course.durationMinutes)}</span>
+    <Card className="mb-4 hover:shadow-md transition-all">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                {course.title}
+              </CardTitle>
+              {getStatusBadge(course.status)}
+            </div>
+            <CardDescription>{course.description || 'No description provided'}</CardDescription>
           </div>
-          <div className="flex items-center gap-1">
-            <Bookmark className="h-4 w-4" />
-            <span>{course.difficultyLevel}</span>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => onEdit(course.id)}
+            >
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-muted-foreground hover:text-red-500"
+              onClick={() => onDelete(course.id)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center gap-2">
+            <Book className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Code</p>
+              <p className="text-sm text-muted-foreground">
+                {course.code || 'No code assigned'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Duration</p>
+              <p className="text-sm text-muted-foreground">
+                {course.estimatedDuration ? `${course.estimatedDuration} minutes` : 'Not specified'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bookmark className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Difficulty</p>
+              <p className="text-sm text-muted-foreground">{course.difficultyLevel || 'Not specified'}</p>
+            </div>
           </div>
         </div>
         {course.tags && course.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {course.tags.slice(0, 3).map((tag, index) => (
+          <div className="flex flex-wrap gap-1 mt-3">
+            {course.tags.map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tag}
               </Badge>
             ))}
-            {course.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{course.tags.length - 3}
-              </Badge>
-            )}
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-end">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-1"
-          onClick={() => onEdit(course)}
-        >
-          <Pencil className="h-4 w-4" />
-          Edit
-        </Button>
+      <CardFooter className="pt-2 flex justify-end">
+        <Link href={`/dashboard/admin/content/courses/${course.id}`} className="w-full">
+          <Button variant="outline" size="sm" className="w-full">
+            <FileEdit className="h-4 w-4 mr-2" />
+            View Course Details
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
 };
 
-export default function CoursesTab() {
+export default function CoursesPage() {
   const router = useRouter();
   const [courses, setCourses] = useState<CourseViewModel[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseViewModel[]>([]);
@@ -128,12 +150,29 @@ export default function CoursesTab() {
     filterCourses();
   }, [courses, searchQuery, statusFilter, difficultyFilter]);
 
-  const fetchCourses = async () => {
+  const handleRefresh: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.preventDefault();
+    void fetchCourses(true);
+  };
+
+  const handleRetry: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.preventDefault();
+    void fetchCourses(false);
+  };
+
+  const fetchCourses = async (forceFresh: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
       
-      const data = await adminService.getCourses();
+      if (forceFresh) {
+        adminService.clearCoursesCache();
+      }
+      
+      const data = await adminService.getCourses({
+        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+        ...(searchQuery ? { search: searchQuery } : {})
+      });
       setCourses(data);
       setFilteredCourses(data);
     } catch (err) {
@@ -148,7 +187,7 @@ export default function CoursesTab() {
   const filterCourses = () => {
     let filtered = [...courses];
     
-    // Apply status filter
+    // Status filtering is now handled by the API, but we'll keep this for client-side filtering too
     if (statusFilter !== 'all') {
       filtered = filtered.filter(course => course.status === statusFilter);
     }
@@ -158,28 +197,30 @@ export default function CoursesTab() {
       filtered = filtered.filter(course => course.difficultyLevel === difficultyFilter);
     }
     
-    // Apply search filter
+    // Search filtering is now handled by the API, but we'll keep this for client-side filtering too
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(course => 
         course.title.toLowerCase().includes(query) || 
         (course.description && course.description.toLowerCase().includes(query)) ||
-        (course.code && course.code.toLowerCase().includes(query))
+        (course.code && course.code.toLowerCase().includes(query)) ||
+        (course.tags && course.tags.some(tag => tag.toLowerCase().includes(query)))
       );
     }
     
     setFilteredCourses(filtered);
   };
 
-  const handleEditCourse = (course: CourseViewModel) => {
-    // Store the course data in localStorage for the edit page to use
-    localStorage.setItem('editCourse', JSON.stringify(course));
-    router.push(`/dashboard/admin/courses/edit/${course.id}`);
+  const handleEditCourse = (courseId: string) => {
+    router.push(`/dashboard/admin/content/courses/edit/${courseId}`);
   };
 
-  const confirmDelete = (course: CourseViewModel) => {
-    setSelectedCourse(course);
-    setShowDeleteDialog(true);
+  const confirmDelete = (courseId: string) => {
+    const course = courses.find(c => c.id === courseId);
+    if (course) {
+      setSelectedCourse(course);
+      setShowDeleteDialog(true);
+    }
   };
 
   const handleDeleteCourse = async () => {
@@ -190,7 +231,8 @@ export default function CoursesTab() {
       setShowDeleteDialog(false);
       fetchCourses(); // Refresh the list
     } catch (err) {
-      setError('Failed to delete course');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete course';
+      setError(errorMessage);
       console.error('Error deleting course:', err);
     }
   };
@@ -212,7 +254,7 @@ export default function CoursesTab() {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={fetchCourses}
+          onClick={handleRetry}
           className="ml-auto border-red-300 dark:border-red-800/30 text-red-800 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30"
         >
           <RefreshCcw className="h-4 w-4 mr-2" />
@@ -221,6 +263,11 @@ export default function CoursesTab() {
       </div>
     );
   }
+
+  // Get all unique difficulty levels for the filter
+  const difficultyLevels = Array.from(new Set(courses
+    .map(course => course.difficultyLevel)
+    .filter(Boolean) as string[]));
 
   return (
     <div className="space-y-6">
@@ -232,12 +279,23 @@ export default function CoursesTab() {
             Manage your course catalog and learning resources
           </p>
         </div>
-        <Link href="/dashboard/admin/courses/add">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Course
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="default" 
+            onClick={handleRefresh}
+            className="gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            Refresh
           </Button>
-        </Link>
+          <Link href="/dashboard/admin/content/courses/add">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Course
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -249,49 +307,50 @@ export default function CoursesTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="md:col-span-4">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search courses by title, description, or code..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+          <div className="grid grid-cols-1 gap-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search courses by title, description, code or tags..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    <SelectItem value="beginner">Beginner</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="advanced">Advanced</SelectItem>
-                    <SelectItem value="expert">Expert</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              
+              <div>
+                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="all">All Difficulty Levels</SelectItem>
+                      {difficultyLevels.map(level => (
+                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -316,7 +375,7 @@ export default function CoursesTab() {
         </CardFooter>
       </Card>
 
-      {/* Courses Grid */}
+      {/* Course List */}
       {filteredCourses.length === 0 ? (
         <Card className="border">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -341,38 +400,41 @@ export default function CoursesTab() {
                 Clear filters
               </Button>
             ) : (
-              <Link href="/dashboard/admin/courses/add">
+              <Link href="/dashboard/admin/content/courses/add">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add your first course
+                  Create a course
                 </Button>
               </Link>
             )}
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {filteredCourses.map((course) => (
             <CourseCard 
               key={course.id} 
-              course={course} 
+              course={course}
               onEdit={handleEditCourse}
+              onDelete={confirmDelete}
             />
           ))}
         </div>
       )}
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the course "{selectedCourse?.title}". This action cannot be undone.
+              This will permanently delete the course &quot;{selectedCourse?.title}&quot; and cannot be undone.
+              All associated modules and lessons will be orphaned.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteCourse} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDeleteCourse} className="bg-red-500 hover:bg-red-600">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

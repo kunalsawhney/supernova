@@ -349,7 +349,7 @@ export default function AdminOverview() {
                         type="monotone"
                         dataKey="Users"
                         name="Users"
-                        stroke="var(--color-secondary)"
+                        stroke="text-primary"
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
                       />

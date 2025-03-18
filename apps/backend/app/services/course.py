@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from uuid import UUID
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func, select, case
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception_handlers import NotFoundException, ValidationError, PermissionError
 from app.models.course import (
@@ -13,7 +14,7 @@ from app.models.course import (
 from app.models.user import User, UserRole
 from app.schemas.course import (
     CourseCreate, CourseUpdate, CourseContentCreate,
-    ModuleCreate, LessonCreate
+    ModuleCreate, LessonCreate, ModuleUpdate
 )
 
 class CourseService:
@@ -29,14 +30,16 @@ class CourseService:
         if current_user.role != UserRole.SUPER_ADMIN:
             raise PermissionError("Only super admins can create courses")
 
+        course_dict = course_data.model_dump()
         # Create course
         course = Course(
-            **course_data.model_dump(exclude={'content'}),
+            **course_dict,
             created_by_id=current_user.id,
-            status=CourseStatus.DRAFT
+            # status=CourseStatus.DRAFT,
+            version="1.0"
         )
         db.add(course)
-        db.flush()  # Get course ID without committing
+        await db.flush()  # Get course ID without committing
         
         return course
 
@@ -48,10 +51,9 @@ class CourseService:
         course_data: CourseUpdate
     ) -> Course:
         """Update an existing course."""
-        course = db.query(Course).filter(Course.id == course_id).first()
+        course = await db.get(Course, course_id)
         if not course:
             raise NotFoundException("Course not found")
-
         if current_user.role != UserRole.SUPER_ADMIN:
             raise PermissionError("Only super admins can update courses")
 
@@ -150,18 +152,20 @@ class CourseService:
 
     @staticmethod
     async def get_course(
-        db: Session,
+        db: AsyncSession,
         current_user: User,
         course_id: UUID,
         with_content: bool = False
     ) -> Course:
         """Get course details."""
-        query = db.query(Course).filter(Course.id == course_id)
+        query = select(Course).where(Course.id == course_id)
         
         if with_content:
             query = query.join(CourseVersion).join(CourseContent)
             
-        course = query.first()
+        result = await db.execute(query)
+        course = result.scalar_one_or_none()
+        
         if not course:
             raise NotFoundException("Course not found")
 
@@ -172,26 +176,30 @@ class CourseService:
         # For B2B users
         if current_user.school_id:
             # Check if school has license
-            has_license = db.query(CourseLicense).filter(
+            license_query = select(CourseLicense).where(
                 and_(
                     CourseLicense.course_id == course_id,
                     CourseLicense.school_id == current_user.school_id,
                     CourseLicense.is_active == True
                 )
-            ).first()
+            )
+            result = await db.execute(license_query)
+            has_license = result.scalar_one_or_none()
             if has_license:
                 return course
 
         # For D2C users
         if current_user.role == UserRole.INDIVIDUAL_USER:
             # Check if user has purchased or enrolled
-            has_access = db.query(CourseEnrollment).filter(
+            enrollment_query = select(CourseEnrollment).where(
                 and_(
                     CourseEnrollment.course_id == course_id,
                     CourseEnrollment.individual_user_id == current_user.id,
                     CourseEnrollment.enrollment_type == EnrollmentType.D2C
                 )
-            ).first()
+            )
+            result = await db.execute(enrollment_query)
+            has_access = result.scalar_one_or_none()
             if has_access:
                 return course
 
@@ -199,7 +207,7 @@ class CourseService:
 
     @staticmethod
     async def list_courses(
-        db: Session,
+        db: AsyncSession,
         current_user: User,
         skip: int = 0,
         limit: int = 100,
@@ -207,11 +215,11 @@ class CourseService:
         search: Optional[str] = None
     ) -> List[Course]:
         """List courses based on user role and access."""
-        query = db.query(Course).filter(Course.is_deleted == False)
+        query = select(Course).where(Course.is_deleted == False)
 
         # Apply filters
         if status:
-            query = query.filter(Course.status == status)
+            query = query.where(Course.status == status)
         
         if search:
             search_filter = or_(
@@ -219,41 +227,42 @@ class CourseService:
                 Course.description.ilike(f"%{search}%"),
                 Course.code.ilike(f"%{search}%")
             )
-            query = query.filter(search_filter)
+            query = query.where(search_filter)
 
         # Apply role-based filtering
         if current_user.role == UserRole.SUPER_ADMIN:
             pass  # Can see all courses
         elif current_user.role == UserRole.INDIVIDUAL_USER:
             # Show only D2C courses or enrolled courses
-            query = query.filter(
+            enrollments_query = select(CourseEnrollment.course_id).where(
+                CourseEnrollment.individual_user_id == current_user.id
+            )
+            query = query.where(
                 or_(
-                    Course.id.in_(
-                        db.query(CourseEnrollment.course_id).filter(
-                            CourseEnrollment.individual_user_id == current_user.id
-                        )
-                    ),
+                    Course.id.in_(enrollments_query),
                     Course.is_d2c_enabled == True
                 )
             )
         else:
             # B2B users can see courses licensed to their school
-            query = query.filter(
-                Course.id.in_(
-                    db.query(CourseLicense.course_id).filter(
-                        and_(
-                            CourseLicense.school_id == current_user.school_id,
-                            CourseLicense.is_active == True
-                        )
-                    )
+            licenses_query = select(CourseLicense.course_id).where(
+                and_(
+                    CourseLicense.school_id == current_user.school_id,
+                    CourseLicense.is_active == True
                 )
             )
+            query = query.where(Course.id.in_(licenses_query))
 
-        return query.offset(skip).limit(limit).all()
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        # Execute query
+        result = await db.execute(query)
+        return result.scalars().all()
 
     @staticmethod
     async def delete_course(
-        db: Session,
+        db: AsyncSession,
         current_user: User,
         course_id: UUID
     ) -> bool:
@@ -261,10 +270,414 @@ class CourseService:
         if current_user.role != UserRole.SUPER_ADMIN:
             raise PermissionError("Only super admins can delete courses")
 
-        course = db.query(Course).filter(Course.id == course_id).first()
+        query = select(Course).where(Course.id == course_id)
+        result = await db.execute(query)
+        course = result.scalar_one_or_none()
+        
         if not course:
             raise NotFoundException("Course not found")
 
         course.is_deleted = True
         db.add(course)
+        return True
+
+    @staticmethod
+    async def get_content_stats(
+        db: AsyncSession,
+        current_user: User
+    ) -> Dict[str, Any]:
+        """Get statistics for the content dashboard."""
+        if current_user.role != UserRole.SUPER_ADMIN:
+            raise PermissionError("Only super admins can access content statistics")
+            
+        # Get course stats
+        course_stats_query = select(
+            func.count(Course.id).label("total"),
+            func.count(case([(Course.status == CourseStatus.PUBLISHED, 1)])).label("published"),
+            func.count(case([(Course.status == CourseStatus.DRAFT, 1)])).label("draft"),
+            func.count(case([(Course.status == CourseStatus.ARCHIVED, 1)])).label("archived")
+        ).where(Course.is_deleted == False)
+        
+        course_stats_result = await db.execute(course_stats_query)
+        course_stats = course_stats_result.one()
+        
+        # Get module stats
+        module_stats_query = select(
+            func.count(Module.id).label("total"),
+            func.count(case([(Module.status == CourseStatus.PUBLISHED, 1)])).label("published"),
+            func.count(case([(Module.status == CourseStatus.DRAFT, 1)])).label("draft"),
+            func.count(case([(Module.status == CourseStatus.ARCHIVED, 1)])).label("archived")
+        )
+        
+        module_stats_result = await db.execute(module_stats_query)
+        module_stats = module_stats_result.one()
+        
+        # Get lesson stats
+        lesson_stats_query = select(
+            func.count(Lesson.id).label("total")
+        )
+        
+        lesson_stats_result = await db.execute(lesson_stats_query)
+        lesson_stats = lesson_stats_result.one()
+        
+        # Get items that need review
+        needs_review_query = select(
+            func.count(Module.id)
+        ).where(Module.status == CourseStatus.DRAFT)
+        
+        needs_review_result = await db.execute(needs_review_query)
+        needs_review = needs_review_result.scalar_one()
+        
+        return {
+            "courses": {
+                "total": course_stats.total or 0,
+                "published": course_stats.published or 0,
+                "draft": course_stats.draft or 0,
+                "archived": course_stats.archived or 0
+            },
+            "modules": {
+                "total": module_stats.total or 0,
+                "published": module_stats.published or 0,
+                "draft": module_stats.draft or 0,
+                "archived": module_stats.archived or 0
+            },
+            "lessons": {
+                "total": lesson_stats.total or 0
+            },
+            "needs_review": needs_review or 0
+        }
+    
+    @staticmethod
+    async def list_modules(
+        db: AsyncSession,
+        current_user: User,
+        skip: int = 0,
+        limit: int = 100,
+        status: Optional[CourseStatus] = None,
+        course_id: Optional[UUID] = None,
+        search: Optional[str] = None
+    ) -> List[Module]:
+        """List modules with filters."""
+        # Start with base query
+        query = select(Module)
+        
+        # Apply role-based permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can see all modules
+            pass
+        # elif current_user.role in [UserRole.SCHOOL_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT]:
+        #     if current_user.school_id:
+        #         # Find modules from courses licensed to the school
+        #         accessible_courses = db.query(CourseLicense.course_id).filter(
+        #             and_(
+        #                 CourseLicense.school_id == current_user.school_id,
+        #                 CourseLicense.is_active == True
+        #             )
+        #         )
+                
+        #         query = query.join(CourseContent).join(CourseVersion).filter(
+        #             CourseVersion.course_id.in_(accessible_courses)
+        #         )
+        #     else:
+        #         # No school, no access
+        #         return []
+        # else:
+        #     # Individual users should use the list_course_modules method
+        #     return []
+            
+        # Apply filters
+        if status:
+            query = query.where(Module.status == status)
+            
+        if course_id:
+            # Join through relevant tables to filter by course
+            query = query.join(CourseContent).join(CourseVersion).where(CourseVersion.course_id == course_id)
+            
+        if search:
+            search_filter = or_(
+                Module.title.ilike(f"%{search}%"),
+                Module.description.ilike(f"%{search}%")
+            )
+            query = query.where(search_filter)
+        
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        # Execute query
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def list_lessons(
+        db: AsyncSession,
+        current_user: User,
+        skip: int = 0,
+        limit: int = 100,
+        module_id: Optional[UUID] = None,
+        lesson_type: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> List[Lesson]:
+        """List lessons with filters."""
+        # Start with base query
+        query = select(Lesson)
+        
+        # Apply role-based permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can see all lessons
+            pass
+        elif current_user.role in [UserRole.SCHOOL_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT]:
+            if current_user.school_id:
+                # Find lessons from modules from courses licensed to the school
+                accessible_courses = select(CourseLicense.course_id).where(
+                    and_(
+                        CourseLicense.school_id == current_user.school_id,
+                        CourseLicense.is_active == True
+                    )
+                )
+                
+                # Get modules from accessible courses
+                accessible_modules = select(Module.id).join(CourseContent).join(CourseVersion).where(
+                    CourseVersion.course_id.in_(accessible_courses)
+                )
+                
+                query = query.where(Lesson.module_id.in_(accessible_modules))
+            else:
+                # No school, no access
+                return []
+        else:
+            # Individual users should use a different method
+            return []
+            
+        # Apply filters
+        if module_id:
+            query = query.where(Lesson.module_id == module_id)
+            
+        if lesson_type:
+            query = query.where(Lesson.content_type == lesson_type)
+            
+        if search:
+            search_filter = or_(
+                Lesson.title.ilike(f"%{search}%"),
+                Lesson.description.ilike(f"%{search}%")
+            )
+            query = query.where(search_filter)
+        
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+        
+        # Execute query
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_module(
+        db: AsyncSession,
+        current_user: User,
+        module_id: UUID
+    ) -> Module:
+        """Get module details."""
+        query = select(Module).where(Module.id == module_id)
+        result = await db.execute(query)
+        module = result.scalar_one_or_none()
+        
+        if not module:
+            raise NotFoundException("Module not found")
+            
+        # Check permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can access any module
+            return module
+            
+        if current_user.school_id:
+            # Get the course this module belongs to
+            course_query = select(CourseVersion.course_id).join(
+                CourseContent, CourseContent.id == module.content_id
+            )
+            course_result = await db.execute(course_query)
+            course_id = course_result.scalar_one_or_none()
+            
+            if not course_id:
+                raise NotFoundException("Course not found for this module")
+                
+            # Check if school has license for this course
+            license_query = select(CourseLicense).where(
+                and_(
+                    CourseLicense.course_id == course_id,
+                    CourseLicense.school_id == current_user.school_id,
+                    CourseLicense.is_active == True
+                )
+            )
+            license_result = await db.execute(license_query)
+            has_license = license_result.scalar_one_or_none()
+            
+            if has_license:
+                return module
+        
+        # Default: no access
+        raise PermissionError("You don't have access to this module")
+            
+    @staticmethod
+    async def get_lesson(
+        db: AsyncSession,
+        current_user: User,
+        lesson_id: UUID
+    ) -> Lesson:
+        """Get lesson details."""
+        query = select(Lesson).where(Lesson.id == lesson_id)
+        result = await db.execute(query)
+        lesson = result.scalar_one_or_none()
+        
+        if not lesson:
+            raise NotFoundException("Lesson not found")
+            
+        # Check permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can access any lesson
+            return lesson
+            
+        if current_user.school_id:
+            # Get the module this lesson belongs to
+            module_query = select(Module).where(Module.id == lesson.module_id)
+            module_result = await db.execute(module_query)
+            module = module_result.scalar_one_or_none()
+            
+            if not module:
+                raise NotFoundException("Module not found for this lesson")
+                
+            # Get the course this module belongs to
+            course_query = select(CourseVersion.course_id).join(
+                CourseContent, CourseContent.id == module.content_id
+            )
+            course_result = await db.execute(course_query)
+            course_id = course_result.scalar_one_or_none()
+            
+            if not course_id:
+                raise NotFoundException("Course not found for this lesson")
+                
+            # Check if school has license for this course
+            license_query = select(CourseLicense).where(
+                and_(
+                    CourseLicense.course_id == course_id,
+                    CourseLicense.school_id == current_user.school_id,
+                    CourseLicense.is_active == True
+                )
+            )
+            license_result = await db.execute(license_query)
+            has_license = license_result.scalar_one_or_none()
+            
+            if has_license:
+                return lesson
+        
+        # Default: no access
+        raise PermissionError("You don't have access to this lesson")
+
+    @staticmethod
+    async def update_module(
+        db: AsyncSession,
+        current_user: User,
+        module_id: UUID,
+        module_data: ModuleUpdate
+    ) -> Module:
+        """Update an existing module."""
+        # Get the module
+        module_query = select(Module).where(Module.id == module_id)
+        module_result = await db.execute(module_query)
+        module = module_result.scalar_one_or_none()
+        
+        if not module:
+            raise NotFoundException("Module not found")
+
+        # Get the course this module belongs to
+        course_query = select(CourseVersion.course_id).join(
+            CourseContent, CourseContent.id == module.content_id
+        )
+        course_result = await db.execute(course_query)
+        course_id = course_result.scalar_one_or_none()
+            
+        if not course_id:
+            raise NotFoundException("Course not found for this module")
+            
+        # Check permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can update any module
+            pass
+        elif current_user.role in [UserRole.SCHOOL_ADMIN, UserRole.TEACHER]:
+            # Check if school has license for this course
+            license_query = select(CourseLicense).where(
+                and_(
+                    CourseLicense.course_id == course_id,
+                    CourseLicense.school_id == current_user.school_id,
+                    CourseLicense.is_active == True
+                )
+            )
+            license_result = await db.execute(license_query)
+            has_license = license_result.scalar_one_or_none()
+            
+            if not has_license:
+                raise PermissionError("You don't have access to update this module")
+        else:
+            raise PermissionError("Only super admins, school admins, and teachers can update modules")
+        
+        # Update module fields
+        update_data = module_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            if field == 'order':  # Map 'order' to 'sequence_number'
+                setattr(module, 'sequence_number', value)
+            elif field == 'title':  # Map 'title' to 'name'
+                setattr(module, 'name', value)
+            else:
+                setattr(module, field, value)
+        
+        db.add(module)
+        return module
+
+    @staticmethod
+    async def delete_module(
+        db: AsyncSession,
+        current_user: User,
+        module_id: UUID
+    ) -> bool:
+        """Delete a module."""
+        # Get the module
+        module_query = select(Module).where(Module.id == module_id)
+        module_result = await db.execute(module_query)
+        module = module_result.scalar_one_or_none()
+        
+        if not module:
+            raise NotFoundException("Module not found")
+
+        # Get the course this module belongs to
+        course_query = select(CourseVersion.course_id).join(
+            CourseContent, CourseContent.id == module.content_id
+        )
+        course_result = await db.execute(course_query)
+        course_id = course_result.scalar_one_or_none()
+            
+        if not course_id:
+            raise NotFoundException("Course not found for this module")
+            
+        # Check permissions
+        if current_user.role == UserRole.SUPER_ADMIN:
+            # Super admins can delete any module
+            pass
+        elif current_user.role == UserRole.SCHOOL_ADMIN:
+            # Check if school has license for this course
+            license_query = select(CourseLicense).where(
+                and_(
+                    CourseLicense.course_id == course_id,
+                    CourseLicense.school_id == current_user.school_id,
+                    CourseLicense.is_active == True
+                )
+            )
+            license_result = await db.execute(license_query)
+            has_license = license_result.scalar_one_or_none()
+            
+            if not has_license:
+                raise PermissionError("You don't have access to delete this module")
+        else:
+            raise PermissionError("Only super admins and school admins can delete modules")
+        
+        # Soft delete the module
+        module.is_deleted = True
+        db.add(module)
         return True 

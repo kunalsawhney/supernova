@@ -55,20 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const userData = await userService.getProfile();
-            setUser(userData);
-          } catch (error) {
-            // If profile fetch fails, try to refresh the token
-            const refreshSuccess = await refreshSession();
-            if (!refreshSuccess) {
-              // If refresh fails, clear tokens
-              localStorage.removeItem('token');
-              localStorage.removeItem('refresh_token');
-              document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-              document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-            }
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          // Try to get user profile with existing token
+          const userData = await userService.getProfile();
+          setUser(userData);
+        } catch (error) {
+          // If profile fetch fails, try to refresh the token
+          const refreshSuccess = await refreshSession();
+          if (!refreshSuccess) {
+            // If refresh fails, clear tokens
+            authService.clearTokens();
           }
         }
       } catch (error) {
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      await authService.logout();
+      authService.clearTokens();
       setUser(null);
       router.push('/');
     } catch (error) {

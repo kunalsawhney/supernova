@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
+from app.models.course import CourseStatus
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +32,7 @@ async def create_course(
         await db.commit()
         return CourseResponse.model_validate(course)
     except Exception as e:
+        print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -52,9 +54,10 @@ async def list_courses(
         )
         return [CourseResponse.model_validate(course) for course in courses]
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{course_id}", response_model=CourseWithContentResponse)
+@router.get("/{course_id}/", response_model=CourseWithContentResponse)
 async def get_course(
     course_id: UUID,
     *,
@@ -71,7 +74,7 @@ async def get_course(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/{course_id}", response_model=CourseResponse)
+@router.put("/{course_id}/", response_model=CourseResponse)
 async def update_course(
     course_id: UUID,
     *,
@@ -85,8 +88,10 @@ async def update_course(
             db, current_user, course_id, course_data
         )
         await db.commit()
+        await db.refresh(course)
         return CourseResponse.model_validate(course)
     except Exception as e:
+        print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -162,4 +167,33 @@ async def add_lesson(
         return LessonResponse.model_validate(lesson)
     except Exception as e:
         await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/{course_id}/modules/", response_model=List[ModuleResponse])
+async def get_course_modules(
+    course_id: UUID,
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    status: Optional[CourseStatus] = None,
+) -> List[ModuleResponse]:
+    """
+    Get all modules for a specific course.
+    
+    Permissions:
+    - Super admins can see all modules
+    - School admins can see modules for courses their school has access to
+    - Instructors can see modules for courses they teach
+    - Students can see modules for courses they are enrolled in
+    """
+    try:
+        modules = await CourseService.list_modules(
+            db, current_user, skip=skip, limit=limit,
+            status=status, course_id=course_id
+        )
+        return [ModuleResponse.model_validate(module) for module in modules]
+    except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail=str(e))

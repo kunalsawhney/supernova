@@ -68,7 +68,7 @@ class Course(SuperAdminScopedModel):
     )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=False)
     code: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     status: Mapped[str] = mapped_column(
         ENUM(*[e.value for e in CourseStatus], name="course_status", create_type=False),
@@ -82,7 +82,7 @@ class Course(SuperAdminScopedModel):
     # Enhanced metadata
     difficulty_level: Mapped[str] = mapped_column(
         ENUM(*[e.value for e in DifficultyLevel], name="difficulty_level", create_type=False),
-        nullable=False,
+        nullable=True,
         server_default=text("'beginner'")
     )
     tags: Mapped[Optional[List[str]]] = mapped_column(JSONB, nullable=True)
@@ -93,9 +93,9 @@ class Course(SuperAdminScopedModel):
     # Business rules
     prerequisites: Mapped[Optional[List[str]]] = mapped_column(JSONB, nullable=True)
     completion_criteria: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
-    grade_level: Mapped[str] = mapped_column(String(20), nullable=False)
-    academic_year: Mapped[str] = mapped_column(String(20), nullable=False)
-    sequence_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    grade_level: Mapped[str] = mapped_column(String(20), nullable=True)
+    academic_year: Mapped[str] = mapped_column(String(20), nullable=True)
+    sequence_number: Mapped[int] = mapped_column(Integer, nullable=True)
 
     # Pricing for D2C
     base_price: Mapped[Optional[float]] = mapped_column(nullable=True)

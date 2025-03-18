@@ -1,10 +1,14 @@
 import { usePathname } from 'next/navigation';
-
-type BreadcrumbItem = {
-  label: string;
-  href: string;
-};
-
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import Link from 'next/link';
+import React from 'react';
 export default function Breadcrumbs() {
   const pathname = usePathname();
   
@@ -31,22 +35,21 @@ export default function Breadcrumbs() {
   const currentSection = pathParts[1]; // 'admin', 'student', etc.
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-4">
-      <ol className="flex items-center space-x-2 text-sm">
-        <li>
-          <span className="text-muted-foreground">Home</span>
-        </li>
+    <Breadcrumb>
+      <BreadcrumbList>
         {breadcrumbs.map((item, index) => (
-          <li key={item.href} className="flex items-center">
-            <span className="mx-2 text-muted-foreground">/</span>
-            {index === breadcrumbs.length - 1 || item.label.toLowerCase() === currentSection ? (
-              <span className="text-foreground font-medium">{item.label}</span>
-            ) : (
-              <span className="text-muted-foreground">{item.label}</span>
+          <React.Fragment key={item.href}>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href={item.href}>{item.label}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {index !== breadcrumbs.length - 1 && (
+              <BreadcrumbSeparator />
             )}
-          </li>
+          </React.Fragment>
         ))}
-      </ol>
-    </nav>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
-} 
+}

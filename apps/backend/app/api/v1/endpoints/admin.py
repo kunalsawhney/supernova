@@ -1,14 +1,16 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.auth import get_current_active_superuser
+from app.api.dependencies.auth import get_current_active_superuser, get_current_user
+from app.api.dependencies.admin import admin_required
 from app.db.session import get_db
 from app.models import User, School, Course
 from app.models.user import UserRole, UserStatus
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
 from app.schemas.school import School as SchoolSchema, SchoolCreate
+from app.services.course import CourseService
 
 from app.security.password import get_password_hash
 
@@ -315,3 +317,16 @@ async def create_school(
         )
 
     return school
+
+@router.get("/content/stats", response_model=Dict[str, Any])
+async def get_content_stats(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(admin_required)
+) -> Dict[str, Any]:
+    """Get stats for the content dashboard."""
+    try:
+        stats = await CourseService.get_content_stats(db, current_user)
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
