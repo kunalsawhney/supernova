@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
 import { CourseViewModel } from '@/types/course';
@@ -19,10 +19,10 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
   const router = useRouter();
   
   const [course, setCourse] = useState<CourseViewModel | null>(null);
-  const [formData, setFormData] = useState<CreateModuleData>({
+  const [contentId, setContentId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<CreateModuleData>>({
     title: '',
     description: '',
-    course_id: courseId,
     sequence_number: 1,
     status: 'draft'
   });
@@ -30,17 +30,84 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Fetch course data to get content ID
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('Fetching course data for ID:', courseId);
+        
+        const courseData = await adminService.getCourse(courseId);
+        console.log('Course data received:', JSON.stringify(courseData, null, 2));
+        setCourse(courseData);
+        
+        // Try multiple sources for content ID
+        let foundContentId = null;
+        let source = 'unknown';
+        
+        // Option 1: Check latestVersionId directly
+        if (courseData.latestVersionId) {
+          console.log('Found content ID from latestVersionId:', courseData.latestVersionId);
+          foundContentId = courseData.latestVersionId;
+          source = 'latestVersionId';
+        } 
+        // Option 2: Check contentVersions array for content ID
+        else if (courseData.contentVersions && courseData.contentVersions.length > 0) {
+          console.log('Found content ID from contentVersions[0]:', courseData.contentVersions[0].id);
+          foundContentId = courseData.contentVersions[0].id;
+          source = 'contentVersions';
+        }
+        // Option 3: Check localStorage
+        else {
+          const storedVersionId = localStorage.getItem(`course_${courseId}_latest_version`);
+          if (storedVersionId) {
+            console.log('Found content ID from localStorage:', storedVersionId);
+            foundContentId = storedVersionId;
+            source = 'localStorage';
+          }
+        }
+        
+        if (foundContentId) {
+          console.log(`Setting content ID to ${foundContentId} (source: ${source})`);
+          setContentId(foundContentId);
+        } else {
+          // No content ID found - this shouldn't happen with our new backend logic
+          console.error('No content ID found for course:', courseId);
+          setError(`Could not determine content ID for this course. The course data appears incomplete. Please try again or contact support if the problem persists.`);
+        }
+      } catch (err) {
+        console.error('Error fetching course:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch course data';
+        setError(`${errorMessage}. Please try again or contact support if the problem persists.`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCourse();
+  }, [courseId]);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     
+    if (!contentId) {
+      setError("Missing content ID - cannot create module");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // This would be a real API call in production
-      // For this example, we'll just simulate success
+      // Create the module with the content ID
+      const moduleData: CreateModuleData = {
+        ...formData as any,
+        content_id: contentId
+      };
       
-      // await adminService.createModule(formData);
-      console.log('Creating module with data:', formData);
+      await adminService.addModule(moduleData);
+      console.log('Creating module with data:', moduleData);
       
       // Return to the course details page after creating the module
       router.push(`/dashboard/admin/content/courses/${courseId}`);

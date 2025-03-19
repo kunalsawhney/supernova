@@ -107,7 +107,7 @@ class Course(SuperAdminScopedModel):
         "CourseVersion",
         back_populates="course",
         cascade="all, delete-orphan",
-        foreign_keys="CourseVersion.course_id"
+        foreign_keys="CourseVersion.course_id",
     )
     licenses = relationship(
         "CourseLicense",
@@ -149,7 +149,11 @@ class CourseVersion(BaseModel):
 
     # Relationships
     course = relationship("Course", back_populates="versions")
-    content = relationship("CourseContent", back_populates="versions", viewonly=True)
+    content = relationship(
+        "CourseContent", 
+        back_populates="versions", 
+        viewonly=True,
+    )
     enrollments = relationship("CourseEnrollment", back_populates="version")
 
 class CourseContent(BaseModel):

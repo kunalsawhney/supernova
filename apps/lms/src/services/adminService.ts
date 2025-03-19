@@ -4,7 +4,8 @@ import {
   Course, 
   CourseViewModel, 
   transformCourse,
-  CreateCourseData
+  CreateCourseData,
+  UpdateCourseData
 } from '@/types/course';
 import { 
   PlatformStats, 
@@ -26,7 +27,7 @@ import { PaginationParams, ApiError } from '@/types/api';
 import { mockApi, mockCourses } from '@/utils/mockData';
 import { handleApiError } from '@/utils/errorHandling';
 import { withCache, clearCacheByPrefix } from '@/utils/caching';
-import { ModuleViewModel } from '@/types/module';
+import { ModuleViewModel, CreateModuleData, Module, transformModule } from '@/types/module';
 
 /**
  * Service for admin-related API calls
@@ -244,7 +245,14 @@ export const adminService = {
     async (params?: PaginationParams & { status?: string, search?: string }): Promise<CourseViewModel[]> => {
       try {
         // Use trailing slash to avoid redirect
-        const courses = await api.get<Course[]>('/courses/', { params });
+        const response = await api.get<any[]>('/courses/', { params });
+        
+        // Normalize each course in the response
+        const courses: Course[] = response.map(courseData => ({
+          ...courseData,
+          content_versions: courseData.content_versions || courseData.versions || []
+        }));
+        
         return courses.map(transformCourse);
       } catch (error) {
         throw handleApiError(error, 'Failed to fetch courses');
@@ -267,9 +275,27 @@ export const adminService = {
    */
   async getCourse(id: string): Promise<CourseViewModel> {
     try {
-      const course = await api.get<Course>(`/courses/${id}/`);
+      const response = await api.get<any>(`/courses/${id}?with_content=true`);
+      console.log('Raw API response:', JSON.stringify(response, null, 2));
+      
+      // Normalize response structure to handle both field naming conventions
+      const course: Course = {
+        ...response,
+        // Ensure content_versions is always available, falling back to versions if needed
+        content_versions: response.content_versions || response.versions || []
+      };
+      
+      // Store content ID for easier access
+      if (course.latest_version_id) {
+        localStorage.setItem(`course_${course.id}_latest_version`, course.latest_version_id);
+      } else if (course.content_versions && course.content_versions.length > 0) {
+        // If we have content versions but no latest_version_id, store the first one
+        localStorage.setItem(`course_${course.id}_latest_version`, course.content_versions[0].id);
+      }
+      
       return transformCourse(course);
     } catch (error) {
+      console.error(`Failed to fetch course ${id}:`, error);
       throw handleApiError(error, `Failed to fetch course ${id}`);
     }
   },
@@ -280,9 +306,62 @@ export const adminService = {
    */
   async createCourse(data: CreateCourseData): Promise<CourseViewModel> {
     try {
-      const course = await api.post<Course>('/courses/', data);
+      // Ensure we're only sending fields the backend API expects
+      const apiData = {
+        title: data.title,
+        description: data.description,
+        code: data.code,
+        status: data.status,
+        cover_image_url: data.cover_image_url,
+        settings: data.settings,
+        difficulty_level: data.difficulty_level,
+        tags: data.tags,
+        estimated_duration: data.estimated_duration,
+        learning_objectives: data.learning_objectives,
+        target_audience: data.target_audience,
+        // The backend expects prerequisites to be UUIDs, ensure they're valid
+        prerequisites: data.prerequisites,
+        completion_criteria: data.completion_criteria,
+        grade_level: data.grade_level,
+        academic_year: data.academic_year,
+        sequence_number: data.sequence_number,
+        base_price: data.base_price,
+        currency: data.currency,
+        pricing_type: data.pricing_type
+      };
+      
+      // Remove any undefined fields to avoid sending them to the API
+      const cleanApiData = Object.fromEntries(
+        Object.entries(apiData).filter(([_, value]) => value !== undefined)
+      );
+      
+      // Log what we're sending to the API
+      console.log('Creating course with data:', JSON.stringify(cleanApiData, null, 2));
+      
+      const response = await api.post<any>('/courses/', cleanApiData);
+      
+      console.log('API response from create course:', JSON.stringify(response, null, 2));
+      
+      // Normalize response structure
+      const course: Course = {
+        ...response,
+        content_versions: response.content_versions || response.versions || []
+      };
+      
+      // Store the latest content ID in localStorage for easier access
+      if (course.latest_version_id) {
+        localStorage.setItem(`course_${course.id}_latest_version`, course.latest_version_id);
+      }
+      
       return transformCourse(course);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Detailed error from create course call:', error);
+      
+      // Try to extract validation errors if available
+      if (error.response?.data) {
+        console.error('Validation errors:', JSON.stringify(error.response.data, null, 2));
+      }
+      
       throw handleApiError(error, 'Failed to create course');
     }
   },
@@ -291,11 +370,60 @@ export const adminService = {
    * Update an existing course
    * @returns Transformed course view model ready for UI display
    */
-  async updateCourse(id: string, data: Partial<Course>): Promise<CourseViewModel> {
+  async updateCourse(id: string, data: Partial<UpdateCourseData>): Promise<CourseViewModel> {
     try {
-      const course = await api.put<Course>(`/courses/${id}/`, data);
+      // Further restrict data to only fields that are updatable
+      // Also ensure data formats match what the backend expects
+      const apiData = {
+        title: data.title,
+        description: data.description,
+        code: data.code,
+        status: data.status,
+        cover_image_url: data.cover_image_url,
+        difficulty_level: data.difficulty_level,
+        tags: data.tags,
+        estimated_duration: data.estimated_duration,
+        learning_objectives: data.learning_objectives,
+        target_audience: data.target_audience,
+        // The backend expects prerequisites to be UUIDs, ensure they're valid
+        prerequisites: data.prerequisites,
+        completion_criteria: data.completion_criteria,
+        grade_level: data.grade_level,
+        academic_year: data.academic_year,
+        sequence_number: data.sequence_number,
+        base_price: data.base_price,
+        currency: data.currency,
+        pricing_type: data.pricing_type,
+        metadata: data.metadata
+      };
+      
+      // Remove any undefined fields to avoid sending them to the API
+      const cleanApiData = Object.fromEntries(
+        Object.entries(apiData).filter(([_, value]) => value !== undefined)
+      );
+      
+      // Log what we're sending
+      console.log('Sending update data to API:', JSON.stringify(cleanApiData, null, 2));
+      
+      const response = await api.put<any>(`/courses/${id}/`, cleanApiData);
+      
+      console.log('API response:', JSON.stringify(response, null, 2));
+      
+      // Normalize response structure
+      const course: Course = {
+        ...response,
+        content_versions: response.content_versions || response.versions || []
+      };
+      
       return transformCourse(course);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Detailed error from update course call:', error);
+      
+      // Try to extract validation errors if available
+      if (error.response?.data) {
+        console.error('Validation errors:', JSON.stringify(error.response.data, null, 2));
+      }
+      
       throw handleApiError(error, `Failed to update course ${id}`);
     }
   },
@@ -343,12 +471,12 @@ export const adminService = {
   },
 
   /**
-   * Add a module to a course
+   * Add a module to a course's content
    */
-  async addModule(contentId: string, data: any): Promise<any> {
+  async addModule(data: CreateModuleData): Promise<ModuleViewModel> {
     try {
-      const response = await api.post(`/courses/content/${contentId}/modules`, data);
-      return response;
+      const module = await api.post<Module>(`/courses/content/${data.content_id}/modules`, data);
+      return transformModule(module);
     } catch (error) {
       throw handleApiError(error, 'Failed to add module');
     }

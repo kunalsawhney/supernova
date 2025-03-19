@@ -22,13 +22,23 @@ export interface Course {
   currency?: string;
   pricing_type?: string;
   created_by_id: string;
-  latest_version_id: string;
+  latest_version_id?: string;
+  content_versions?: CourseVersion[];
+  versions?: CourseVersion[];  // For backward compatibility
   created_at: string;
   updated_at: string;
   is_active: boolean;
   is_deleted: boolean;
   deleted_at?: string;
+}
 
+export interface CourseVersion {
+  id: string;
+  version: string;
+  content_id?: string;
+  valid_from?: string;
+  valid_until?: string;
+  content?: any;
 }
 
 export type CourseStatus = 'draft' | 'published' | 'archived';
@@ -47,7 +57,7 @@ export interface CreateCourseData {
   estimated_duration?: number;  // in hours
   learning_objectives?: string[];
   target_audience?: string[];
-  prerequisites?: string[];
+  prerequisites?: string[];  // Note: Backend expects UUIDs
   completion_criteria?: Record<string, any>;
   grade_level: string;
   academic_year: string;
@@ -69,7 +79,7 @@ export interface UpdateCourseData {
   estimated_duration?: number;
   learning_objectives?: string[];
   target_audience?: string[];
-  prerequisites?: string[];
+  prerequisites?: string[];  // Note: Backend expects UUIDs
   completion_criteria?: Record<string, any>;
   grade_level?: string;
   academic_year?: string;
@@ -104,7 +114,8 @@ export interface CourseViewModel {
   currency?: string;
   pricingType?: string;
   createdById: string;
-  latestVersionId: string;
+  latestVersionId?: string;
+  contentVersions?: { id: string; version: string }[];
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -181,6 +192,10 @@ export const transformCourse = (course: Course): CourseViewModel => ({
   pricingType: course.pricing_type,
   createdById: course.created_by_id,
   latestVersionId: course.latest_version_id,
+  contentVersions: (course.content_versions || course.versions || []).map(version => ({
+    id: version.id,
+    version: version.version || '',
+  })),
   createdAt: course.created_at,
   updatedAt: course.updated_at,
   isActive: course.is_active,

@@ -1,0 +1,5 @@
+SELECT courses.title, courses.description, courses.code, courses.status, courses.cover_image_url, courses.settings, courses.difficulty_level, courses.tags, courses.estimated_duration, courses.learning_objectives, courses.target_audience, courses.prerequisites, courses.completion_criteria, courses.grade_level, courses.academic_year, courses.sequence_number, courses.base_price, courses.currency, courses.pricing_type, courses.created_by_id, courses.version, courses.is_d2c_enabled, courses.is_b2b_enabled, courses.id, courses.is_active, courses.created_at, courses.updated_at, courses.deleted_at, courses.is_deleted 
+FROM courses 
+JOIN course_versions ON courses.id = course_versions.course_id 
+JOIN course_contents ON course_contents.id = course_versions.content_id 
+WHERE courses.id = :id_1

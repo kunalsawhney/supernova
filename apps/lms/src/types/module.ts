@@ -30,7 +30,7 @@ export interface ModuleViewModel {
 export interface CreateModuleData {
   title: string;
   description?: string;
-  course_id: string;
+  content_id: string;
   sequence_number: number;
   status?: 'draft' | 'published' | 'archived';
 }

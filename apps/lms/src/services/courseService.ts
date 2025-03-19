@@ -22,7 +22,14 @@ export const courseService = {
    */
   getCourses: withCache(
     async (params?: SearchParams & { status?: string }): Promise<CourseViewModel[]> => {
-      const courses = await api.get<Course[]>('/courses/', { params });
+      const response = await api.get<any[]>('/courses/', { params });
+      
+      // Normalize each course in the response
+      const courses: Course[] = response.map(courseData => ({
+        ...courseData,
+        content_versions: courseData.content_versions || courseData.versions || []
+      }));
+      
       return courses.map(transformCourse);
     },
     (params?: SearchParams & { status?: string }) => {
@@ -42,7 +49,14 @@ export const courseService = {
    */
   getCourse: withCache(
     async (id: string): Promise<CourseViewModel> => {
-      const course = await api.get<Course>(`/courses/${id}`);
+      const response = await api.get<any>(`/courses/${id}`);
+      
+      // Normalize response structure
+      const course: Course = {
+        ...response,
+        content_versions: response.content_versions || response.versions || []
+      };
+      
       return transformCourse(course);
     },
     (id: string) => `course_${id}`,
@@ -105,7 +119,14 @@ export const courseService = {
    */
   getRelatedCourses: withCache(
     async (courseId: string, limit: number = 4): Promise<CourseViewModel[]> => {
-      const courses = await api.get<Course[]>(`/courses/${courseId}/related`, { params: { limit } });
+      const response = await api.get<any[]>(`/courses/${courseId}/related`, { params: { limit } });
+      
+      // Normalize each course in the response
+      const courses: Course[] = response.map(courseData => ({
+        ...courseData,
+        content_versions: courseData.content_versions || courseData.versions || []
+      }));
+      
       return courses.map(transformCourse);
     },
     (courseId: string, limit: number = 4) => `course_${courseId}_related_limit_${limit}`,

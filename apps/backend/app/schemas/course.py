@@ -66,6 +66,11 @@ class CourseInDB(CourseBase, BaseSchema):
     currency: Optional[str] = None
     pricing_type: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+        # Enable arbitrary type conversion for complex nested models
+        arbitrary_types_allowed = True
+
 class CourseContentBase(BaseModel):
     """Base schema for course content."""
     version: str
@@ -83,6 +88,11 @@ class CourseContentUpdate(BaseModel):
     settings: Optional[Dict[str, Any]] = None
     content_status: Optional[CourseStatus] = None
 
+    class Config:
+        from_attributes = True
+        # Enable arbitrary type conversion for complex nested models
+        arbitrary_types_allowed = True
+
 class CourseContentInDB(CourseContentBase, BaseSchema):
     """Schema for course content from database."""
     course_id: UUID
@@ -90,37 +100,21 @@ class CourseContentInDB(CourseContentBase, BaseSchema):
     last_reviewed_by_id: Optional[UUID] = None
     last_reviewed_at: Optional[datetime] = None
 
-class ModuleBase(BaseModel):
-    """Base schema for module data."""
-    title: str
-    description: Optional[str] = None
-    order: int
-    settings: Optional[Dict[str, Any]] = None
-
-class ModuleCreate(ModuleBase):
-    """Schema for creating a module."""
-    content_id: UUID
-
-class ModuleUpdate(BaseModel):
-    """Schema for updating a module."""
-    title: Optional[str] = None
-    description: Optional[str] = None
-    order: Optional[int] = None
-    settings: Optional[Dict[str, Any]] = None
-    status: Optional[CourseStatus] = None
-
-class ModuleInDB(ModuleBase, BaseSchema):
-    """Schema for module data from database."""
-    content_id: UUID
-    status: CourseStatus
+    class Config:
+        from_attributes = True
+        # Enable arbitrary type conversion for complex nested models
+        arbitrary_types_allowed = True
 
 class LessonBase(BaseModel):
     """Base schema for lesson data."""
-    title: str
+    title: str = Field(..., alias="name")
     description: Optional[str] = None
-    content: str
-    order: int
+    content: Any
+    order: int = Field(..., alias="sequence_number")
     settings: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        populate_by_name = True
 
 class LessonCreate(LessonBase):
     """Schema for creating a lesson."""
@@ -128,11 +122,14 @@ class LessonCreate(LessonBase):
 
 class LessonUpdate(BaseModel):
     """Schema for updating a lesson."""
-    title: Optional[str] = None
+    title: Optional[str] = Field(None, alias="name")
     description: Optional[str] = None
-    content: Optional[str] = None
-    order: Optional[int] = None
+    content: Optional[Any] = None
+    order: Optional[int] = Field(None, alias="sequence_number")
     settings: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        populate_by_name = True
 
 class LessonInDB(LessonBase, BaseSchema):
     """Schema for lesson data from database."""
@@ -142,17 +139,79 @@ class LessonResponse(LessonBase, BaseSchema):
     """Schema for lesson response."""
     module_id: UUID
 
+class ModuleBase(BaseModel):
+    """Base schema for module data."""
+    title: str = Field(..., alias="name")
+    description: Optional[str] = None
+    order: int = Field(..., alias="sequence_number")
+    settings: Optional[Dict[str, Any]] = None
+
+    class Config:
+        populate_by_name = True
+
+class ModuleCreate(ModuleBase):
+    """Schema for creating a module."""
+    content_id: UUID
+
+class ModuleUpdate(BaseModel):
+    """Schema for updating a module."""
+    title: Optional[str] = Field(None, alias="name")
+    description: Optional[str] = None
+    order: Optional[int] = Field(None, alias="sequence_number")
+    settings: Optional[Dict[str, Any]] = None
+    status: Optional[CourseStatus] = None
+    
+    class Config:
+        populate_by_name = True
+
+class ModuleInDB(ModuleBase, BaseSchema):
+    """Schema for module data from database."""
+    content_id: UUID
+    status: CourseStatus
+
 class ModuleResponse(ModuleBase, BaseSchema):
     """Schema for module response."""
     content_id: UUID
     status: CourseStatus
     lessons: List[LessonResponse] = []
 
-class CourseContentResponse(CourseContentBase, BaseSchema):
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        populate_by_name = True
+
+class CourseContentResponse(BaseSchema):
     """Schema for course content response."""
-    course_id: UUID
+    version: str
+    description: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
     content_status: CourseStatus
+    syllabus_url: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    duration_weeks: Optional[int] = None
+    course_id: UUID
     modules: List[ModuleResponse] = []
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        populate_by_name = True
+
+class CourseVersionResponse(BaseSchema):
+    """Schema for course version response."""
+    course_id: UUID
+    version: str
+    content_id: UUID
+    valid_from: datetime
+    valid_until: Optional[datetime] = None
+    changelog: Optional[Dict[str, Any]] = None
+    content: Optional[CourseContentResponse] = None
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        populate_by_name = True
 
 class CourseResponse(CourseBase, BaseSchema):
     """Schema for course response."""
@@ -162,11 +221,30 @@ class CourseResponse(CourseBase, BaseSchema):
     base_price: Optional[float] = None
     currency: Optional[str] = None
     pricing_type: Optional[str] = None
-    latest_version: Optional[CourseContentResponse] = None
+    latest_version_id: Optional[UUID] = None
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
 
 class CourseWithContentResponse(CourseResponse):
     """Schema for course response with all content versions."""
-    content_versions: List[CourseContentResponse] = []
+    content_versions: List[CourseVersionResponse] = Field([], alias="versions")
+    
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        populate_by_name = True
+        # This makes the response use the field names, not the aliases
+        json_schema_extra = {"examples": []}
+        
+    # Override model_dump to rename versions to content_versions during serialization
+    def model_dump(self, **kwargs):
+        data = super().model_dump(**kwargs)
+        # If both versions and content_versions exist in the data somehow, prioritize content_versions
+        if "versions" in data and "content_versions" not in data:
+            data["content_versions"] = data.pop("versions")
+        return data
 
 # Review schemas
 class CourseReviewBase(BaseModel):
@@ -210,4 +288,8 @@ class CourseReviewInDB(CourseReviewBase, BaseSchema):
     is_featured: bool
     status: str
     moderated_by_id: Optional[UUID] = None
-    moderated_at: Optional[datetime] = None 
+    moderated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True 

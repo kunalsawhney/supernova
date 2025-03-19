@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
-from app.models.course import CourseStatus
+from app.models.course import CourseStatus, Course, CourseVersion, CourseContent
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.api.dependencies.auth import get_current_user
 from app.db.session import get_db
@@ -12,25 +13,29 @@ from app.schemas.course import (
     CourseContentCreate, CourseContentResponse,
     ModuleCreate, ModuleResponse,
     LessonCreate, LessonResponse,
-    CourseWithContentResponse
+    CourseWithContentResponse, CourseVersionResponse
 )
 from app.models.user import User
 from app.services.course import CourseService
+from app.models.course import CourseVersion
+from app.models.course import CourseContent
 
 router = APIRouter()
 
-@router.post("/", response_model=CourseResponse)
+@router.post("/", response_model=CourseWithContentResponse)
 async def create_course(
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     course_data: CourseCreate
-) -> CourseResponse:
+) -> CourseWithContentResponse:
     """Create a new course."""
     try:
         course = await CourseService.create_course(db, current_user, course_data)
         await db.commit()
-        return CourseResponse.model_validate(course)
+        # Refresh the course to get the latest data including relationships
+        await db.refresh(course)
+        return CourseWithContentResponse.model_validate(course)
     except Exception as e:
         print(e)
         await db.rollback()
@@ -57,21 +62,48 @@ async def list_courses(
         print(e)
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{course_id}/", response_model=CourseWithContentResponse)
+@router.get("/{course_id}", response_model=None)
 async def get_course(
     course_id: UUID,
-    *,
+    with_content: bool = Query(False, description="Include content information"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    with_content: bool = Query(False)
-) -> CourseWithContentResponse:
-    """Get course details with optional content."""
+    current_user: User = Depends(get_current_user)
+):
+    """Get course details."""
     try:
-        course = await CourseService.get_course(
-            db, current_user, course_id, with_content=with_content
-        )
-        return CourseWithContentResponse.model_validate(course)
+        # Get course with all relationships loaded by the service
+        course = await CourseService.get_course(db, current_user, course_id, with_content)
+        
+        try:
+            if with_content:
+                # Validate using the Pydantic model
+                response = CourseWithContentResponse.model_validate(course)
+                
+                # Convert to dictionary
+                response_dict = response.model_dump()
+                
+                # Manually rename the field
+                if "versions" in response_dict:
+                    response_dict["content_versions"] = response_dict.pop("versions")
+                                
+                return response_dict
+            else:
+                response = CourseResponse.model_validate(course)
+                return response
+        except Exception as validation_error:
+            print(f"[API VALIDATION ERROR] get_course: {str(validation_error)}")
+            # Log more details about the object structure to help debug
+            if with_content and hasattr(course, 'versions') and course.versions:
+                version = course.versions[0]
+                print(f"Version fields: {version.__dict__}")
+                if hasattr(version, 'content') and version.content:
+                    content = version.content
+                    print(f"Content fields: {content.__dict__}")
+            raise validation_error
+        
     except Exception as e:
+        print(f"[API ERROR] get_course: {str(e)}")
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{course_id}/", response_model=CourseResponse)
