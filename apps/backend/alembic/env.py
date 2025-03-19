@@ -13,11 +13,21 @@ from app.db.base import Base  # Changed from base_class to base to get all model
 from app.models.user import User, StudentProfile, TeacherProfile
 from app.models.school import School, Subscription, SchoolSettings
 from app.models.course import (
-    Course, CourseVersion, CourseContent, CourseLicense,
-    CourseReview, CourseEnrollment, Module, Lesson,
-    LessonProgress, UserProgress, CoursePurchase, LessonQuiz
+    Course, 
+    # CourseVersion, CourseContent, CourseLicense,
+    # CourseReview, CourseEnrollment, Module, Lesson,
+    # LessonProgress, UserProgress, CoursePurchase, LessonQuiz
 )
+from app.models.course_version import CourseVersion, CourseContent
+from app.models.module import Module
+from app.models.lesson import Lesson
+from app.models.enrollment import CourseEnrollment
+from app.models.purchase import CourseLicense
+from app.models.review import CourseReview
 from app.models.scoped_models import SuperAdminScopedModel, SchoolScopedModel
+from app.models.progress import LessonProgress, UserProgress
+from app.models.purchase import CoursePurchase
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

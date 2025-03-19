@@ -13,7 +13,7 @@ from app.schemas.enrollment import (
     ProgressResponse
 )
 from app.models.user import User
-from app.models.course import EnrollmentStatus
+from app.models.enums import EnrollmentStatus
 from app.services.enrollment import EnrollmentService
 
 router = APIRouter()

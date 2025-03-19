@@ -8,14 +8,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exception_handlers import NotFoundException, ValidationError, PermissionError
 from app.models.course import (
-    Course, CourseContent, CourseVersion, Module, Lesson,
-    CourseStatus, EnrollmentType
+    Course,
+    CourseStatus
 )
+from app.models.course_version import CourseContent, CourseVersion
+from app.models.module import Module
+from app.models.lesson import Lesson
 from app.models.user import User, UserRole
+from app.models.enrollment import CourseEnrollment
+from app.models.purchase import CourseLicense
+from app.models.enums import CourseStatus
+
 from app.schemas.course import (
-    CourseCreate, CourseUpdate, CourseContentCreate,
-    ModuleCreate, LessonCreate, ModuleUpdate
+    CourseCreate, CourseUpdate
 )
+from app.schemas.course_version import CourseContentCreate
+from app.schemas.module import ModuleCreate, ModuleUpdate
+from app.schemas.lesson import LessonCreate
 
 class CourseService:
     """Service for managing courses and their content."""
@@ -36,7 +45,7 @@ class CourseService:
             **course_dict,
             created_by_id=current_user.id,
             # status=CourseStatus.DRAFT,
-            version="1.0"
+            # version="1.0"
         )
         db.add(course)
         await db.flush()  # Get course ID without committing

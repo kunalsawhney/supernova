@@ -55,14 +55,13 @@ class User(BaseModel):
         primaryjoin="and_(User.id==CourseEnrollment.individual_user_id, User.role=='individual_user')",
         foreign_keys="CourseEnrollment.individual_user_id"
     )
-    lesson_progress = relationship(
+    lesson_progresses = relationship(
         "LessonProgress", 
         back_populates="individual_user",
         primaryjoin="and_(User.id==LessonProgress.individual_user_id, User.role=='individual_user')",
         foreign_keys="LessonProgress.individual_user_id"
     )
-    # New relationships
-    reviewed_courses = relationship(
+    reviewed_course_contents = relationship(
         "CourseContent",
         back_populates="last_reviewed_by",
         foreign_keys="CourseContent.last_reviewed_by_id",
@@ -78,7 +77,7 @@ class User(BaseModel):
         back_populates="user",
         foreign_keys="CoursePurchase.user_id"
     )
-    enrollments_created = relationship(
+    created_enrollments = relationship(
         "CourseEnrollment",
         back_populates="enrolled_by",
         foreign_keys="CourseEnrollment.enrolled_by_id"
@@ -89,9 +88,14 @@ class User(BaseModel):
         """Return user's full name."""
         return f"{self.first_name} {self.last_name}"
 
-    def __repr__(self) -> str:
-        """Return string representation of the user."""
-        return f"<User {self.email}>"
+    @property
+    def status(self) -> UserStatus:
+        """Return user status based on is_active field."""
+        return UserStatus.ACTIVE if self.is_active else UserStatus.INACTIVE
+
+    # def __repr__(self) -> str:
+    #     """Return string representation of the user."""
+    #     return f"<User {self.email}>"
 
 class StudentProfile(BaseModel):
     """Student profile model."""
@@ -117,7 +121,7 @@ class StudentProfile(BaseModel):
     user = relationship("User", back_populates="student_profile")
     school = relationship("School", back_populates="student_profiles")
     enrollments = relationship("CourseEnrollment", back_populates="student")
-    progress_records = relationship("LessonProgress", back_populates="student")
+    lesson_progresses = relationship("LessonProgress", back_populates="student")
 
 class TeacherProfile(BaseModel):
     """Teacher profile model."""

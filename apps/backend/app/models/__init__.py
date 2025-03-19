@@ -1,18 +1,35 @@
 """Model imports."""
 
-from app.models.user import User, StudentProfile, TeacherProfile, UserRole, UserStatus
-from app.models.school import School, Subscription, SchoolSettings
-from app.models.course import (
-    Course,
-    CourseContent,
-    Module,
-    Lesson,
-    CourseEnrollment,
-    CourseVersion,
-    LessonProgress
-)
-from app.models.base_model import BaseModel
+# Base models
+from app.models.base_model import BaseModel, TimestampMixin, SoftDeleteMixin
 from app.models.scoped_models import SchoolScopedModel, SuperAdminScopedModel
+
+# User and school models
+from app.models.user import User, StudentProfile, TeacherProfile
+from app.models.school import School, Subscription, SchoolSettings, SubscriptionPlan, SubscriptionStatus
+
+# Enums
+from app.models.enums import (
+    UserRole, 
+    UserStatus, 
+    CourseStatus, 
+    ContentType,
+    DifficultyLevel,
+    EnrollmentType,
+    EnrollmentStatus,
+    PaymentStatus,
+    ReviewStatus
+)
+
+# Course models
+from app.models.course import Course
+from app.models.course_version import CourseVersion, CourseContent
+from app.models.module import Module
+from app.models.lesson import Lesson, LessonQuiz
+from app.models.enrollment import CourseEnrollment
+from app.models.progress import LessonProgress, UserProgress
+from app.models.review import CourseReview
+from app.models.purchase import CoursePurchase, CourseLicense
 
 # For Alembic migrations
 __all__ = [
@@ -27,6 +44,8 @@ __all__ = [
     "School",
     "Subscription",
     "SchoolSettings",
+    "SubscriptionPlan",
+    "SubscriptionStatus",
     
     # Course models and enums
     "Course",
@@ -36,9 +55,22 @@ __all__ = [
     "CourseEnrollment",
     "CourseVersion",
     "LessonProgress",
+    "CourseStatus",
+    "ContentType",
+    "DifficultyLevel",
+    "EnrollmentType",
+    "EnrollmentStatus",
+    "PaymentStatus",
+    "ReviewStatus",
+    "CourseReview",
+    "CourseLicense",
+    "LessonQuiz",
+    "UserProgress",
     
-    # Base model
+    # Base model and mixins
     "BaseModel",
+    "TimestampMixin",
+    "SoftDeleteMixin",
     
     # Scoped models
     "SchoolScopedModel",

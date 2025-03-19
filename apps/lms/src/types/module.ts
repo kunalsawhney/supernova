@@ -28,7 +28,7 @@ export interface ModuleViewModel {
 }
 
 export interface CreateModuleData {
-  name: string;
+  title: string;
   description?: string;
   content_id: string;
   sequence_number: number;

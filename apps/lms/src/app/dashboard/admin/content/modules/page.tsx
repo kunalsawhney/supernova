@@ -27,77 +27,13 @@ import {
   FileText
 } from 'lucide-react';
 
-// Sample data for demonstration
-const sampleModules: ModuleViewModel[] = [
-  {
-    id: "1",
-    title: "Introduction to Mathematics",
-    description: "An overview of key mathematical concepts",
-    sequenceNumber: 1,
-    lessonCount: 5,
-    totalDuration: 60,
-    status: "published",
-    courseId: "1"
-  },
-  {
-    id: "2",
-    title: "Advanced Algebra",
-    description: "Deep dive into algebraic concepts and applications",
-    sequenceNumber: 2,
-    lessonCount: 8,
-    totalDuration: 120,
-    status: "published",
-    courseId: "1"
-  },
-  {
-    id: "3",
-    title: "Introduction to Biology",
-    description: "Learn about cells, organisms, and biological systems",
-    sequenceNumber: 1,
-    lessonCount: 6,
-    totalDuration: 90,
-    status: "draft",
-    courseId: "2"
-  },
-  {
-    id: "4",
-    title: "Genetics and DNA",
-    description: "Understanding heredity and genetic information",
-    sequenceNumber: 2,
-    lessonCount: 4,
-    totalDuration: 75,
-    status: "published",
-    courseId: "2"
-  }
-];
-
-const sampleCourses: CourseViewModel[] = [
-  {
-    id: "1",
-    title: "Mathematics 101",
-    code: "MATH101",
-    status: "published",
-    difficultyLevel: "beginner",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "2",
-    title: "Biology Fundamentals",
-    code: "BIO101",
-    status: "published",
-    difficultyLevel: "beginner",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
 function ModuleCard({ module, course, onEdit, onDelete }: { 
   module: ModuleViewModel; 
   course: CourseViewModel | undefined;
   onEdit: (moduleId: string) => void;
   onDelete: (moduleId: string) => void;
 }) {
+  console.log('ModuleCard', module, course);
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
@@ -212,12 +148,12 @@ export default function ModulesPage() {
       
       // In a real app, you would fetch actual data from your API
       // For now, we'll use the sample data
-      // const modulesData = await adminService.getModules();
-      // const coursesData = await adminService.getCourses();
+      const modulesData = await adminService.getModules();
+      const coursesData = await adminService.getCourses();
       
-      setModules(sampleModules);
-      setCourses(sampleCourses);
-      setFilteredModules(sampleModules);
+      setModules(modulesData);
+      setCourses(coursesData);
+      setFilteredModules(modulesData);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';

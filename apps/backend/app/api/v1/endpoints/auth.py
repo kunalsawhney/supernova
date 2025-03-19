@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -31,39 +31,52 @@ async def login(
     """
     Login endpoint that accepts JSON data.
     """
-    user = await AuthService.authenticate_user(
-        db, request.username, request.password
-    )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        user = await AuthService.authenticate_user(
+            db, request.username, request.password
         )
-    
-    if user.is_active == False:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is not active",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        if user.is_active == False:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is not active",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-    access_token_expires = timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-    refresh_token_expires = timedelta(
-        minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
-    )
-    
-    return {
-        "access_token": await AuthService.create_access_token(
-            user.id, expires_delta=access_token_expires
-        ),
-        "refresh_token": await AuthService.create_refresh_token(
-            user.id, expires_delta=refresh_token_expires
-        ),
-        "token_type": "bearer",
-    }
+        access_token_expires = timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        refresh_token_expires = timedelta(
+            minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
+        )
+        
+        # Calculate expiration datetime
+        expires_at = datetime.utcnow() + access_token_expires
+        
+        # Create and return a Token object directly
+        return Token(
+            access_token=await AuthService.create_access_token(
+                user.id, expires_delta=access_token_expires
+            ),
+            refresh_token=await AuthService.create_refresh_token(
+                user.id, expires_delta=refresh_token_expires
+            ),
+            token_type="bearer",
+            expires_at=expires_at
+        )
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
@@ -98,15 +111,20 @@ async def refresh_token(
             minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         )
         
-        return {
-            "access_token": await AuthService.create_access_token(
+        # Calculate expiration datetime
+        expires_at = datetime.utcnow() + access_token_expires
+        
+        # Create and return a Token object directly
+        return Token(
+            access_token=await AuthService.create_access_token(
                 user.id, expires_delta=access_token_expires
             ),
-            "refresh_token": await AuthService.create_refresh_token(
+            refresh_token=await AuthService.create_refresh_token(
                 user.id, expires_delta=refresh_token_expires
             ),
-            "token_type": "bearer",
-        }
+            token_type="bearer",
+            expires_at=expires_at
+        )
         
     except Exception:
         raise HTTPException(

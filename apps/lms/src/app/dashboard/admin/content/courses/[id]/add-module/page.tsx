@@ -21,7 +21,7 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
   const [course, setCourse] = useState<CourseViewModel | null>(null);
   const [contentId, setContentId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CreateModuleData>>({
-    name: 'Course Introduction',
+    title: 'Course Introduction',
     description: 'This is the first module of the course. It provides an overview of the course and its objectives.',
     sequence_number: 1,
     status: 'draft'
@@ -161,12 +161,12 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Module Name<span className="text-red-500">*</span></Label>
+              <Label htmlFor="title">Module Title<span className="text-red-500">*</span></Label>
               <Input
-                id="name"
-                placeholder="Enter module name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                id="title"
+                placeholder="Enter module title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
             </div>

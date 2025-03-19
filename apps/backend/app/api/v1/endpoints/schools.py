@@ -2,7 +2,6 @@ from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import (
@@ -11,138 +10,137 @@ from app.api.dependencies.auth import (
     get_current_school,
     check_permissions,
 )
-from app.security.password import get_password_hash
 from app.db.session import get_db
-from app.models import School, User, Course, UserRole
+from app.models import School, User, UserRole
 from app.schemas.school import (
     School as SchoolSchema,
     SchoolCreate,
     SchoolUpdate,
-    SchoolInDB,
     SchoolWithStats,
 )
-from app.schemas.user import UserCreate
+from app.services.school import SchoolService
+from app.core.exception_handlers import NotFoundException, ValidationError, PermissionError
 
 router = APIRouter()
 
-@router.get("/", response_model=List[SchoolInDB])
+@router.get("/", response_model=List[SchoolSchema])
 async def get_schools(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_superuser),
+    current_user: User = Depends(get_current_active_user),
     skip: int = 0,
     limit: int = 100,
-) -> List[SchoolInDB]:
+    search: Optional[str] = None,
+    include_inactive: bool = False,
+) -> List[SchoolSchema]:
     """
     Retrieve schools.
     """
-    query = select(School).offset(skip).limit(limit)
-    result = await db.execute(query)
-    schools = result.scalars().all()
-    return schools
+    try:
+        schools = await SchoolService.list_schools(
+            db, 
+            current_user, 
+            skip=skip, 
+            limit=limit, 
+            search=search, 
+            include_inactive=include_inactive
+        )
+        return schools
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
-@router.post("/", response_model=SchoolInDB, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=SchoolSchema, status_code=status.HTTP_201_CREATED)
 async def create_school(
     *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_superuser),
+    current_user: User = Depends(get_current_active_user),
     school_in: SchoolCreate,
-) -> SchoolInDB:
+) -> SchoolSchema:
     """
     Create new school.
     """
-    # Check if school with same domain exists
-    query = select(School).where(School.domain == school_in.domain)
-    result = await db.execute(query)
-    if result.scalar_one_or_none():
+    try:
+        school = await SchoolService.create_school(db, current_user, school_in)
+        return school
+    except ValidationError as e:
         raise HTTPException(
-            status_code=400,
-            detail="A school with this domain already exists.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
-
-    school = School(**school_in.model_dump(exclude={"admin"}))
-    db.add(school)
-    await db.flush()  # Flush to get the school ID
-
-    # Create school admin user
-    admin_data = school_in.admin.model_dump()
-    admin = User(
-        email=admin_data["email"],
-        hashed_password=get_password_hash(admin_data["password"]),
-        first_name=admin_data["first_name"],
-        last_name=admin_data["last_name"],
-        role=UserRole.SCHOOL_ADMIN,
-        school_id=school.id,
-    )
-    db.add(admin)
-    await db.commit()
-    await db.refresh(school)
-    
-    return school
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/me", response_model=SchoolWithStats)
 async def get_my_school(
     *,
     db: AsyncSession = Depends(get_db),
     current_school: School = Depends(get_current_school),
+    current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """
     Get current school with statistics.
     """
-    # Get statistics
-    stats = await db.execute(
-        select(
-            func.count(User.id).filter(User.role == UserRole.STUDENT).label("total_students"),
-            func.count(User.id).filter(User.role == UserRole.TEACHER).label("total_teachers"),
-            func.count(Course.id).label("total_courses"),
-            func.count(Course.id).filter(Course.status == "active").label("active_courses"),
+    try:
+        if not current_user.school_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not associated with a school",
+            )
+            
+        # Get statistics for the current school
+        school_stats = await SchoolService.get_school_with_stats(db, current_user.school_id)
+        return school_stats
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
         )
-        .select_from(School)
-        .outerjoin(User, User.school_id == School.id)
-        .outerjoin(Course, Course.school_id == School.id)
-        .where(School.id == current_school.id)
-        .group_by(School.id)
-    )
-    
-    stats_row = stats.one()
-    school_dict = SchoolSchema.model_validate(current_school).model_dump()
-    school_dict.update({
-        "total_students": stats_row.total_students,
-        "total_teachers": stats_row.total_teachers,
-        "total_courses": stats_row.total_courses,
-        "active_courses": stats_row.active_courses,
-        "storage_used": 0,  # TODO: Implement storage calculation
-    })
-    
-    return school_dict
 
 @router.put("/me", response_model=SchoolSchema)
-async def update_school(
+async def update_my_school(
     *,
     db: AsyncSession = Depends(get_db),
     current_school: School = Depends(get_current_school),
-    current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN])),
+    current_user: User = Depends(get_current_active_user),
     school_in: SchoolUpdate,
 ) -> Any:
     """
     Update school settings. Only school admin can update their school.
     """
-    # Check domain uniqueness if being updated
-    if school_in.domain and school_in.domain != current_school.domain:
-        result = await db.execute(
-            select(School).where(School.domain == school_in.domain)
-        )
-        if result.scalar_one_or_none():
+    try:
+        if not current_user.school_id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Domain already registered",
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not associated with a school",
             )
-
-    for field, value in school_in.model_dump(exclude_unset=True).items():
-        setattr(current_school, field, value)
-
-    await db.commit()
-    await db.refresh(current_school)
-    return current_school
+            
+        school = await SchoolService.update_school(
+            db, 
+            current_user, 
+            current_user.school_id, 
+            school_in
+        )
+        return school
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/{school_id}", response_model=SchoolWithStats)
 async def get_school(
@@ -153,94 +151,258 @@ async def get_school(
     """
     Get school by ID.
     """
-    # Check permissions
-    if current_user.role != UserRole.SUPER_ADMIN and current_user.school_id != school_id:
+    try:
+        school_stats = await SchoolService.get_school_with_stats(db, school_id)
+        return school_stats
+    except NotFoundException as e:
         raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions to access this school",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
         )
 
-    query = select(School).where(School.id == school_id)
-    result = await db.execute(query)
-    school = result.scalar_one_or_none()
-    
-    if not school:
-        raise HTTPException(
-            status_code=404,
-            detail="School not found",
-        )
-
-    # Get school stats
-    users_query = select(User).where(User.school_id == school_id)
-    users_result = await db.execute(users_query)
-    users = users_result.scalars().all()
-
-    courses_query = select(Course).where(Course.school_id == school_id)
-    courses_result = await db.execute(courses_query)
-    courses = courses_result.scalars().all()
-
-    return SchoolWithStats(
-        **school.__dict__,
-        total_users=len(users),
-        total_courses=len(courses),
-        active_courses=len([c for c in courses if c.status == "active"]),
-    )
-
-@router.put("/{school_id}", response_model=SchoolInDB)
+@router.put("/{school_id}", response_model=SchoolSchema)
 async def update_school(
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     school_id: UUID,
     school_in: SchoolUpdate,
-) -> SchoolInDB:
+) -> SchoolSchema:
     """
     Update school.
     """
-    # Check permissions
-    if current_user.role != UserRole.SUPER_ADMIN and current_user.school_id != school_id:
+    try:
+        school = await SchoolService.update_school(db, current_user, school_id, school_in)
+        return school
+    except NotFoundException as e:
         raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions to update this school",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
         )
-
-    query = select(School).where(School.id == school_id)
-    result = await db.execute(query)
-    school = result.scalar_one_or_none()
-    
-    if not school:
+    except ValidationError as e:
         raise HTTPException(
-            status_code=404,
-            detail="School not found",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
-
-    # Update school attributes
-    for field, value in school_in.model_dump(exclude_unset=True).items():
-        setattr(school, field, value)
-
-    await db.commit()
-    await db.refresh(school)
-    return school
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.delete("/{school_id}")
 async def delete_school(
     *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_superuser),
+    current_user: User = Depends(get_current_active_user),
     school_id: UUID,
-) -> None:
+) -> dict:
     """
     Delete school.
     """
-    query = select(School).where(School.id == school_id)
-    result = await db.execute(query)
-    school = result.scalar_one_or_none()
-    
-    if not school:
+    try:
+        await SchoolService.delete_school(db, current_user, school_id)
+        return {"status": "success", "message": "School deleted successfully"}
+    except NotFoundException as e:
         raise HTTPException(
-            status_code=404,
-            detail="School not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
         )
 
-    await db.delete(school)
-    await db.commit() 
+# School Members endpoints
+
+@router.get("/{school_id}/members", response_model=List[dict])
+async def get_school_members(
+    school_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    role: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[dict]:
+    """
+    Get school members.
+    """
+    try:
+        # Convert string role to enum if provided
+        school_role = None
+        if role:
+            try:
+                from app.models.school import SchoolRole
+                school_role = SchoolRole[role.upper()]
+            except (KeyError, ValueError):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid role: {role}",
+                )
+        
+        members = await SchoolService.list_school_members(
+            db, current_user, school_id, role=school_role, skip=skip, limit=limit
+        )
+        
+        # Format response
+        result = []
+        for member in members:
+            result.append({
+                "id": member.id,
+                "user_id": member.user_id,
+                "school_id": member.school_id,
+                "role": member.role.name,
+                "user": {
+                    "id": member.user.id,
+                    "email": member.user.email,
+                    "first_name": member.user.first_name,
+                    "last_name": member.user.last_name,
+                    "full_name": f"{member.user.first_name} {member.user.last_name}",
+                }
+            })
+            
+        return result
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
+
+@router.post("/{school_id}/members", status_code=status.HTTP_201_CREATED)
+async def add_school_member(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    school_id: UUID,
+    user_id: UUID,
+    role: str,
+) -> dict:
+    """
+    Add a user to a school.
+    """
+    try:
+        # Convert string role to enum
+        try:
+            from app.models.school import SchoolRole
+            school_role = SchoolRole[role.upper()]
+        except (KeyError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role: {role}",
+            )
+        
+        member = await SchoolService.add_school_member(
+            db, current_user, school_id, user_id, school_role
+        )
+        
+        return {
+            "status": "success",
+            "message": "User added to school successfully",
+            "member_id": str(member.id)
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
+
+@router.delete("/{school_id}/members/{user_id}")
+async def remove_school_member(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    school_id: UUID,
+    user_id: UUID,
+) -> dict:
+    """
+    Remove a user from a school.
+    """
+    try:
+        await SchoolService.remove_school_member(db, current_user, school_id, user_id)
+        return {
+            "status": "success",
+            "message": "User removed from school successfully"
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
+
+@router.put("/{school_id}/members/{user_id}")
+async def update_member_role(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    school_id: UUID,
+    user_id: UUID,
+    role: str,
+) -> dict:
+    """
+    Update a school member's role.
+    """
+    try:
+        # Convert string role to enum
+        try:
+            from app.models.school import SchoolRole
+            school_role = SchoolRole[role.upper()]
+        except (KeyError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role: {role}",
+            )
+        
+        await SchoolService.update_school_member_role(
+            db, current_user, school_id, user_id, school_role
+        )
+        
+        return {
+            "status": "success",
+            "message": "Member role updated successfully"
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) 

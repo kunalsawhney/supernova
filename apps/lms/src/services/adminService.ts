@@ -5,7 +5,7 @@ import {
   CourseViewModel, 
   transformCourse,
   CreateCourseData,
-  UpdateCourseData
+  UpdateCourseData,
 } from '@/types/course';
 import { 
   PlatformStats, 
@@ -341,7 +341,6 @@ export const adminService = {
       const cleanApiData = Object.fromEntries(
         Object.entries(apiData).filter(([_, value]) => value !== undefined)
       );
-      
       const response = await api.post<any>('/courses/', cleanApiData);
       
       // Normalize response structure

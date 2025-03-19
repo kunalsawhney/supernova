@@ -132,13 +132,17 @@ const CourseCard = ({ course, onEdit, onDelete }: {
 
 export default function CoursesPage() {
   const router = useRouter();
+
   const [courses, setCourses] = useState<CourseViewModel[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseViewModel[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseViewModel | null>(null);
 

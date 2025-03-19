@@ -131,12 +131,38 @@ export interface CourseContentViewModel {
   resources?: ResourceViewModel[];
 }
 
-export interface ModuleViewModel {
+export interface Module {
   id: string;
+  content_id: string;
   title: string;
   description?: string;
-  order: number;
-  lessons: LessonViewModel[];
+  sequence_number: number;
+  duration_weeks?: number;
+  status: string;
+  completion_criteria?: Record<string, any>;
+  is_mandatory: boolean;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  is_deleted: boolean;
+  deleted_at?: string;
+}
+
+export interface ModuleViewModel {
+  id: string;
+  contentId: string;
+  title: string;
+  description?: string;
+  sequenceNumber: number;
+  durationWeeks?: number;
+  status: string;
+  completionCriteria?: Record<string, any>;
+  isMandatory: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  deletedAt?: string;
 }
 
 export interface LessonViewModel {
@@ -248,3 +274,20 @@ export const transformCourseReview = (review: any): CourseReviewViewModel => ({
   comment: review.comment,
   createdAt: review.created_at,
 }); 
+
+export const transformModule = (module: Module): ModuleViewModel => ({
+  id: module.id,
+  contentId: module.content_id,
+  title: module.title,
+  description: module.description,
+  sequenceNumber: module.sequence_number || 0,
+  durationWeeks: module.duration_weeks,
+  status: module.status,
+  completionCriteria: module.completion_criteria,
+  isMandatory: module.is_mandatory,
+  createdAt: module.created_at,
+  updatedAt: module.updated_at,
+  isActive: module.is_active,
+  isDeleted: module.is_deleted,
+  deletedAt: module.deleted_at,
+});

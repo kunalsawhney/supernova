@@ -1,8 +1,7 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import (
@@ -10,25 +9,34 @@ from app.api.dependencies.auth import (
     get_current_school,
     check_permissions,
 )
-from app.security.password import get_password_hash
 from app.db.session import get_db
-from app.models import School, User, UserRole
+from app.models.user import User, UserRole
+from app.models.school import School
 from app.schemas.user import (
     User as UserSchema,
     UserCreate,
     UserUpdate,
     UserWithSchool,
 )
+from app.services.user import UserService
 
 router = APIRouter()
 
 @router.get("/me", response_model=UserWithSchool)
 async def read_user_me(
     current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     Get current user.
     """
+    # # Load the user in the current session to avoid DetachedInstanceError
+    # user = await UserService.get_user(db, current_user.id, with_school=True)
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_404_NOT_FOUND,
+    #         detail="User not found"
+    #     )
     return current_user
 
 @router.put("/me", response_model=UserSchema)
@@ -41,151 +49,113 @@ async def update_user_me(
     """
     Update current user.
     """
-    if user_in.password:
-        current_user.hashed_password = get_password_hash(user_in.password)
-        
-    for field, value in user_in.model_dump(
-        exclude={"password"}, exclude_unset=True
-    ).items():
-        setattr(current_user, field, value)
-
-    await db.commit()
-    await db.refresh(current_user)
-    return current_user
+    try:
+        # Using UserService for updating the user
+        updated_user = await UserService.update_user(
+            db, current_user, current_user.id, user_in
+        )
+        await db.commit()
+        return updated_user
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/", response_model=List[UserSchema])
 async def list_users(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])),
     current_school: School = Depends(get_current_school),
-    skip: int = 0,
-    limit: int = 100,
-    role: UserRole | None = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    role: Optional[UserRole] = None,
+    search: Optional[str] = None,
 ) -> Any:
     """
     Retrieve users.
-    - Super admin can see all users across schools
-    - School admin can only see users in their school
     """
-    query = select(User)
-    
-    if current_user.role != UserRole.SUPER_ADMIN:
-        query = query.where(User.school_id == current_school.id)
-    
-    if role:
-        query = query.where(User.role == role)
-        
-    query = query.offset(skip).limit(limit)
-    result = await db.execute(query)
-    users = result.scalars().all()
-    return users
+    try:
+        # For school admin, limit to their school
+        school_id = None
+        if current_user.role == UserRole.SCHOOL_ADMIN and current_school:
+            school_id = current_school.id
+            
+        users = await UserService.list_users(
+            db, current_user, skip=skip, limit=limit, 
+            role=role, school_id=school_id, search=search
+        )
+        return users
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/", response_model=UserSchema)
 async def create_user(
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])),
+    current_school: School = Depends(get_current_school),
     user_in: UserCreate,
+    school_role: Optional[Any] = Query(None),
 ) -> Any:
     """
     Create new user.
-    - Super admin can create users for any school or super_admin users without a school
-    - School admin can only create users for their school
     """
-    # Check if email is already registered
-    result = await db.execute(
-        select(User).where(User.email == user_in.email)
-    )
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+    try:
+        # Determine school ID based on user role
+        school_id = None
+        if current_user.role == UserRole.SCHOOL_ADMIN and current_school:
+            school_id = current_school.id
+            
+        user = await UserService.create_user(
+            db, current_user, user_in, 
+            school_id=school_id, school_role=school_role
         )
-
-    # Handle school_id based on role
-    school_id = None
-    if user_in.role == UserRole.SUPER_ADMIN:
-        if current_user.role != UserRole.SUPER_ADMIN:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only super admins can create other super admin users",
-            )
-    else:
-        # For non-super_admin users, we need a school
-        if current_user.role == UserRole.SUPER_ADMIN:
-            # Super admin can specify any school
-            if not user_in.school_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="school_id is required for non-super_admin users",
-                )
-            school = await db.get(School, user_in.school_id)
-            if not school:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="School not found",
-                )
-            school_id = school.id
-        else:
-            # School admin uses their own school
-            school_id = current_user.school_id
-            if user_in.school_id and user_in.school_id != school_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="School admin cannot specify different school_id",
-                )
-
-    # Validate role permissions
-    if current_user.role != UserRole.SUPER_ADMIN:
-        if user_in.role in [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot create user with higher privileges",
-            )
-
-    user = User(
-        **user_in.model_dump(exclude={"password", "school_id"}),
-        hashed_password=get_password_hash(user_in.password),
-        school_id=school_id,
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
+        await db.commit()
+        return user
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/{user_id}", response_model=UserSchema)
 async def get_user(
-    user_id: UUID,
+    user_id: UUID = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])),
     current_school: School = Depends(get_current_school),
 ) -> Any:
     """
-    Get user by ID.
-    - Super admin can get any user
-    - School admin can only get users in their school
+    Get a specific user by ID.
     """
-    user = await db.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-        
-    if (
-        current_user.role != UserRole.SUPER_ADMIN
-        and user.school_id != current_school.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-        
-    return user
+    try:
+        user = await UserService.get_user(db, user_id, with_school=True)
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+            
+        # If school admin, check if user belongs to their school
+        if current_user.role == UserRole.SCHOOL_ADMIN and current_school:
+            user_in_school = False
+            for school_member in user.schools:
+                if school_member.school_id == current_school.id:
+                    user_in_school = True
+                    break
+                    
+            if not user_in_school:
+                raise HTTPException(
+                    status_code=403,
+                    detail="User not in your school",
+                )
+                
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{user_id}", response_model=UserSchema)
 async def update_user(
-    user_id: UUID,
+    user_id: UUID = Path(...),
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])),
@@ -193,77 +163,37 @@ async def update_user(
     user_in: UserUpdate,
 ) -> Any:
     """
-    Update user.
-    - Super admin can update any user
-    - School admin can only update users in their school
+    Update a user.
     """
-    user = await db.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+    try:
+        user = await UserService.update_user(
+            db, current_user, user_id, user_in, current_school=current_school
         )
-        
-    if (
-        current_user.role != UserRole.SUPER_ADMIN
-        and user.school_id != current_school.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-
-    # Prevent role escalation
-    if (
-        current_user.role != UserRole.SUPER_ADMIN
-        and user_in.role
-        and user_in.role in [UserRole.SUPER_ADMIN, UserRole.SCHOOL_ADMIN]
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot update user to higher privileges",
-        )
-
-    if user_in.password:
-        user.hashed_password = get_password_hash(user_in.password)
-        
-    for field, value in user_in.model_dump(
-        exclude={"password"}, exclude_unset=True
-    ).items():
-        setattr(user, field, value)
-
-    await db.commit()
-    await db.refresh(user)
-    return user
+        await db.commit()
+        return user
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    user_id: UUID,
+    user_id: UUID = Path(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(check_permissions([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])),
     current_school: School = Depends(get_current_school),
 ) -> None:
     """
-    Delete user.
-    - Super admin can delete any user
-    - School admin can only delete users in their school
-    This is a soft delete - user is marked as inactive.
+    Delete a user.
     """
-    user = await db.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+    try:
+        success = await UserService.delete_user(
+            db, current_user, user_id, current_school=current_school
         )
-        
-    if (
-        current_user.role != UserRole.SUPER_ADMIN
-        and user.school_id != current_school.id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-
-    user.is_active = False
-    await db.commit() 
+        if success:
+            await db.commit()
+        else:
+            await db.rollback()
+            raise HTTPException(status_code=400, detail="Failed to delete user")
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e)) 

@@ -1,18 +1,21 @@
 from typing import Any, List, Dict
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.auth import get_current_active_superuser, get_current_user
+from app.api.dependencies.auth import get_current_active_superuser, get_current_active_user
 from app.api.dependencies.admin import admin_required
 from app.db.session import get_db
-from app.models import User, School, Course
+from app.models import User
 from app.models.user import UserRole, UserStatus
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
 from app.schemas.school import School as SchoolSchema, SchoolCreate
+from app.services.user import UserService
+from app.services.school import SchoolService
+from app.services.admin import AdminService
 from app.services.course import CourseService
-
-from app.security.password import get_password_hash
+from app.core.exception_handlers import NotFoundException, ValidationError, PermissionError
 
 router = APIRouter()
 
@@ -25,36 +28,14 @@ async def get_platform_stats(
     Get platform-wide statistics.
     Only accessible by super admin.
     """
-    # Get total users
-    users_query = select(func.count()).select_from(User)
-    users_result = await db.execute(users_query)
-    total_users = users_result.scalar()
-    
-    # Get total schools
-    schools_query = select(func.count()).select_from(School)
-    schools_result = await db.execute(schools_query)
-    total_schools = schools_result.scalar()
-
-    # # Get total revenue (from course purchases)
-    # revenue_query = select(func.sum(CoursePurchase.amount_paid)).select_from(CoursePurchase).where(
-    #     CoursePurchase.payment_status == 'completed'
-    # )
-    # revenue_result = await db.execute(revenue_query)
-    # total_revenue = revenue_result.scalar() or 0
-
-    # Get active users percentage
-    active_users_query = select(func.count()).select_from(User).where(User.is_active == True)
-    active_users_result = await db.execute(active_users_query)
-    active_users = active_users_result.scalar()
-    active_users_percentage = round((active_users / total_users * 100) if total_users > 0 else 0, 1)
-    
-    return {
-        "totalUsers": total_users,
-        "totalSchools": total_schools,
-        # "totalRevenue": f"${total_revenue:,.2f}",
-        "totalRevenue": "$ 100,000.00",
-        "activeUsers": f"{active_users_percentage}%",
-    }
+    try:
+        stats = await AdminService.get_platform_stats(db, current_user)
+        return stats
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/health")
 async def get_system_health(
@@ -65,18 +46,14 @@ async def get_system_health(
     Get system health metrics.
     Only accessible by super admin.
     """
-    # In a real application, these metrics would come from monitoring services
-    # For now, we'll return mock data
-    return {
-        "serverStatus": "Operational",
-        "uptime": "99.9%",
-        "responseTime": "120ms",
-        "activeConnections": 1250,
-        "cpuUsage": "45%",
-        "memoryUsage": "60%",
-        "storageUsed": "45%",
-        "lastBackup": "2024-03-15 03:00 AM"
-    }
+    try:
+        health_metrics = await AdminService.get_system_health(db, current_user)
+        return health_metrics
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/users", response_model=List[UserSchema])
 async def list_users(
@@ -85,51 +62,51 @@ async def list_users(
     skip: int = 0,
     limit: int = 100,
     role: UserRole | None = None,
+    search: str | None = None,
 ) -> Any:
     """
     List all users.
     Only accessible by super admin.
     """
-    query = select(User)
-    if role:
-        query = query.where(User.role == role)
-    query = query.offset(skip).limit(limit)
-    
-    result = await db.execute(query)
-    users = result.scalars().all()
-    return users
+    try:
+        users = await AdminService.list_users(
+            db, current_user, skip, limit, role, search
+        )
+        return users
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.post("/users", response_model=UserSchema)
-async def create_user(
+async def create_admin_user(
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
     user_in: UserCreate,
 ) -> Any:
     """
-    Create new user.
+    Create new admin user.
     Only accessible by super admin.
     """
-    # Check if user with this email exists
-    user = await db.scalar(select(User).where(User.email == user_in.email))
-    if user:
+    try:
+        user = await AdminService.create_admin_user(db, current_user, user_in)
+        return user
+    except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+            detail=str(e),
         )
-    
-    # Create new user
-    user = User(**user_in.model_dump(exclude={"password"}))
-    user.password = get_password_hash(user_in.password)
-    
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/users/{user_id}", response_model=UserSchema)
 async def get_user(
-    user_id: str,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
@@ -137,17 +114,23 @@ async def get_user(
     Get user by ID.
     Only accessible by super admin.
     """
-    user = await db.get(User, user_id)
-    if not user:
+    try:
+        user = await UserService.get_user(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+        return user
+    except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=str(e),
         )
-    return user
 
 @router.put("/users/{user_id}", response_model=UserSchema)
 async def update_user(
-    user_id: str,
+    user_id: UUID,
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
@@ -157,27 +140,28 @@ async def update_user(
     Update user.
     Only accessible by super admin.
     """
-    user = await db.get(User, user_id)
-    if not user:
+    try:
+        user = await UserService.update_user(db, current_user, user_id, user_in)
+        return user
+    except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=str(e),
         )
-    
-    # Update user fields
-    for field, value in user_in.model_dump(exclude_unset=True).items():
-        if field == "password" and value:
-            user.password = get_password_hash(value)
-        else:
-            setattr(user, field, value)
-    
-    await db.commit()
-    await db.refresh(user)
-    return user
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    user_id: str,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
 ) -> None:
@@ -185,19 +169,22 @@ async def delete_user(
     Delete user.
     Only accessible by super admin.
     """
-    user = await db.get(User, user_id)
-    if not user:
+    try:
+        await UserService.delete_user(db, current_user, user_id)
+    except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=str(e),
         )
-    
-    await db.delete(user)
-    await db.commit()
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.post("/users/{user_id}/suspend", response_model=UserSchema)
 async def suspend_user(
-    user_id: str,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
@@ -206,22 +193,25 @@ async def suspend_user(
     This is an admin-specific operation that deactivates the account and sets its status to suspended.
     Only accessible by super admin.
     """
-    user = await db.get(User, user_id)
-    if not user:
+    try:
+        user = await AdminService.update_user_status(
+            db, current_user, user_id, UserStatus.SUSPENDED, active=False
+        )
+        return user
+    except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=str(e),
         )
-    
-    user.is_active = False
-    user.status = UserStatus.SUSPENDED
-    await db.commit()
-    await db.refresh(user)
-    return user
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.post("/users/{user_id}/reinstate", response_model=UserSchema)
 async def reinstate_user(
-    user_id: str,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
 ) -> Any:
@@ -230,34 +220,49 @@ async def reinstate_user(
     This is an admin-specific operation that reactivates the account and sets its status back to active.
     Only accessible by super admin.
     """
-    user = await db.get(User, user_id)
-    if not user:
+    try:
+        user = await AdminService.update_user_status(
+            db, current_user, user_id, UserStatus.ACTIVE, active=True
+        )
+        return user
+    except NotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            detail=str(e),
         )
-    
-    user.is_active = True
-    user.status = UserStatus.ACTIVE
-    await db.commit()
-    await db.refresh(user)
-    return user 
-
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
 
 @router.get("/schools", response_model=List[SchoolSchema])
 async def list_schools(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
+    skip: int = 0,
+    limit: int = 100,
+    search: str | None = None,
+    include_inactive: bool = False,
 ) -> Any:
     """
     List all schools.
     Only accessible by super admin.
     """
-    query = select(School)
-    result = await db.execute(query)
-    schools = result.scalars().all()
-    return schools
-
+    try:
+        schools = await SchoolService.list_schools(
+            db, current_user, skip, limit, search, include_inactive
+        )
+        return schools
+    except Exception as e:
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f"Error in /admin/schools: {str(e)}")
+        print(traceback_str)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving schools: {str(e)}",
+        )
 
 @router.post("/schools", response_model=SchoolSchema)
 async def create_school(
@@ -267,56 +272,22 @@ async def create_school(
     school_in: SchoolCreate,
 ) -> Any:
     """
-    Create a new school.
+    Create new school.
     Only accessible by super admin.
     """
     try:
-        print(f"School in: {school_in.model_dump()}")
-        school = School(**school_in.model_dump(exclude={"admin"}))
-        db.add(school)
-        await db.commit()
-        await db.refresh(school)
-
-        print(f"School added: {school}")
-
-    except Exception as e:
-        print(f"Error adding school: {e}")
+        school = await SchoolService.create_school(db, current_user, school_in)
+        return school
+    except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
-    # Create admin user
-    try:
-        print("Creating admin user")
-        print(f"School in: {school_in.model_dump()}")
-        user = await db.scalar(select(User).where(User.email == school_in.admin["email"]))
-        if user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered",
-            )
-        user = User(
-            email=school_in.admin["email"],
-            password=get_password_hash(school_in.admin["password"]),
-            role=UserRole.SCHOOL_ADMIN,
-            school_id=school.id,
-            first_name=school_in.admin["first_name"],
-            last_name=school_in.admin["last_name"],
-            settings=None,
-        )   
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-
-    except Exception as e:
-        print(f"Error adding admin user: {e}")
+    except PermissionError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),
         )
-
-    return school
 
 @router.get("/content/stats", response_model=Dict[str, Any])
 async def get_content_stats(
@@ -324,9 +295,16 @@ async def get_content_stats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(admin_required)
 ) -> Dict[str, Any]:
-    """Get stats for the content dashboard."""
+    """
+    Get statistics about platform content.
+    This includes total courses, active courses, popular categories, etc.
+    Accessible by super admin and school admins.
+    """
     try:
-        stats = await CourseService.get_content_stats(db, current_user)
+        stats = await AdminService.get_content_stats(db, current_user)
         return stats
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )

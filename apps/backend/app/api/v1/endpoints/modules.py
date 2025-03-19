@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies.auth import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.models.course import CourseStatus
-from app.schemas.course import ModuleResponse, ModuleUpdate, ModuleCreate
+from app.models.enums import CourseStatus
+from app.schemas.module import ModuleResponse, ModuleUpdate, ModuleCreate
 from app.services.course import CourseService
 
 router = APIRouter()

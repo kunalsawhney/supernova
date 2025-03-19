@@ -77,8 +77,8 @@ class BaseModel(Base, TimestampMixin, SoftDeleteMixin):
         nullable=False,
     )
 
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}(id={self.id!r})>"
+    # def __repr__(self) -> str:
+    #     return f"<{self.__class__.__name__}(id={self.id!r})>"
 
     @declared_attr
     def __mapper_args__(cls) -> dict:

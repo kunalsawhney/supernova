@@ -7,9 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import NotFoundException, ValidationError, PermissionError
 from app.models.course import (
-    Course, CourseEnrollment, UserProgress,
-    EnrollmentStatus, EnrollmentType
+    Course
 )
+from app.models.enrollment import CourseEnrollment
+from app.models.progress import UserProgress
+from app.models.purchase import CourseLicense
+from app.models.enums import EnrollmentStatus, EnrollmentType
 from app.models.user import User, UserRole
 from app.schemas.enrollment import (
     StudentEnrollmentCreate, IndividualEnrollmentCreate,
