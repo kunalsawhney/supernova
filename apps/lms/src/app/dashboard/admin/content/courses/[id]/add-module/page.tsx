@@ -21,8 +21,8 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
   const [course, setCourse] = useState<CourseViewModel | null>(null);
   const [contentId, setContentId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CreateModuleData>>({
-    title: '',
-    description: '',
+    name: 'Course Introduction',
+    description: 'This is the first module of the course. It provides an overview of the course and its objectives.',
     sequence_number: 1,
     status: 'draft'
   });
@@ -44,26 +44,19 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
         
         // Try multiple sources for content ID
         let foundContentId = null;
+        let foundVersionId = null;
         let source = 'unknown';
         
-        // Option 1: Check latestVersionId directly
-        if (courseData.latestVersionId) {
-          console.log('Found content ID from latestVersionId:', courseData.latestVersionId);
-          foundContentId = courseData.latestVersionId;
-          source = 'latestVersionId';
-        } 
-        // Option 2: Check contentVersions array for content ID
-        else if (courseData.contentVersions && courseData.contentVersions.length > 0) {
-          console.log('Found content ID from contentVersions[0]:', courseData.contentVersions[0].id);
-          foundContentId = courseData.contentVersions[0].id;
+        if (courseData.contentVersions && courseData.contentVersions.length > 0) {
+          console.log('Found from courseData.contentVersions:', courseData.contentVersions[0].contentId);
+          foundContentId = courseData.contentVersions[0].contentId;
           source = 'contentVersions';
         }
-        // Option 3: Check localStorage
         else {
-          const storedVersionId = localStorage.getItem(`course_${courseId}_latest_version`);
-          if (storedVersionId) {
-            console.log('Found content ID from localStorage:', storedVersionId);
-            foundContentId = storedVersionId;
+          const storedContentId = localStorage.getItem(`course_${courseId}_latest_content`);
+          if (storedContentId) {
+            console.log('Found content ID from localStorage:', storedContentId);
+            foundContentId = storedContentId;
             source = 'localStorage';
           }
         }
@@ -168,12 +161,12 @@ export default function AddModulePage({ params }: { params: Promise<{ id: string
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Module Title<span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">Module Name<span className="text-red-500">*</span></Label>
               <Input
-                id="title"
-                placeholder="Enter module title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                id="name"
+                placeholder="Enter module name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>

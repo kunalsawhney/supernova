@@ -38,7 +38,6 @@ export interface CourseVersion {
   content_id?: string;
   valid_from?: string;
   valid_until?: string;
-  content?: any;
 }
 
 export type CourseStatus = 'draft' | 'published' | 'archived';
@@ -115,7 +114,7 @@ export interface CourseViewModel {
   pricingType?: string;
   createdById: string;
   latestVersionId?: string;
-  contentVersions?: { id: string; version: string }[];
+  contentVersions?: {id: string, version: string, contentId: string, validFrom: string, validUntil: string}[];
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -195,6 +194,9 @@ export const transformCourse = (course: Course): CourseViewModel => ({
   contentVersions: (course.content_versions || course.versions || []).map(version => ({
     id: version.id,
     version: version.version || '',
+    contentId: version.content_id || '',
+    validFrom: version.valid_from || '',
+    validUntil: version.valid_until || '',
   })),
   createdAt: course.created_at,
   updatedAt: course.updated_at,

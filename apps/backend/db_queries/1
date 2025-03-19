@@ -2,4 +2,9 @@ SELECT courses.title, courses.description, courses.code, courses.status, courses
 FROM courses 
 JOIN course_versions ON courses.id = course_versions.course_id 
 JOIN course_contents ON course_contents.id = course_versions.content_id 
-WHERE courses.id = :id_1
+WHERE courses.id = :id_1;
+
+
+select * 
+from course_contents
+where id = '416baf12-5147-41e6-ae0e-b8091df4f1b3';

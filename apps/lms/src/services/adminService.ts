@@ -276,7 +276,6 @@ export const adminService = {
   async getCourse(id: string): Promise<CourseViewModel> {
     try {
       const response = await api.get<any>(`/courses/${id}?with_content=true`);
-      console.log('Raw API response:', JSON.stringify(response, null, 2));
       
       // Normalize response structure to handle both field naming conventions
       const course: Course = {
@@ -288,9 +287,17 @@ export const adminService = {
       // Store content ID for easier access
       if (course.latest_version_id) {
         localStorage.setItem(`course_${course.id}_latest_version`, course.latest_version_id);
+        if (course.content_versions) {
+          const latest_version = course.content_versions.find(version => version.id === course.latest_version_id);
+          localStorage.setItem(`course_${course.id}_latest_content`, latest_version?.content_id || '');
+        }
       } else if (course.content_versions && course.content_versions.length > 0) {
         // If we have content versions but no latest_version_id, store the first one
         localStorage.setItem(`course_${course.id}_latest_version`, course.content_versions[0].id);
+        if (course.content_versions) {
+          const latest_version = course.content_versions.find(version => version.id === course.latest_version_id);
+          localStorage.setItem(`course_${course.id}_latest_content`, latest_version?.content_id || '');
+        }
       }
       
       return transformCourse(course);
@@ -335,12 +342,7 @@ export const adminService = {
         Object.entries(apiData).filter(([_, value]) => value !== undefined)
       );
       
-      // Log what we're sending to the API
-      console.log('Creating course with data:', JSON.stringify(cleanApiData, null, 2));
-      
       const response = await api.post<any>('/courses/', cleanApiData);
-      
-      console.log('API response from create course:', JSON.stringify(response, null, 2));
       
       // Normalize response structure
       const course: Course = {
@@ -351,6 +353,10 @@ export const adminService = {
       // Store the latest content ID in localStorage for easier access
       if (course.latest_version_id) {
         localStorage.setItem(`course_${course.id}_latest_version`, course.latest_version_id);
+        if (course.content_versions) {
+          const latest_version = course.content_versions.find(version => version.id === course.latest_version_id);
+          localStorage.setItem(`course_${course.id}_latest_content`, latest_version?.content_id || '');
+        }
       }
       
       return transformCourse(course);
@@ -402,12 +408,7 @@ export const adminService = {
         Object.entries(apiData).filter(([_, value]) => value !== undefined)
       );
       
-      // Log what we're sending
-      console.log('Sending update data to API:', JSON.stringify(cleanApiData, null, 2));
-      
       const response = await api.put<any>(`/courses/${id}/`, cleanApiData);
-      
-      console.log('API response:', JSON.stringify(response, null, 2));
       
       // Normalize response structure
       const course: Course = {
@@ -475,6 +476,7 @@ export const adminService = {
    */
   async addModule(data: CreateModuleData): Promise<ModuleViewModel> {
     try {
+      console.log('Adding module to course content:', data);
       const module = await api.post<Module>(`/courses/content/${data.content_id}/modules`, data);
       return transformModule(module);
     } catch (error) {

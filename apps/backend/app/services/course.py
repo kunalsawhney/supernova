@@ -51,7 +51,7 @@ class CourseService:
         )
         db.add(content)
         await db.flush()
-        
+
         # Create CourseVersion linking Course and CourseContent
         version = CourseVersion(
             course_id=course.id,
@@ -63,11 +63,13 @@ class CourseService:
         )
         db.add(version)
         await db.flush()
-        
+
+
         # Update course with latest version ID
         course.latest_version_id = version.id
         db.add(course)
-        
+        await db.flush()
+
         return course
 
     @staticmethod
@@ -143,7 +145,8 @@ class CourseService:
         module_data: ModuleCreate
     ) -> Module:
         """Add a module to course content."""
-        content = db.query(CourseContent).filter(CourseContent.id == content_id).first()
+        # content = db.query(CourseContent).filter(CourseContent.id == content_id).first()
+        content = await db.get(CourseContent, content_id)
         if not content:
             raise NotFoundException("Course content not found")
 
@@ -152,8 +155,8 @@ class CourseService:
 
         module = Module(
             **module_data.model_dump(),
-            content_id=content_id,
-            status=CourseStatus.DRAFT
+            # content_id=content_id,
+            # status=CourseStatus.DRAFT
         )
         db.add(module)
         return module

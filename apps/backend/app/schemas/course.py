@@ -141,7 +141,7 @@ class LessonResponse(LessonBase, BaseSchema):
 
 class ModuleBase(BaseModel):
     """Base schema for module data."""
-    title: str = Field(..., alias="name")
+    name: str = Field(..., alias="name")
     description: Optional[str] = None
     order: int = Field(..., alias="sequence_number")
     settings: Optional[Dict[str, Any]] = None
@@ -155,7 +155,7 @@ class ModuleCreate(ModuleBase):
 
 class ModuleUpdate(BaseModel):
     """Schema for updating a module."""
-    title: Optional[str] = Field(None, alias="name")
+    name: Optional[str] = Field(None, alias="name")
     description: Optional[str] = None
     order: Optional[int] = Field(None, alias="sequence_number")
     settings: Optional[Dict[str, Any]] = None

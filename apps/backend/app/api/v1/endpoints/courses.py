@@ -22,20 +22,20 @@ from app.models.course import CourseContent
 
 router = APIRouter()
 
-@router.post("/", response_model=CourseWithContentResponse)
+@router.post("/", response_model=CourseResponse)
 async def create_course(
     *,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     course_data: CourseCreate
-) -> CourseWithContentResponse:
+) -> CourseResponse:
     """Create a new course."""
     try:
         course = await CourseService.create_course(db, current_user, course_data)
         await db.commit()
         # Refresh the course to get the latest data including relationships
         await db.refresh(course)
-        return CourseWithContentResponse.model_validate(course)
+        return CourseResponse.model_validate(course)
     except Exception as e:
         print(e)
         await db.rollback()
@@ -127,7 +127,7 @@ async def update_course(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/{course_id}")
+@router.delete("/{course_id}/")
 async def delete_course(
     course_id: UUID,
     *,
@@ -140,6 +140,7 @@ async def delete_course(
         await db.commit()
         return {"success": success}
     except Exception as e:
+        print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -179,6 +180,7 @@ async def add_module(
         await db.commit()
         return ModuleResponse.model_validate(module)
     except Exception as e:
+        print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
