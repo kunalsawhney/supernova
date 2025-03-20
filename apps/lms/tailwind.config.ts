@@ -58,7 +58,7 @@ const config: Config = {
   				'5': 'hsl(var(--chart-5))'
   			},
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar))',
+  				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
   				muted: 'hsl(var(--sidebar-muted))',
   				'muted-foreground': 'hsl(var(--sidebar-muted-foreground))',

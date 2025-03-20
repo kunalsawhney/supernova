@@ -9,7 +9,7 @@ import {
   FiHome, FiUsers, FiBook, FiClipboard, FiBarChart2, 
   FiPieChart, FiAward, FiSettings, FiBox, FiServer,
   FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare,
-  FiChevronDown, FiVideo, FiPlay
+  FiChevronDown, FiVideo, FiPlay, FiPlus
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -93,6 +93,14 @@ const navigationConfig = {
         { label: 'Courses', href: '/dashboard/admin/content/courses', icon: 'FiBookmark' },
         { label: 'Modules', href: '/dashboard/admin/content/modules', icon: 'FiServer' },
         { label: 'Lessons', href: '/dashboard/admin/content/lessons', icon: 'FiClipboard' },
+      ]
+    },
+    {
+      category: 'Content V2',
+      items: [
+        { label: 'Overview', href: '/dashboard/admin/content-v2', icon: 'FiBook' },
+        { label: 'Courses', href: '/dashboard/admin/content-v2/courses', icon: 'FiBookmark' },
+        { label: 'Create Course', href: '/dashboard/admin/content-v2/courses/create', icon: 'FiPlus' },
       ]
     },
     {
@@ -186,7 +194,8 @@ const icons = {
   FiHelpCircle: <FiHelpCircle />,
   FiMessageSquare: <FiMessageSquare />,
   FiVideo: <FiVideo />,
-  FiPlay: <FiPlay />
+  FiPlay: <FiPlay />,
+  FiPlus: <FiPlus />
 };
 
 export function DashboardNavigation() {
@@ -245,6 +254,21 @@ export function DashboardNavigation() {
     if (href === '/dashboard/admin/content/lessons') {
       // Highlight lessons for the lessons path and its sub-paths
       return pathname.startsWith(href);
+    }
+
+    // Special handling for content-v2 section
+    if (href === '/dashboard/admin/content-v2') {
+      return pathname === href;
+    }
+
+    if (href === '/dashboard/admin/content-v2/courses') {
+      // Highlight courses for the courses path but not create
+      return pathname === href;
+    }
+
+    if (href === '/dashboard/admin/content-v2/courses/create') {
+      // Highlight create course only when on create path
+      return pathname === href;
     }
     
     // Default behavior for other routes

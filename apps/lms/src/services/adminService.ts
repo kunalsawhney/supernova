@@ -620,9 +620,38 @@ export const adminService = {
    */
   async deleteModule(moduleId: string): Promise<void> {
     try {
-      await api.delete<void>(`/modules/${moduleId}/`);
+      await api.delete<void>(`/admin/modules/${moduleId}`);
     } catch (error) {
       throw handleApiError(error, `Failed to delete module ${moduleId}`);
+    }
+  },
+
+  /**
+   * Save course as draft
+   */
+  async saveCourseAsDraft(data: {
+    id: string | null;
+    step: number;
+    data: any;
+    lastModified: string;
+  }): Promise<{ id: string }> {
+    try {
+      if (data.id) {
+        // Update existing draft
+        const response = await api.put<{ id: string }>(`/admin/courses/drafts/${data.id}`, data);
+        return response;
+      } else {
+        // Create new draft
+        const response = await api.post<{ id: string }>('/admin/courses/drafts', data);
+        return response;
+      }
+    } catch (error) {
+      // For now, return a mock ID in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Using mock draft ID in development');
+        return { id: data.id || 'draft-' + Date.now() };
+      }
+      throw handleApiError(error, 'Failed to save course draft');
     }
   },
 }; 
