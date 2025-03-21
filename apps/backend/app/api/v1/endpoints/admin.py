@@ -302,6 +302,7 @@ async def get_content_stats(
     """
     try:
         stats = await AdminService.get_content_stats(db, current_user)
+        print(stats)
         return stats
     except PermissionError as e:
         raise HTTPException(

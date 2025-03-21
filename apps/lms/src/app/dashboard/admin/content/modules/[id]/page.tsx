@@ -48,14 +48,18 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { LessonViewModel } from '@/types/course';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ModuleData {
   id: string;
   title: string;
   description: string;
-  courseId: string;
-  courseName: string;
-  order: number;
+  content_id: string;
+  sequence_number: number;
+  duration_weeks: number | null;
+  status: 'draft' | 'published' | 'archived';
+  is_mandatory: boolean;
+  completion_criteria: Record<string, any> | null;
   lessons: LessonViewModel[];
 }
 
@@ -202,9 +206,12 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
         id: moduleId,
         title: 'Introduction to Mathematics',
         description: 'This module covers the fundamental concepts of mathematics including numbers, operations, and basic algebra.',
-        courseId: 'course-123',
-        courseName: 'Mathematics 101',
-        order: 1,
+        content_id: 'course-123',
+        sequence_number: 1,
+        duration_weeks: 4,
+        status: 'draft',
+        is_mandatory: true,
+        completion_criteria: null,
         lessons: [
           {
             id: 'l1',
@@ -431,7 +438,7 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
             </div>
           )}
           
-          <Link href={`/dashboard/admin/courses/edit/${module.courseId}`}>
+          <Link href={`/dashboard/admin/courses/edit/${module.content_id}`}>
             <Button variant="outline" size="sm" className="gap-1">
               <Library className="h-4 w-4" />
               View Course
@@ -451,11 +458,11 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
       {/* Course breadcrumb */}
       <div className="text-sm text-muted-foreground flex items-center gap-1">
         <span>Course:</span>
-        <Link href={`/dashboard/admin/courses/edit/${module.courseId}`} className="text-primary hover:underline">
-          {module.courseName}
+        <Link href={`/dashboard/admin/courses/edit/${module.content_id}`} className="text-primary hover:underline">
+          {module.content_id}
         </Link>
         <span>•</span>
-        <span>Module {module.order}</span>
+        <span>Module {module.sequence_number}</span>
       </div>
       
       {/* Module Editor Tabs */}
@@ -559,8 +566,103 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
               <CardDescription>Configure module behavior and accessibility</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Settings content would go here */}
-              <p className="text-muted-foreground">Module settings coming soon.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="status" className="text-sm font-medium mb-1 block">
+                    Status
+                  </label>
+                  <Select 
+                    value={module?.status || 'draft'} 
+                    onValueChange={(value) => {
+                      if (module) {
+                        setModule({
+                          ...module,
+                          status: value as 'draft' | 'published' | 'archived'
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label htmlFor="duration_weeks" className="text-sm font-medium mb-1 block">
+                    Duration (weeks)
+                  </label>
+                  <Input
+                    id="duration_weeks"
+                    type="number"
+                    min="0"
+                    value={module?.duration_weeks || ''}
+                    onChange={(e) => {
+                      if (module) {
+                        const value = e.target.value ? parseInt(e.target.value, 10) : null;
+                        setModule({
+                          ...module,
+                          duration_weeks: value
+                        });
+                      }
+                    }}
+                    placeholder="Enter duration in weeks"
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="is_mandatory"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={module?.is_mandatory || false}
+                    onChange={(e) => {
+                      if (module) {
+                        setModule({
+                          ...module,
+                          is_mandatory: e.target.checked
+                        });
+                      }
+                    }}
+                  />
+                  <label htmlFor="is_mandatory" className="text-sm font-medium">
+                    Mandatory
+                  </label>
+                  <p className="text-xs text-muted-foreground ml-2">
+                    Require students to complete this module
+                  </p>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label htmlFor="sequence_number" className="text-sm font-medium mb-1 block">
+                    Sequence Number
+                  </label>
+                  <Input
+                    id="sequence_number"
+                    type="number"
+                    min="1"
+                    value={module?.sequence_number || '1'}
+                    onChange={(e) => {
+                      if (module) {
+                        const value = parseInt(e.target.value, 10);
+                        setModule({
+                          ...module,
+                          sequence_number: value
+                        });
+                      }
+                    }}
+                    placeholder="Enter sequence number"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Determines the order of this module in the course
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

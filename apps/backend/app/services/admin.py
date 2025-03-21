@@ -204,9 +204,16 @@ class AdminService:
         
         # Get active courses
         active_courses_query = select(func.count()).select_from(Course).where(
-            Course.status == "active"
+            Course.is_active == True
         )
         
+        draft_courses_query = select(func.count()).select_from(Course).where(
+            Course.status == 'draft'
+        )
+
+        draft_courses_result = await db.execute(draft_courses_query)
+        draft_courses = draft_courses_result.scalar()
+
         # For school admins, limit to their school
         if current_user.role == UserRole.SCHOOL_ADMIN and current_user.school_id:
             active_courses_query = active_courses_query.where(
@@ -220,11 +227,10 @@ class AdminService:
         # In a real scenario, you'd join with the reviews table
         # Simplified version for now
         avg_rating = 4.2  # Mock value
-        
+
         return {
-            "totalCourses": total_courses,
-            "activeCourses": active_courses,
-            "averageRating": avg_rating,
-            "popularCategories": ["Technology", "Business", "Design"],  # Mock values
-            "averageCompletion": "68%",  # Mock value
+            "total_courses": total_courses,
+            "published_courses": active_courses,
+            "draft_courses": draft_courses,
+            "average_rating": avg_rating,
         } 

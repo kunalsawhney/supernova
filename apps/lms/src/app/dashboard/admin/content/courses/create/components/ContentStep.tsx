@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FiPlus, FiChevronUp, FiChevronDown, FiEdit2, FiTrash2, FiX, FiMenu, FiFile, FiLoader, FiCheck } from 'react-icons/fi';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { courseWizardService } from '@/services/courseWizardService';
 import {
   DndContext,
   closestCenter,
@@ -30,6 +29,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { adminService } from '@/services/adminService';
 
 interface Lesson {
   id?: string;
@@ -318,7 +318,7 @@ export function ContentStep() {
         };
 
         // Call API to save lesson
-        const response = await courseWizardService.addLesson(apiModuleId, lessonData);
+        const response = await adminService.addLesson(apiModuleId, lessonData);
         
         // Store the API lesson ID in our context
         dispatch({
@@ -344,7 +344,7 @@ export function ContentStep() {
       toast({
         title: "Module not saved to API",
         description: "Cannot save lesson to API because the module hasn't been saved yet",
-        variant: "warning",
+        variant: "destructive",
       });
     }
   };
@@ -354,7 +354,7 @@ export function ContentStep() {
     setEditingLessonId(null);
   };
 
-  const handleDeleteLesson = (lessonId: string) => {
+  const handleDeleteLesson = async (lessonId: string) => {
     const updatedModules = modules.map(module => {
       if (module.id === selectedModuleId) {
         return {
@@ -370,7 +370,13 @@ export function ContentStep() {
       payload: { modules: updatedModules }
     });
 
-    // TODO: Add API call to delete lesson if implemented
+    if (lessonId) {
+      try {
+        await adminService.deleteLesson(lessonId);
+      } catch (error) {
+        console.error("Error deleting lesson:", error);
+      }
+    }
   };
 
   const handleToggleExpand = (id: string) => {

@@ -28,7 +28,7 @@ import { mockApi, mockCourses } from '@/utils/mockData';
 import { handleApiError } from '@/utils/errorHandling';
 import { withCache, clearCacheByPrefix } from '@/utils/caching';
 import { ModuleViewModel, CreateModuleData, Module, transformModule } from '@/types/module';
-
+import { ContentStats, ContentStatsViewModel, transformContentStats } from '@/types/content';
 /**
  * Service for admin-related API calls
  */
@@ -569,10 +569,11 @@ export const adminService = {
   /**
    * Get content statistics for the dashboard
    */
-  async getContentStats(): Promise<any> {
+  async getContentStats(): Promise<ContentStatsViewModel> {
     try {
-      const response = await api.get('/admin/content/stats');
-      return response;
+      const response = await api.get<ContentStats>('/admin/content/stats');
+      // Transform the response to match the ContentStats type
+      return transformContentStats(response);
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch content statistics');
     }

@@ -32,16 +32,15 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 interface LessonData {
   id: string;
   title: string;
-  description: string;
-  type: 'text' | 'video' | 'presentation' | 'quiz';
-  content: any;
-  moduleId: string;
-  moduleName: string;
-  courseId: string;
-  courseName: string;
-  order: number;
-  duration: number;
-  hasQuiz: boolean;
+  description: string | null;
+  module_id: string;
+  sequence_number: number;
+  content_type: 'text' | 'pdf' | 'presentation' | 'video' | 'audio';
+  content: Record<string, any>;
+  duration_minutes: number | null;
+  is_mandatory: boolean;
+  completion_criteria: Record<string, any> | null;
+  status: 'draft' | 'published' | 'archived';
 }
 
 export default function LessonEditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,10 +51,13 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
   const [lesson, setLesson] = useState<LessonData | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<'text' | 'video' | 'presentation' | 'quiz'>('text');
-  const [content, setContent] = useState<any>({ text: '' });
-  const [duration, setDuration] = useState(0);
-  const [hasQuiz, setHasQuiz] = useState(false);
+  const [contentType, setContentType] = useState<'text' | 'pdf' | 'presentation' | 'video' | 'audio'>('text');
+  const [content, setContent] = useState<Record<string, any>>({});
+  const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+  const [isMandatory, setIsMandatory] = useState(true);
+  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [moduleId, setModuleId] = useState('');
+  const [sequenceNumber, setSequenceNumber] = useState(1);
   
   const [activeTab, setActiveTab] = useState('content');
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,9 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
         id: lessonId,
         title: 'Introduction to Numbers',
         description: 'Learn about different types of numbers and basic operations.',
-        type: 'text',
+        module_id: 'module-123',
+        sequence_number: 1,
+        content_type: 'text',
         content: { 
           text: `<h2>Introduction to Numbers</h2>
 <p>In mathematics, we work with different types of numbers:</p>
@@ -96,22 +100,22 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
   <li>Division (÷)</li>
 </ul>` 
         },
-        moduleId: 'module-123',
-        moduleName: 'Introduction to Mathematics',
-        courseId: 'course-123',
-        courseName: 'Mathematics 101',
-        order: 1,
-        duration: 15,
-        hasQuiz: true
+        duration_minutes: 15,
+        is_mandatory: true,
+        completion_criteria: null,
+        status: 'draft'
       };
       
       setLesson(mockLesson);
       setTitle(mockLesson.title);
-      setDescription(mockLesson.description);
-      setType(mockLesson.type);
+      setDescription(mockLesson.description || '');
+      setContentType(mockLesson.content_type);
       setContent(mockLesson.content);
-      setDuration(mockLesson.duration);
-      setHasQuiz(mockLesson.hasQuiz);
+      setDurationMinutes(mockLesson.duration_minutes);
+      setIsMandatory(mockLesson.is_mandatory);
+      setStatus(mockLesson.status);
+      setModuleId(mockLesson.module_id);
+      setSequenceNumber(mockLesson.sequence_number);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch lesson data';
@@ -126,18 +130,24 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
     try {
       setIsSaved(false);
       
-      // In a real app, this would save to the API
-      // adminService.updateLesson(lessonId, { title, description, type, content, duration, hasQuiz });
-      
-      console.log('Saving lesson data:', {
+      const updatedLesson: LessonData = {
         id: lessonId,
         title,
         description,
-        type,
+        module_id: moduleId,
+        sequence_number: sequenceNumber,
+        content_type: contentType,
         content,
-        duration,
-        hasQuiz
-      });
+        duration_minutes: durationMinutes,
+        is_mandatory: isMandatory,
+        completion_criteria: lesson?.completion_criteria || null,
+        status
+      };
+      
+      // In a real app, this would save to the API
+      // adminService.updateLesson(lessonId, updatedLesson);
+      
+      console.log('Saving lesson data:', updatedLesson);
       
       // Show success message
       setIsSaved(true);
@@ -157,15 +167,17 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
         return <FileText className="h-5 w-5 text-purple-500" />;
       case 'presentation':
         return <BookOpen className="h-5 w-5 text-green-500" />;
-      case 'quiz':
-        return <FileQuestion className="h-5 w-5 text-red-500" />;
+      case 'pdf':
+        return <FileText className="h-5 w-5 text-orange-500" />;
+      case 'audio':
+        return <FileText className="h-5 w-5 text-green-500" />;
       default:
         return <FileText className="h-5 w-5" />;
     }
   };
   
   const renderContentEditor = () => {
-    switch (type) {
+    switch (contentType) {
       case 'text':
         return (
           <div className="space-y-4">
@@ -260,45 +272,60 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
           </div>
         );
       
-      case 'quiz':
+      case 'audio':
         return (
           <div className="space-y-4">
             <div className="p-4 border rounded-md bg-muted/40">
               <p className="text-sm text-muted-foreground mb-2">
-                This is a placeholder for a quiz builder.
-                In a production environment, this would be a full quiz creation interface.
+                This is a placeholder for an audio editor.
+                In a production environment, this would allow uploading and managing audio files.
               </p>
               
-              <div className="border rounded-md p-4 mb-4 bg-card">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium">Question 1</h4>
-                  <Badge>Multiple Choice</Badge>
-                </div>
-                <Input 
-                  value="What is 2 + 2?" 
-                  className="mb-2" 
-                  placeholder="Enter question"
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Audio URL
+                </label>
+                <Input
+                  value={content.audioUrl || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setContent({ ...content, audioUrl: e.target.value })
+                  }
+                  placeholder="Enter audio URL or upload a file"
                 />
-                <div className="space-y-2 ml-4">
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="1" id="q1-1" checked />
-                    <Input value="4" placeholder="Option 1" className="flex-1" />
-                    <Badge className="bg-green-100 text-green-800">Correct</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="2" id="q1-2" />
-                    <Input value="3" placeholder="Option 2" className="flex-1" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="3" id="q1-3" />
-                    <Input value="5" placeholder="Option 3" className="flex-1" />
-                  </div>
-                </div>
               </div>
               
-              <Button variant="outline" className="w-full">
-                + Add Question
-              </Button>
+              <div className="mt-4">
+                <Button variant="outline">Upload Audio File</Button>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'pdf':
+        return (
+          <div className="space-y-4">
+            <div className="p-4 border rounded-md bg-muted/40">
+              <p className="text-sm text-muted-foreground mb-2">
+                This is a placeholder for a PDF manager.
+                In a production environment, this would allow uploading and managing PDF files.
+              </p>
+              
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  PDF URL
+                </label>
+                <Input
+                  value={content.pdfUrl || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setContent({ ...content, pdfUrl: e.target.value })
+                  }
+                  placeholder="Enter PDF URL or upload a file"
+                />
+              </div>
+              
+              <div className="mt-4">
+                <Button variant="outline">Upload PDF File</Button>
+              </div>
             </div>
           </div>
         );
@@ -389,23 +416,22 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
       {/* Breadcrumb */}
       <div className="text-sm text-muted-foreground flex items-center gap-1">
         <span>Course:</span>
-        <Link href={`/dashboard/admin/courses/edit/${lesson.courseId}`} className="text-primary hover:underline">
-          {lesson.courseName}
+        <Link href={`/dashboard/admin/courses/edit/${lesson.id}`} className="text-primary hover:underline">
+          {lesson.title}
         </Link>
         <span>•</span>
         <span>Module:</span>
-        <Link href={`/dashboard/admin/content/modules/${lesson.moduleId}`} className="text-primary hover:underline">
-          {lesson.moduleName}
+        <Link href={`/dashboard/admin/content/modules/${lesson.module_id}`} className="text-primary hover:underline">
+          {lesson.title}
         </Link>
         <span>•</span>
-        <span>Lesson {lesson.order}</span>
+        <span>Lesson {lesson.sequence_number}</span>
       </div>
       
       {/* Lesson Type Indicator */}
       <div className="flex items-center gap-2">
-        {getLessonTypeIcon(type)}
-        <span className="font-medium">{type.charAt(0).toUpperCase() + type.slice(1)} Lesson</span>
-        {hasQuiz && <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Has Quiz</Badge>}
+        {getLessonTypeIcon(contentType)}
+        <span className="font-medium">{contentType.charAt(0).toUpperCase() + contentType.slice(1)} Lesson</span>
       </div>
       
       {/* Lesson Editor Tabs */}
@@ -454,8 +480,8 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                   Lesson Type
                 </label>
                 <Select 
-                  value={type} 
-                  onValueChange={(value: 'text' | 'video' | 'presentation' | 'quiz') => setType(value)}
+                  value={contentType} 
+                  onValueChange={(value: 'text' | 'pdf' | 'presentation' | 'video' | 'audio') => setContentType(value)}
                 >
                   <SelectTrigger id="lesson-type">
                     <SelectValue placeholder="Select lesson type" />
@@ -464,7 +490,8 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                     <SelectItem value="text">Text Content</SelectItem>
                     <SelectItem value="video">Video Lesson</SelectItem>
                     <SelectItem value="presentation">Presentation</SelectItem>
-                    <SelectItem value="quiz">Quiz</SelectItem>
+                    <SelectItem value="audio">Audio</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -505,22 +532,22 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                     id="duration"
                     type="number"
                     className="w-24"
-                    value={duration}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDuration(parseInt(e.target.value) || 0)}
+                    value={durationMinutes || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDurationMinutes(parseInt(e.target.value) || null)}
                   />
                 </div>
                 
                 <div className="flex items-center justify-between pt-2">
                   <div className="space-y-0.5">
-                    <Label htmlFor="hasQuiz">Include Quiz</Label>
+                    <Label htmlFor="isMandatory">Required for Completion</Label>
                     <p className="text-sm text-muted-foreground">
-                      Add a quiz at the end of this lesson
+                      Students must complete this lesson to progress
                     </p>
                   </div>
                   <Switch
-                    id="hasQuiz"
-                    checked={hasQuiz}
-                    onCheckedChange={setHasQuiz}
+                    id="isMandatory"
+                    checked={isMandatory}
+                    onCheckedChange={setIsMandatory}
                   />
                 </div>
               </div>
@@ -530,27 +557,80 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="requireCompletion">Required for Completion</Label>
+                    <Label htmlFor="status">Status</Label>
                     <p className="text-sm text-muted-foreground">
-                      Students must complete this lesson to progress
+                      Whether this lesson is published or archived
                     </p>
                   </div>
-                  <Switch
-                    id="requireCompletion"
-                    checked={true}
+                  <Select
+                    value={status}
+                    onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="tab-content space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="status">Status</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Whether this lesson is published or archived
+                    </p>
+                  </div>
+                  <Select
+                    value={status}
+                    onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
+                  >
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="sequence_number">Sequence Number</Label>
+                  <p className="text-sm text-muted-foreground">
+                    The order in which this lesson appears in the module
+                  </p>
+                  <Input
+                    id="sequence_number"
+                    type="number"
+                    min="1"
+                    value={sequenceNumber}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                      setSequenceNumber(parseInt(e.target.value, 10) || 1)
+                    }
+                    placeholder="Enter sequence number"
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="visibleToStudents">Visible to Students</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Whether this lesson is visible to enrolled students
-                    </p>
-                  </div>
-                  <Switch
-                    id="visibleToStudents"
-                    checked={true}
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="module_id">Module ID</Label>
+                  <p className="text-sm text-muted-foreground">
+                    The module this lesson belongs to
+                  </p>
+                  <Input
+                    id="module_id"
+                    value={moduleId}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                      setModuleId(e.target.value)
+                    }
+                    placeholder="Enter module ID"
+                    disabled // Usually this would be a dropdown of available modules
                   />
                 </div>
               </div>

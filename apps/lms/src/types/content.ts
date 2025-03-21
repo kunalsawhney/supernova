@@ -95,3 +95,26 @@ export interface ContentTree {
   course_id: string;
   items: ContentTreeItem[];
 } 
+
+export interface ContentStats {
+  total_courses: number;
+  published_courses: number;
+  draft_courses: number;
+  average_rating: number;
+}
+
+export interface ContentStatsViewModel {
+  totalCourses: number;
+  publishedCourses: number;
+  draftCourses: number;
+  averageRating: number;
+}
+
+export function transformContentStats(stats: ContentStats): ContentStatsViewModel {
+  return {
+    totalCourses: stats.total_courses,
+    publishedCourses: stats.published_courses,
+    draftCourses: stats.draft_courses,
+    averageRating: stats.average_rating,
+  };
+} 

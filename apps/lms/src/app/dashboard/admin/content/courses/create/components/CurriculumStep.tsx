@@ -30,6 +30,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { adminService } from '@/services/adminService';
 
 interface Module {
   id?: string;
@@ -303,9 +304,15 @@ export function CurriculumStep() {
     setEditingModuleId(undefined);
   };
 
-  const handleDeleteModule = (id: string) => {
+  const handleDeleteModule = async (id: string) => {
     setModules(modules.filter(m => m.id !== id));
-    // TODO: Add API call to delete module if backend integration is implemented
+    if (contentId) {
+      try {
+        await adminService.deleteModule(id);
+      } catch (error) {
+        console.error("Error deleting module:", error);
+      }
+    }
   };
 
   const handleToggleExpand = (id: string) => {

@@ -27,6 +27,7 @@ import {
   ScrollText,
   BarChart4
 } from 'lucide-react';
+import { ModuleViewModel, CourseViewModel } from '@/types';
 
 // Sample data interfaces
 interface LessonViewModel {
@@ -40,16 +41,16 @@ interface LessonViewModel {
   sequenceNumber: number;
 }
 
-interface ModuleBasicInfo {
-  id: string;
-  title: string;
-  courseId: string;
-}
+// interface ModuleBasicInfo {
+//   id: string;
+//   title: string;
+//   courseId: string;
+// }
 
-interface CourseBasicInfo {
-  id: string;
-  title: string;
-}
+// interface CourseBasicInfo {
+//   id: string;
+//   title: string;
+// }
 
 function getLessonTypeIcon(type: string) {
   switch (type) {
@@ -74,8 +75,8 @@ function LessonCard({
   onDelete 
 }: { 
   lesson: LessonViewModel;
-  module: ModuleBasicInfo | undefined;
-  course: CourseBasicInfo | undefined;
+  module: ModuleViewModel | undefined;
+  course: CourseViewModel | undefined;
   onEdit: (lessonId: string) => void;
   onDelete: (lessonId: string) => void;
 }) {
@@ -190,8 +191,8 @@ export default function LessonsPage() {
   const initialFetchRef = React.useRef(false);
   
   const [lessons, setLessons] = useState<LessonViewModel[]>([]);
-  const [modules, setModules] = useState<ModuleBasicInfo[]>([]);
-  const [courses, setCourses] = useState<CourseBasicInfo[]>([]);
+  const [modules, setModules] = useState<ModuleViewModel[]>([]);
+  const [courses, setCourses] = useState<CourseViewModel[]>([]);
   const [filteredLessons, setFilteredLessons] = useState<LessonViewModel[]>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -497,7 +498,7 @@ export default function LessonsPage() {
           {filteredLessons.map((lesson) => {
             const module = modules.find(m => m.id === lesson.moduleId);
             const course = module 
-              ? courses.find(c => c.id === module.courseId) 
+              ? courses.find(c => c.contentId === module.contentId) 
               : undefined;
               
             return (

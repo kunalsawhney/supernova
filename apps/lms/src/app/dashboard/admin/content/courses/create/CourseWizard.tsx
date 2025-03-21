@@ -60,7 +60,7 @@ export function CourseWizard({ isEditing = false, onComplete, onCancel }: Course
       if (onComplete) {
         onComplete(state.formData);
       } else {
-        router.push('/dashboard/admin/content-v2/courses');
+        router.push('/dashboard/admin/content/courses');
       }
     }
   };
@@ -78,7 +78,7 @@ export function CourseWizard({ isEditing = false, onComplete, onCancel }: Course
     if (onCancel) {
       onCancel();
     } else {
-      router.push('/dashboard/admin/content-v2/courses');
+      router.push('/dashboard/admin/content/courses');
     }
   };
 
