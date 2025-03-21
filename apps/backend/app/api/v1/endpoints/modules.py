@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.enums import CourseStatus
 from app.schemas.module import ModuleResponse, ModuleUpdate, ModuleCreate
 from app.services.course import CourseService
+from app.services.module import ModuleService
 
 router = APIRouter()
 
@@ -104,6 +105,30 @@ async def delete_module(
     """
     try:
         success = await CourseService.delete_module(db, current_user, module_id)
+        await db.commit()
+        return {"success": success}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/reorder", response_model=dict)
+async def reorder_modules(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    course_id: UUID,
+    module_ids: List[UUID]
+) -> dict:
+    """
+    Reorder modules within a course.
+    
+    Permissions:
+    - Super admins can reorder any modules
+    - School admins can reorder modules for courses their school has access to
+    - Instructors can reorder modules for courses they teach
+    """
+    try:
+        success = await ModuleService.reorder_modules(db, current_user, course_id, module_ids)
         await db.commit()
         return {"success": success}
     except Exception as e:

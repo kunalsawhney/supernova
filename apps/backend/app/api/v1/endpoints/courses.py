@@ -320,3 +320,30 @@ async def get_course_modules(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/{course_id}/structure", response_model=CourseWithContentResponse)
+async def get_course_structure(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    course_id: UUID = Path(...),
+    content_version: Optional[str] = Query(None, description="Specific content version to retrieve")
+) -> CourseWithContentResponse:
+    """
+    Get the complete structure of a course with all modules and lessons.
+    
+    Access control:
+    - Super admins can see all course content
+    - School admins can see content for courses their school has access to
+    - Instructors can see content for courses they teach
+    - Students can see content for courses they are enrolled in
+    """
+    try:
+        # Get the course with modules and lessons
+        course_with_content = await CourseService.get_course_structure(
+            db, current_user, course_id, content_version
+        )
+        return CourseWithContentResponse.model_validate(course_with_content)
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))

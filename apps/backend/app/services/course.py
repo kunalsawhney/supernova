@@ -703,6 +703,62 @@ class CourseService:
         return module
 
     @staticmethod
+    async def get_course_structure(
+        db: AsyncSession,
+        current_user: User,
+        course_id: UUID,
+        content_version: Optional[str] = None
+    ) -> Course:
+        """
+        Get the complete structure of a course with all modules and lessons.
+        If content_version is not provided, it will return the latest version.
+        """
+        # Check if course exists
+        course = await CourseService.get_course(db, current_user, course_id, True)
+        if not course:
+            raise NotFoundException("Course not found")
+            
+        # Get or create course content
+        from app.services.content import ContentService
+        
+        # Get version from the specified version or latest
+        if content_version:
+            version = await ContentService.get_course_version(
+                db, course_id, content_version
+            )
+            if not version:
+                raise NotFoundException(f"Course version {content_version} not found")
+        else:
+            # Get latest version
+            version = await ContentService.get_latest_course_version(
+                db, course_id
+            )
+            if not version:
+                # If no version exists yet, return the course without content
+                return course
+                
+        # Get content
+        content = await ContentService.get_course_content(
+            db, version.content_id
+        )
+        if not content:
+            raise NotFoundException("Course content not found")
+            
+        # Get modules with lessons
+        from app.services.module import ModuleService
+        modules = await ModuleService.list_modules_with_lessons(
+            db, content.id
+        )
+        
+        # Add modules to content
+        content.modules = modules
+        
+        # Add content to course
+        course.content = content
+        
+        return course
+
+    @staticmethod
     async def delete_module(
         db: AsyncSession,
         current_user: User,

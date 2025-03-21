@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.lesson import LessonResponse, LessonUpdate, LessonCreate
 from app.services.course import CourseService
+from app.services.lesson import LessonService
 
 router = APIRouter()
 
@@ -80,11 +81,9 @@ async def update_lesson(
     - Instructors can update lessons for courses they teach
     """
     try:
-        # TODO: Implement update_lesson in CourseService
-        # lesson = await CourseService.update_lesson(db, current_user, lesson_id, lesson_data)
-        # await db.commit()
-        # return LessonResponse.model_validate(lesson)
-        raise HTTPException(status_code=501, detail="Not implemented yet")
+        lesson = await LessonService.update_lesson(db, current_user, lesson_id, lesson_data)
+        await db.commit()
+        return LessonResponse.model_validate(lesson)
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
@@ -104,11 +103,33 @@ async def delete_lesson(
     - School admins can delete lessons for courses their school has access to
     """
     try:
-        # TODO: Implement delete_lesson in CourseService
-        # success = await CourseService.delete_lesson(db, current_user, lesson_id)
-        # await db.commit()
-        # return {"success": success}
-        raise HTTPException(status_code=501, detail="Not implemented yet")
+        success = await LessonService.delete_lesson(db, current_user, lesson_id)
+        await db.commit()
+        return {"success": success}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/reorder", response_model=dict)
+async def reorder_lessons(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    module_id: UUID,
+    lesson_ids: List[UUID]
+) -> dict:
+    """
+    Reorder lessons within a module.
+    
+    Permissions:
+    - Super admins can reorder any lessons
+    - School admins can reorder lessons for courses their school has access to
+    - Instructors can reorder lessons for courses they teach
+    """
+    try:
+        success = await LessonService.reorder_lessons(db, current_user, module_id, lesson_ids)
+        await db.commit()
+        return {"success": success}
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e)) 
