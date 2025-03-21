@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { adminService } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -150,6 +150,7 @@ const chartConfig = {
 };
 
 export default function AdminOverview() {
+  const initialFetchRef = useRef(false);
   const [platformStats, setPlatformStats] = useState<PlatformStats>({
     totalUsers: 0,
     totalSchools: 0,
@@ -169,7 +170,10 @@ export default function AdminOverview() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    if (!initialFetchRef.current) {
+      fetchDashboardData();
+      initialFetchRef.current = true;
+    }
   }, []);
 
   const fetchDashboardData = async () => {
@@ -182,12 +186,14 @@ export default function AdminOverview() {
       setSystemHealth(health);
     } catch (error) {
       console.error('Error fetching admin dashboard data:', error);
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleRefresh = () => {
+    initialFetchRef.current = false;
     fetchDashboardData();
   };
 

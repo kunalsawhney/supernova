@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
 import { Button } from '@/components/ui/button';
@@ -50,94 +50,6 @@ interface CourseBasicInfo {
   id: string;
   title: string;
 }
-
-// Sample data for demonstration
-const sampleLessons: LessonViewModel[] = [
-  {
-    id: "1",
-    title: "Introduction to Variables",
-    description: "Learn about variables and data types",
-    moduleId: "1",
-    type: "text",
-    duration: 15,
-    status: "published",
-    sequenceNumber: 1
-  },
-  {
-    id: "2",
-    title: "Math Operations Tutorial",
-    description: "Video explaining basic mathematical operations",
-    moduleId: "1",
-    type: "video",
-    duration: 20,
-    status: "published",
-    sequenceNumber: 2
-  },
-  {
-    id: "3",
-    title: "Variables and Operations Quiz",
-    description: "Test your knowledge on variables and basic operations",
-    moduleId: "1",
-    type: "quiz",
-    duration: 10,
-    status: "published",
-    sequenceNumber: 3
-  },
-  {
-    id: "4",
-    title: "Cell Structure",
-    description: "Understanding the components of a cell",
-    moduleId: "3",
-    type: "presentation",
-    duration: 25,
-    status: "draft",
-    sequenceNumber: 1
-  },
-  {
-    id: "5",
-    title: "Cell Functions",
-    description: "How cells perform various functions in organisms",
-    moduleId: "3",
-    type: "text",
-    duration: 15,
-    status: "published",
-    sequenceNumber: 2
-  }
-];
-
-const sampleModules: ModuleBasicInfo[] = [
-  {
-    id: "1",
-    title: "Introduction to Mathematics",
-    courseId: "1"
-  },
-  {
-    id: "2",
-    title: "Advanced Algebra",
-    courseId: "1"
-  },
-  {
-    id: "3",
-    title: "Introduction to Biology",
-    courseId: "2"
-  },
-  {
-    id: "4",
-    title: "Genetics and DNA",
-    courseId: "2"
-  }
-];
-
-const sampleCourses: CourseBasicInfo[] = [
-  {
-    id: "1",
-    title: "Mathematics 101"
-  },
-  {
-    id: "2",
-    title: "Biology Fundamentals"
-  }
-];
 
 function getLessonTypeIcon(type: string) {
   switch (type) {
@@ -275,6 +187,7 @@ function LessonCard({
 
 export default function LessonsPage() {
   const router = useRouter();
+  const initialFetchRef = React.useRef(false);
   
   const [lessons, setLessons] = useState<LessonViewModel[]>([]);
   const [modules, setModules] = useState<ModuleBasicInfo[]>([]);
@@ -291,7 +204,10 @@ export default function LessonsPage() {
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    fetchData();
+    if (!initialFetchRef.current) {
+      fetchData();
+      initialFetchRef.current = true;
+    }
   }, []);
   
   useEffect(() => {
@@ -310,16 +226,21 @@ export default function LessonsPage() {
       
       // In a real app, you would fetch actual data from your API
       // For now, we'll use the sample data
+      const lessonsData = await adminService.getLessons();
+      const modulesData = await adminService.getModules();
+      const coursesData = await adminService.getCourses();
       
-      setLessons(sampleLessons);
-      setModules(sampleModules);
-      setCourses(sampleCourses);
-      setFilteredLessons(sampleLessons);
+      setLessons(lessonsData);
+      // Cast the modules data to the expected type before setting state
+      setModules(modulesData as unknown as ModuleBasicInfo[]);
+      setCourses(coursesData);
+      setFilteredLessons(lessonsData);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
       console.error('Error fetching data:', err);
+      initialFetchRef.current = false; // Reset so we can try again
     } finally {
       setLoading(false);
     }

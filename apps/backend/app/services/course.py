@@ -258,6 +258,8 @@ class CourseService:
                 if latest_version:
                     # Set the ID of the latest version
                     setattr(course, 'latest_version_id', latest_version.id)
+                    # Also set the content_id from the latest version's content_id
+                    setattr(course, 'content_id', latest_version.content_id)
             else:
                 # Simple course query without content
                 result = await db.execute(query)
@@ -265,6 +267,21 @@ class CourseService:
                 
                 if not course:
                     raise NotFoundException("Course not found")
+                
+                # Even for simple queries, get content_id from the latest version
+                if hasattr(course, 'versions') and course.versions:
+                    latest_version = max(course.versions, key=lambda v: v.valid_from)
+                    setattr(course, 'content_id', latest_version.content_id)
+                else:
+                    # If no versions are loaded, we need to query for the latest version
+                    version_query = select(CourseVersion).where(
+                        CourseVersion.course_id == course_id
+                    ).order_by(CourseVersion.valid_from.desc())
+                    version_result = await db.execute(version_query)
+                    latest_version = version_result.scalar_one_or_none()
+                    
+                    if latest_version:
+                        setattr(course, 'content_id', latest_version.content_id)
             
             # Check access permissions
             if current_user.role != UserRole.SUPER_ADMIN:
@@ -283,53 +300,95 @@ class CourseService:
         skip: int = 0,
         limit: int = 100,
         status: Optional[CourseStatus] = None,
-        search: Optional[str] = None
-    ) -> List[Course]:
+        search: Optional[str] = None,
+        with_content: Optional[bool] = False
+    ):
         """List courses based on user role and access."""
-        query = select(Course).where(Course.is_deleted == False)
-
-        # Apply filters
-        if status:
-            query = query.where(Course.status == status)
-        
-        if search:
-            search_filter = or_(
-                Course.title.ilike(f"%{search}%"),
-                Course.description.ilike(f"%{search}%"),
-                Course.code.ilike(f"%{search}%")
-            )
-            query = query.where(search_filter)
-
-        # Apply role-based filtering
-        if current_user.role == UserRole.SUPER_ADMIN:
-            pass  # Can see all courses
-        elif current_user.role == UserRole.INDIVIDUAL_USER:
-            # Show only D2C courses or enrolled courses
-            enrollments_query = select(CourseEnrollment.course_id).where(
-                CourseEnrollment.individual_user_id == current_user.id
-            )
-            query = query.where(
-                or_(
-                    Course.id.in_(enrollments_query),
-                    Course.is_d2c_enabled == True
+        try:
+            # Build base query
+            query = select(Course).where(Course.is_deleted == False)
+    
+            # Apply filters
+            if status:
+                query = query.where(Course.status == status)
+    
+            if search:
+                search_filter = or_(
+                    Course.title.ilike(f"%{search}%"),
+                    Course.description.ilike(f"%{search}%"),
+                    Course.code.ilike(f"%{search}%")
                 )
-            )
-        else:
-            # B2B users can see courses licensed to their school
-            licenses_query = select(CourseLicense.course_id).where(
-                and_(
-                    CourseLicense.school_id == current_user.school_id,
-                    CourseLicense.is_active == True
+                query = query.where(search_filter)
+    
+            # Apply role-based filtering
+            if current_user.role == UserRole.SUPER_ADMIN:
+                pass  # Can see all courses
+            elif current_user.role == UserRole.INDIVIDUAL_USER:
+                # Show only D2C courses or enrolled courses
+                enrollments_query = select(CourseEnrollment.course_id).where(
+                    CourseEnrollment.individual_user_id == current_user.id
                 )
-            )
-            query = query.where(Course.id.in_(licenses_query))
-
-        # Apply pagination
-        query = query.offset(skip).limit(limit)
-        
-        # Execute query
-        result = await db.execute(query)
-        return result.scalars().all()
+                enrollments_result = await db.execute(enrollments_query)
+                enrollment_ids = [row[0] for row in enrollments_result.all()]
+                
+                query = query.where(
+                    or_(
+                        Course.id.in_(enrollment_ids),
+                        Course.is_d2c_enabled == True
+                    )
+                )
+            else:
+                # B2B users can see courses licensed to their school
+                licenses_query = select(CourseLicense.course_id).where(
+                    and_(
+                        CourseLicense.school_id == current_user.school_id,
+                        CourseLicense.is_active == True
+                    )
+                )
+                licenses_result = await db.execute(licenses_query)
+                license_ids = [row[0] for row in licenses_result.all()]
+                
+                query = query.where(Course.id.in_(license_ids))
+    
+            # Apply minimal loading for basic course details
+            if not with_content:
+                # Simple query without content
+                query = query.options(selectinload(Course.versions))
+            
+            # Apply pagination
+            query = query.offset(skip).limit(limit)
+            
+            # Execute base query to get courses
+            result = await db.execute(query)
+            courses = result.scalars().all()
+            
+            # If with_content is True, we'll load content in a separate loop to avoid async issues
+            if with_content and courses:
+                # Prepare a list to store updated courses
+                updated_courses = []
+                
+                # Process each course individually
+                for course in courses:
+                    # Get the course with full content directly
+                    course_with_content = await CourseService.get_course(
+                        db, current_user, course.id, with_content=True
+                    )
+                    updated_courses.append(course_with_content)
+                
+                return updated_courses
+            else:
+                # For courses without content, still set the content_id from the latest version
+                for course in courses:
+                    if hasattr(course, 'versions') and course.versions:
+                        latest_version = max(course.versions, key=lambda v: v.valid_from)
+                        setattr(course, 'content_id', latest_version.content_id)
+                        setattr(course, 'latest_version_id', latest_version.id)
+            
+            return courses
+            
+        except Exception as e:
+            print(f"Error in list_courses: {str(e)}")
+            raise
 
     @staticmethod
     async def delete_course(

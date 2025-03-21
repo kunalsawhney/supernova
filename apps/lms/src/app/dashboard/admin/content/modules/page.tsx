@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminService } from '@/services/adminService';
 import { ModuleViewModel } from '@/types/module';
@@ -27,13 +27,16 @@ import {
   FileText
 } from 'lucide-react';
 
-function ModuleCard({ module, course, onEdit, onDelete }: { 
+// Create a memoized version of ModuleCard to prevent unnecessary re-renders
+const ModuleCard = React.memo(function ModuleCard({ module, course, onEdit, onDelete }: { 
   module: ModuleViewModel; 
   course: CourseViewModel | undefined;
   onEdit: (moduleId: string) => void;
   onDelete: (moduleId: string) => void;
 }) {
-  console.log('ModuleCard', module, course);
+  // Remove this console.log or wrap in a conditional for development only
+  // console.log('ModuleCard', module, course);
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
@@ -117,10 +120,11 @@ function ModuleCard({ module, course, onEdit, onDelete }: {
       </CardFooter>
     </Card>
   );
-}
+});
 
 export default function ModulesPage() {
   const router = useRouter();
+  const initialFetchRef = React.useRef(false);
   
   const [modules, setModules] = useState<ModuleViewModel[]>([]);
   const [courses, setCourses] = useState<CourseViewModel[]>([]);
@@ -133,23 +137,15 @@ export default function ModulesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  useEffect(() => {
-    fetchData();
-  }, []);
-  
-  useEffect(() => {
-    filterModules();
-  }, [modules, searchQuery, courseFilter, statusFilter]);
-  
-  const fetchData = async () => {
+  // Use useCallback to memoize the fetchData function
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       // In a real app, you would fetch actual data from your API
-      // For now, we'll use the sample data
       const modulesData = await adminService.getModules();
-      const coursesData = await adminService.getCourses();
+      const coursesData = await adminService.getCourses({ with_content: true });
       
       setModules(modulesData);
       setCourses(coursesData);
@@ -159,12 +155,14 @@ export default function ModulesPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
       console.error('Error fetching data:', err);
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
-  const filterModules = () => {
+  // Use useCallback to memoize the filterModules function
+  const filterModules = useCallback(() => {
     let filtered = [...modules];
     
     // Apply course filter
@@ -187,17 +185,114 @@ export default function ModulesPage() {
     }
     
     setFilteredModules(filtered);
-  };
+  }, [modules, searchQuery, courseFilter, statusFilter]);
   
-  const handleEditModule = (moduleId: string) => {
+  // Memoize the handler functions
+  const handleEditModule = useCallback((moduleId: string) => {
     router.push(`/dashboard/admin/content/modules/${moduleId}`);
-  };
+  }, [router]);
   
-  const handleDeleteModule = (moduleId: string) => {
-    // This would open a confirmation dialog in a real app
-    // For now, we'll just remove it from the list
-    setModules(modules.filter(module => module.id !== moduleId));
-  };
+  const handleDeleteModule = useCallback(async (moduleId: string) => {
+    try {
+      await adminService.deleteModule(moduleId);
+      // Reset ref so manual fetches still work
+      initialFetchRef.current = false;
+      fetchData();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete module';
+      setError(errorMessage);
+      console.error('Error deleting module:', err);
+    }
+  }, [fetchData]);
+  
+  // Load data on initial render and update filters when data changes
+  useEffect(() => {
+    if (!initialFetchRef.current) {
+      fetchData();
+      initialFetchRef.current = true;
+    }
+  }, [fetchData]);
+  
+  // Filter modules when filter criteria change
+  useEffect(() => {
+    filterModules();
+  }, [filterModules]);
+
+  // Memoize the courseFinder function to prevent re-creation every render
+  const courseFinder = useCallback((moduleContentId: string | undefined) => {
+    if (!moduleContentId) return undefined;
+    return courses.find(c => c.contentId === moduleContentId);
+  }, [courses]);
+  
+  // Memoize clear filters function
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setCourseFilter('all');
+    setStatusFilter('all');
+  }, []);
+  
+  // Memoize filter handlers
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+  
+  const handleCourseFilterChange = useCallback((value: string) => {
+    setCourseFilter(value);
+  }, []);
+  
+  const handleStatusFilterChange = useCallback((value: string) => {
+    setStatusFilter(value);
+  }, []);
+  
+  // Memoize the filtered modules list
+  const moduleElements = useMemo(() => {
+    if (filteredModules.length === 0) {
+      return (
+        <Card className="border">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-muted p-3 mb-3">
+              <Layers className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-1">No modules found</h3>
+            <p className="text-muted-foreground text-sm mb-4 max-w-md">
+              {searchQuery || courseFilter !== 'all' || statusFilter !== 'all'
+                ? "No modules match your current filters. Try adjusting your search criteria."
+                : "No modules have been added to the system yet."}
+            </p>
+            {searchQuery || courseFilter !== 'all' || statusFilter !== 'all' ? (
+              <Button 
+                variant="outline" 
+                onClick={handleClearFilters}
+              >
+                Clear filters
+              </Button>
+            ) : (
+              <Link href="/dashboard/admin/content/courses">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create a module
+                </Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return (
+      <div className="space-y-4">
+        {filteredModules.map((module) => (
+          <ModuleCard 
+            key={module.id} 
+            module={module} 
+            course={courseFinder(module.contentId)}
+            onEdit={handleEditModule} 
+            onDelete={handleDeleteModule}
+          />
+        ))}
+      </div>
+    );
+  }, [filteredModules, searchQuery, courseFilter, statusFilter, courseFinder, handleEditModule, handleDeleteModule, handleClearFilters]);
   
   if (loading) {
     return (
@@ -214,9 +309,12 @@ export default function ModulesPage() {
         <AlertCircle className="h-5 w-5" />
         <div>{error}</div>
         <Button 
-          variant="outline" 
+          variant="outline"
           size="sm" 
-          onClick={fetchData}
+          onClick={() => {
+            initialFetchRef.current = false;
+            fetchData();
+          }}
           className="ml-auto border-red-300 dark:border-red-800/30 text-red-800 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30"
         >
           <RefreshCcw className="h-4 w-4 mr-2" />
@@ -256,12 +354,12 @@ export default function ModulesPage() {
                   placeholder="Search modules by title or description..."
                   className="pl-9"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>
             <div>
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
+              <Select value={courseFilter} onValueChange={handleCourseFilterChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by course" />
                 </SelectTrigger>
@@ -278,7 +376,7 @@ export default function ModulesPage() {
               </Select>
             </div>
             <div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -302,11 +400,7 @@ export default function ModulesPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setCourseFilter('all');
-                setStatusFilter('all');
-              }}
+              onClick={handleClearFilters}
               className="text-muted-foreground hover:text-foreground"
             >
               Clear Filters
@@ -316,52 +410,7 @@ export default function ModulesPage() {
       </Card>
       
       {/* Modules List */}
-      {filteredModules.length === 0 ? (
-        <Card className="border">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-muted p-3 mb-3">
-              <Layers className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium mb-1">No modules found</h3>
-            <p className="text-muted-foreground text-sm mb-4 max-w-md">
-              {searchQuery || courseFilter !== 'all' || statusFilter !== 'all'
-                ? "No modules match your current filters. Try adjusting your search criteria."
-                : "No modules have been added to the system yet."}
-            </p>
-            {searchQuery || courseFilter !== 'all' || statusFilter !== 'all' ? (
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchQuery('');
-                  setCourseFilter('all');
-                  setStatusFilter('all');
-                }}
-              >
-                Clear filters
-              </Button>
-            ) : (
-              <Link href="/dashboard/admin/content/courses">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create a module
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {filteredModules.map((module) => (
-            <ModuleCard 
-              key={module.id} 
-              module={module} 
-              course={courses.find(c => c.id === module.courseId)}
-              onEdit={handleEditModule} 
-              onDelete={handleDeleteModule}
-            />
-          ))}
-        </div>
-      )}
+      {moduleElements}
     </div>
   );
 } 

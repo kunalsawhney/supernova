@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ChevronUp, ChevronDown, Save, RefreshCw, ArrowLeft } from 'lucide-react';
 import { CourseWizardProvider } from '@/contexts/CourseWizardContext';
-import { CourseWizard } from '../../create/CourseWizard';
+import { CourseWizard } from '../create/CourseWizard';
 import { QuickEditInterface } from './components/QuickEditInterface';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';

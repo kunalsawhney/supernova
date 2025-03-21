@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { adminService } from '@/services';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -44,6 +44,8 @@ import {
 
 export default function UsersTab() {
   const router = useRouter();
+  const initialFetchRef = React.useRef(false);
+  
   const [users, setUsers] = useState<UserViewModel[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserViewModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,10 @@ export default function UsersTab() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchUsers();
+    if (!initialFetchRef.current) {
+      fetchUsers();
+      initialFetchRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -66,10 +71,12 @@ export default function UsersTab() {
       setLoading(true);
       const transformedUsers = await adminService.getUsers();
       setUsers(transformedUsers);
+      setFilteredUsers(transformedUsers);
       setError(null);
     } catch (err) {
       setError('Failed to fetch users');
       console.error('Error fetching users:', err);
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setLoading(false);
     }

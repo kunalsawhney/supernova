@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminService } from '@/services/adminService';
 import { SchoolViewModel } from '@/types/school';
@@ -36,6 +36,7 @@ export default function EditSchoolPage() {
   const router = useRouter();
   const params = useParams();
   const schoolId = params.id as string;
+  const initialFetchRef = useRef(false);
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,8 @@ export default function EditSchoolPage() {
   });
 
   useEffect(() => {
+    if (initialFetchRef.current) return;
+    
     // Load school data from localStorage
     const storedSchool = localStorage.getItem('editSchool');
     if (storedSchool) {
@@ -88,6 +91,8 @@ export default function EditSchoolPage() {
       // If no stored school, fetch from API
       fetchSchool();
     }
+    
+    initialFetchRef.current = true;
   }, [schoolId]);
 
   const fetchSchool = async () => {
@@ -111,6 +116,7 @@ export default function EditSchoolPage() {
     } catch (err) {
       console.error('Error fetching school:', err);
       setError('Failed to fetch school data');
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setLoading(false);
     }

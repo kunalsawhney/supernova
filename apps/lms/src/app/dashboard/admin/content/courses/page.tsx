@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { adminService } from '@/services/adminService';
 import { CourseViewModel } from '@/types/course';
 import Link from 'next/link';
@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 import { 
   AlertCircle, 
   Book, 
@@ -23,12 +25,17 @@ import {
   RefreshCcw,
   Search, 
   Trash2, 
-  BookOpen
+  BookOpen,
+  MoreVertical,
+  RefreshCw,
+  Edit,
+  Trash
 } from 'lucide-react';
 
-const CourseCard = ({ course, onEdit, onDelete }: { 
+const CourseCard = ({ course, onQuickEdit, onWizardEdit, onDelete }: { 
   course: CourseViewModel; 
-  onEdit: (courseId: string) => void;
+  onQuickEdit: (courseId: string) => void;
+  onWizardEdit: (courseId: string) => void;
   onDelete: (courseId: string) => void;
 }) => {
   const getStatusBadge = (status: string) => {
@@ -59,15 +66,37 @@ const CourseCard = ({ course, onEdit, onDelete }: {
             <CardDescription>{course.description || 'No description provided'}</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button 
+            {/* <Button 
               variant="ghost" 
               size="sm" 
               className="text-muted-foreground hover:text-foreground"
-              onClick={() => onEdit(course.id)}
+              onClick={() => onQuickEdit(course.id)}
             >
               <Pencil className="h-4 w-4 mr-1" />
               Edit
-            </Button>
+            </Button> */}
+            <div className="">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onQuickEdit(course.id)}>
+                    <Edit className="h-4 w-4 mr-2" /> Quick Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onWizardEdit(course.id)}>
+                    <RefreshCw className="h-4 w-4 mr-2" /> Wizard Edit
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -119,10 +148,10 @@ const CourseCard = ({ course, onEdit, onDelete }: {
         )}
       </CardContent>
       <CardFooter className="pt-2 flex justify-end">
-        <Link href={`/dashboard/admin/content/courses/${course.id}`} className="w-full">
+        <Link href={`/dashboard/admin/content/modules?courseId=${course.id}`} className="w-full">
           <Button variant="outline" size="sm" className="w-full">
             <FileEdit className="h-4 w-4 mr-2" />
-            View Course Details
+            Manage Modules
           </Button>
         </Link>
       </CardFooter>
@@ -132,6 +161,7 @@ const CourseCard = ({ course, onEdit, onDelete }: {
 
 export default function CoursesPage() {
   const router = useRouter();
+  const initialFetchRef = React.useRef(false);
 
   const [courses, setCourses] = useState<CourseViewModel[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseViewModel[]>([]);
@@ -147,7 +177,10 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseViewModel | null>(null);
 
   useEffect(() => {
-    fetchCourses();
+    if (!initialFetchRef.current) {
+      fetchCourses();
+      initialFetchRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -156,11 +189,13 @@ export default function CoursesPage() {
 
   const handleRefresh: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    initialFetchRef.current = false;
     void fetchCourses(true);
   };
 
   const handleRetry: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.preventDefault();
+    initialFetchRef.current = false;
     void fetchCourses(false);
   };
 
@@ -183,6 +218,7 @@ export default function CoursesPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch courses';
       setError(errorMessage);
       console.error('Error fetching courses:', err);
+      initialFetchRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -215,8 +251,12 @@ export default function CoursesPage() {
     setFilteredCourses(filtered);
   };
 
-  const handleEditCourse = (courseId: string) => {
-    router.push(`/dashboard/admin/content/courses/edit/${courseId}`);
+  const handleQuickEdit = (courseId: string) => {
+    router.push(`/dashboard/admin/content/courses/${courseId}`);
+  };
+
+  const handleWizardEdit = (courseId: string) => {
+    router.push(`/dashboard/admin/content/courses/${courseId}?mode=wizard`);
   };
 
   const confirmDelete = (courseId: string) => {
@@ -293,7 +333,7 @@ export default function CoursesPage() {
             <RefreshCcw className="h-4 w-4" />
             Refresh
           </Button>
-          <Link href="/dashboard/admin/content/courses/add">
+          <Link href="/dashboard/admin/content/courses/create">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Add Course
@@ -419,7 +459,8 @@ export default function CoursesPage() {
             <CourseCard 
               key={course.id} 
               course={course}
-              onEdit={handleEditCourse}
+              onQuickEdit={handleQuickEdit}
+              onWizardEdit={handleWizardEdit}
               onDelete={confirmDelete}
             />
           ))}

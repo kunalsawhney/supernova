@@ -55,16 +55,23 @@ async def list_courses(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     status: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    with_content: Optional[bool] = Query(False, description="Include content information")
 ) -> List[CourseResponse]:
     """List courses based on user role and filters."""
     try:
         courses = await CourseService.list_courses(
             db, current_user, skip=skip, limit=limit,
-            status=status, search=search
+            status=status, search=search, with_content=with_content
         )
-        # print("Courses fetched", courses)
-        return [CourseResponse.model_validate(course) for course in courses]
+        print("Courses fetched", courses)
+        for course in courses:
+            print("Course: ", course.__dict__)
+        
+        if with_content:
+            return [CourseWithContentResponse.model_validate(course) for course in courses]
+        else:
+            return [CourseResponse.model_validate(course) for course in courses]
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail=str(e))
@@ -229,6 +236,23 @@ async def add_module_to_content(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.delete("/modules/{module_id}/")
+async def delete_module(
+    module_id: UUID,
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> dict:
+    """Delete a module."""
+    try:
+        await ModuleService.delete_module(db, current_user, module_id)
+        await db.commit()
+        return {"success": True}
+    except Exception as e:
+        print(e)
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.put("/modules/{module_id}/", response_model=ModuleResponse)
 async def update_module(
     *,
@@ -271,6 +295,23 @@ async def add_lesson_to_module(
         print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/lessons/{lesson_id}/")
+async def delete_lesson(
+    lesson_id: UUID,
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> dict:
+    """Delete a lesson."""
+    try:
+        await LessonService.delete_lesson(db, current_user, lesson_id)
+        await db.commit()
+        return {"success": True}
+    except Exception as e:
+        print(e)
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(e)) 
 
 @router.get("/{course_id}/modules/", response_model=List[ModuleResponse])
 async def get_course_modules(

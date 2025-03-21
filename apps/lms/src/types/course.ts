@@ -30,6 +30,7 @@ export interface Course {
   is_active: boolean;
   is_deleted: boolean;
   deleted_at?: string;
+  content_id?: string;
 }
 
 export interface CourseVersion {
@@ -121,6 +122,7 @@ export interface CourseViewModel {
   isDeleted: boolean;
   deletedAt?: string;
   metadata?: Record<string, any>;
+  contentId?: string;
 }
 
 export interface CourseContentViewModel {
@@ -229,6 +231,7 @@ export const transformCourse = (course: Course): CourseViewModel => ({
   isActive: course.is_active,
   isDeleted: course.is_deleted,
   deletedAt: course.deleted_at,
+  contentId: course.content_id,
 });
 
 export const transformCourseContent = (content: any): CourseContentViewModel => ({

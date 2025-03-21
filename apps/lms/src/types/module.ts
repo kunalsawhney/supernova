@@ -12,6 +12,7 @@ export interface Module {
   created_at: string;
   updated_at: string;
   metadata?: Record<string, any>;
+  content_id: string;
 }
 
 export interface ModuleViewModel {
@@ -25,6 +26,7 @@ export interface ModuleViewModel {
   status: 'draft' | 'published' | 'archived';
   createdAt?: string;
   updatedAt?: string;
+  contentId?: string;
 }
 
 export interface CreateModuleData {
@@ -53,6 +55,7 @@ export function transformModule(module: Module): ModuleViewModel {
     totalDuration: 0, // This would be filled in by the application code
     status: module.status,
     createdAt: module.created_at,
-    updatedAt: module.updated_at
+    updatedAt: module.updated_at,
+    contentId: module.content_id
   };
 } 

@@ -242,18 +242,23 @@ export const adminService = {
    * @returns Transformed course view models ready for UI display
    */
   getCourses: withCache(
-    async (params?: PaginationParams & { status?: string, search?: string }): Promise<CourseViewModel[]> => {
+    async (params?: PaginationParams & { status?: string, search?: string, with_content?: boolean }): Promise<CourseViewModel[]> => {
       try {
-        console.log('Fetching courses', params);
+        // Single console log for debugging, can be removed in production
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Fetching courses', params);
+        }
+        
         // Use trailing slash to avoid redirect
         const response = await api.get<any[]>('/courses/', { params });
-        console.log('Courses fetched', response);
+        
         // Normalize each course in the response
         const courses: Course[] = response.map(courseData => ({
           ...courseData,
           content_versions: courseData.content_versions || courseData.versions || []
         }));
-        console.log('Courses transformed', courses);
+        
+        // Transform and return without additional logging
         return courses.map(transformCourse);
       } catch (error) {
         throw handleApiError(error, 'Failed to fetch courses');
@@ -450,10 +455,17 @@ export const adminService = {
     status?: string; 
     course_id?: string;
     search?: string;
-  }): Promise<any[]> {
+  }): Promise<ModuleViewModel[]> {
     try {
-      const response = await api.get<any[]>('/modules', { params });
-      return response;
+      // Single console log for debugging, can be removed in production
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Fetching modules', params);
+      }
+      
+      const response = await api.get<any[]>('/modules/', { params });
+      
+      // Transform the modules without logging
+      return response.map(module => transformModule(module));
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch modules');
     }
@@ -481,6 +493,20 @@ export const adminService = {
       return transformModule(module);
     } catch (error) {
       throw handleApiError(error, 'Failed to add module');
+    }
+  },
+
+  /**
+   * Delete a module
+   */
+  async deleteModule(moduleId: string): Promise<void> {
+    try {
+      console.log('Deleting module', moduleId);
+      await api.delete(`/courses/modules/${moduleId}/`);
+      clearCacheByPrefix(`course_${moduleId}`);
+      console.log('Module deleted', moduleId);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete module ${moduleId}`);
     }
   },
 
@@ -524,6 +550,19 @@ export const adminService = {
       return response;
     } catch (error) {
       throw handleApiError(error, 'Failed to add lesson');
+    }
+  },
+
+  /**
+   * Delete a lesson
+   */
+  async deleteLesson(lessonId: string): Promise<void> {
+    try {
+      console.log('Deleting lesson', lessonId);
+      await api.delete(`/courses/lessons/${lessonId}/`);
+      console.log('Lesson deleted', lessonId);
+    } catch (error) {
+      throw handleApiError(error, `Failed to delete lesson ${lessonId}`);
     }
   },
 
@@ -616,17 +655,6 @@ export const adminService = {
     }
   },
   
-  /**
-   * Delete a module
-   */
-  async deleteModule(moduleId: string): Promise<void> {
-    try {
-      await api.delete<void>(`/admin/modules/${moduleId}`);
-    } catch (error) {
-      throw handleApiError(error, `Failed to delete module ${moduleId}`);
-    }
-  },
-
   /**
    * Save course as draft
    */

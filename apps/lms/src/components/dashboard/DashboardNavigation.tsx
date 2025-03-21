@@ -107,18 +107,6 @@ const navigationConfig = {
       ]
     },
     {
-      category: 'Content V2',
-      items: [
-        { label: 'Overview', href: '/dashboard/admin/content-v2', icon: 'FiBook' },
-        { label: 'Courses', href: '/dashboard/admin/content-v2/courses', icon: 'FiBookmark' },
-        { label: 'Create Course', href: '/dashboard/admin/content-v2/courses/create', icon: 'FiPlus' },
-        { label: 'Modules', href: '/dashboard/admin/content-v2/modules', icon: 'FiServer' },
-        { label: 'Create Module', href: '/dashboard/admin/content-v2/modules/create', icon: 'FiPlus' },
-        { label: 'Lessons', href: '/dashboard/admin/content-v2/lessons', icon: 'FiClipboard' },
-        { label: 'Create Lesson', href: '/dashboard/admin/content-v2/lessons/create', icon: 'FiPlus' },
-      ]
-    },
-    {
       category: 'System',
       items: [
         { label: 'Settings', href: '/dashboard/admin/settings', icon: 'FiSettings' },

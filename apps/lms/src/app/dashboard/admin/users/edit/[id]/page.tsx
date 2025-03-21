@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { adminService } from '@/services';
 import { ApiUser, UserViewModel } from '@/types/admin';
@@ -40,6 +40,7 @@ export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
+  const initialFetchRef = useRef(false);
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,6 +57,8 @@ export default function EditUserPage() {
   });
 
   useEffect(() => {
+    if (initialFetchRef.current) return;
+    
     // Load user data from localStorage
     const storedUser = localStorage.getItem('editUser');
     if (storedUser) {
@@ -84,6 +87,8 @@ export default function EditUserPage() {
       // If no stored user, fetch from API
       fetchUser();
     }
+    
+    initialFetchRef.current = true;
   }, [userId]);
 
   const fetchUser = async () => {
@@ -102,6 +107,7 @@ export default function EditUserPage() {
     } catch (err) {
       console.error('Error fetching user:', err);
       setError('Failed to fetch user data');
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setInitialLoading(false);
     }

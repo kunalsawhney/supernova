@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -47,6 +47,8 @@ type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled' | 'past_d
 
 export default function SchoolsTab() {
   const router = useRouter();
+  const initialFetchRef = React.useRef(false);
+  
   const [schools, setSchools] = useState<School[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,10 @@ export default function SchoolsTab() {
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
 
   useEffect(() => {
-    fetchSchools();
+    if (!initialFetchRef.current) {
+      fetchSchools();
+      initialFetchRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -74,6 +79,7 @@ export default function SchoolsTab() {
     } catch (err) {
       setError('Failed to fetch schools');
       console.error('Error fetching schools:', err);
+      initialFetchRef.current = false; // Reset for retry
     } finally {
       setLoading(false);
     }

@@ -65,16 +65,7 @@ export const courseService = {
     { ttl: 0.01 * 60 * 1000 } // 0.01 minutes cache
   ),
 
-  /**
-   * Delete a course
-   */
-  async deleteCourse(courseId: string): Promise<void> {
-    console.log('Deleting course', courseId);
-    await api.delete(`/courses/${courseId}/`);
-    clearCacheByPrefix(`course_${courseId}`);
-    console.log('Course deleted', courseId);
-  },
-
+  
   /**
    * Enroll the current user in a course
    */

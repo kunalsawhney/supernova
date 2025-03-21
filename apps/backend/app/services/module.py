@@ -121,14 +121,13 @@ class ModuleService:
         if not module:
             raise NotFoundException("Module not found")
             
-        # Check if content exists
-        content = await db.get(CourseContent, module.course_content_id)
-        if not content:
-            raise NotFoundException("Course content not found")
+        # # Check if content exists
+        # content = await db.get(CourseContent, module.course_content_id)
+        # if not content:
+        #     raise NotFoundException("Course content not found")
             
         # Check permissions
-        if (current_user.role != UserRole.SUPER_ADMIN and 
-                content.course.created_by_id != current_user.id):
+        if (current_user.role != UserRole.SUPER_ADMIN):
             raise PermissionError("You don't have permission to delete this module")
             
         # Delete module
