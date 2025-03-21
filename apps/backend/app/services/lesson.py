@@ -77,7 +77,7 @@ class LessonService:
         # Create lesson
         lesson = Lesson(
             **lesson_data_dict,
-            status=LessonStatus.draft
+            # status=LessonStatus.DRAFT
         )
         db.add(lesson)
         await db.flush()

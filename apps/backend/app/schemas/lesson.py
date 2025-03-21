@@ -9,7 +9,7 @@ from pydantic import (
     ConfigDict
 )
 
-from app.models.enums import LessonStatus, ResourceType
+from app.models.enums import LessonStatus, ResourceType, ContentType
 from app.schemas.shared import BaseSchema
 
 
@@ -76,8 +76,10 @@ class LessonBase(BaseModel):
     description: Optional[str] = None
     sequence_number: int = Field(..., ge=1)
     duration_minutes: Optional[int] = Field(None, ge=0)
-    settings: Optional[Dict[str, Any]] = None
-    
+    content_type: ContentType = Field(..., description="Type of content in the lesson")
+    is_mandatory: bool = Field(True, description="Whether the lesson is mandatory")
+    content: Optional[Dict[str, Any]] = None
+
     model_config = ConfigDict(
         from_attributes=True,
         extra="forbid"
@@ -87,6 +89,7 @@ class LessonBase(BaseModel):
 class LessonCreate(LessonBase):
     """Schema for creating a lesson."""
     module_id: UUID
+
     
     model_config = ConfigDict(
         extra="forbid",
@@ -109,7 +112,7 @@ class LessonUpdate(BaseModel):
     sequence_number: Optional[int] = None
     duration_minutes: Optional[int] = None
     status: Optional[LessonStatus] = None
-    settings: Optional[Dict[str, Any]] = None
+
 
     model_config = ConfigDict(
         from_attributes=True,

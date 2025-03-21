@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FiPlus, FiChevronUp, FiChevronDown, FiEdit2, FiTrash2, FiX, FiMenu, FiFile } from 'react-icons/fi';
+import { FiPlus, FiChevronUp, FiChevronDown, FiEdit2, FiTrash2, FiX, FiMenu, FiFile, FiLoader, FiCheck } from 'react-icons/fi';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import { courseWizardService } from '@/services/courseWizardService';
 import {
   DndContext,
   closestCenter,
@@ -174,10 +176,24 @@ function SortableLessonItem({
 
 export function ContentStep() {
   const { state, dispatch } = useCourseWizard();
+  const { toast } = useToast();
+  const { moduleIds } = state.apiState;
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [isAddingLesson, setIsAddingLesson] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [expandedLessons, setExpandedLessons] = useState<string[]>([]);
+  const [savingLessonId, setSavingLessonId] = useState<string | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<Partial<Lesson>>({
+    title: '',
+    description: '',
+    content_type: 'video',
+    content: { video_url: '' },
+    is_mandatory: true,
+    duration_minutes: 10,
+  });
 
+  const modules = state.formData.modules || [];
+  
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -185,157 +201,226 @@ export function ContentStep() {
     })
   );
 
-  // Initialize selected module
+  // Pre-select the first module if none is selected and modules exist
   useEffect(() => {
-    const modules = state.formData.modules || [];
     if (!selectedModuleId && modules.length > 0) {
-      const firstModuleId = modules[0].id;
-      if (firstModuleId) {
-        setSelectedModuleId(firstModuleId);
-      }
+      setSelectedModuleId(modules[0].id || null);
     }
-  }, [state.formData.modules, selectedModuleId]);
+  }, [modules, selectedModuleId]);
 
-  // Validate step when lessons change
+  // Get lessons for the currently selected module
+  const currentModuleLessons = selectedModuleId
+    ? modules.find(m => m.id === selectedModuleId)?.lessons || []
+    : [];
+
+  // Validate the step - at least one lesson in each module
   useEffect(() => {
-    const hasLessons = state.formData.modules?.some(m => m.lessons?.length > 0);
+    const isValid = modules.every(module => module.lessons && module.lessons.length > 0);
     dispatch({
       type: 'VALIDATE_STEP',
-      payload: { step: 3, isValid: Boolean(hasLessons) }
+      payload: { step: 3, isValid },
     });
-  }, [state.formData.modules, dispatch]);
-
-  const currentModule = state.formData.modules?.find(m => m.id === selectedModuleId);
-  const currentLessons = currentModule?.lessons || [];
+  }, [modules, dispatch]);
 
   const handleAddLesson = () => {
-    if (!selectedModuleId) return;
-
-    const newLesson: Lesson = {
-      title: '',
-      sequence_number: (currentLessons?.length || 0) + 1,
-      content_type: 'video',
-      content: {},
-      is_mandatory: true,
-      module_id: selectedModuleId,
-      completion_criteria: {}
-    };
-    setEditingLesson(newLesson);
-  };
-
-  const handleEditLesson = (lesson: Lesson) => {
-    setEditingLesson({ 
-      ...lesson,
-      content: lesson.content || {},
-      completion_criteria: lesson.completion_criteria || {}
-    });
-  };
-
-  const handleSaveLesson = () => {
-    if (!editingLesson || !selectedModuleId) return;
-
-    const modules = [...(state.formData.modules || [])];
-    const moduleIndex = modules.findIndex(m => m.id === selectedModuleId);
-    if (moduleIndex === -1) return;
-
-    const lessons = [...(modules[moduleIndex].lessons || [])];
-    const lessonIndex = editingLesson.id 
-      ? lessons.findIndex(l => l.id === editingLesson.id)
-      : -1;
-
-    // Ensure all required properties are present
-    const updatedLesson: Lesson = {
-      ...editingLesson,
-      module_id: selectedModuleId,
-      content: editingLesson.content || {},
-      completion_criteria: editingLesson.completion_criteria || {},
-      sequence_number: lessonIndex >= 0 
-        ? editingLesson.sequence_number 
-        : (lessons.length + 1)
-    };
-
-    if (lessonIndex >= 0) {
-      lessons[lessonIndex] = updatedLesson;
-    } else {
-      lessons.push(updatedLesson);
+    if (!selectedModuleId) {
+      toast({
+        title: "No module selected",
+        description: "Please select a module first",
+        variant: "destructive"
+      });
+      return;
     }
 
-    // Update the module with the new lessons
-    const updatedModule = {
-      ...modules[moduleIndex],
-      lessons: lessons
-    };
-    modules[moduleIndex] = updatedModule;
+    setCurrentLesson({
+      title: '',
+      description: '',
+      sequence_number: (currentModuleLessons.length || 0) + 1,
+      content_type: 'video',
+      content: { video_url: '' },
+      is_mandatory: true,
+      module_id: selectedModuleId,
+      duration_minutes: 10,
+    });
+    setIsAddingLesson(true);
+    setEditingLessonId(null);
+  };
 
-    // Update the form state
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules }
+  const handleEditLesson = (lesson: any) => {
+    setCurrentLesson({ ...lesson });
+    setEditingLessonId(lesson.id);
+    setIsAddingLesson(true);
+  };
+
+  const handleSaveLesson = async () => {
+    if (!currentLesson.title || !selectedModuleId) {
+      toast({
+        title: "Missing required fields",
+        description: "Lesson title is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Generate a temporary ID if one doesn't exist
+    const tempId = editingLessonId || `temp-${Date.now()}`;
+    const lessonToSave = { 
+      ...currentLesson, 
+      id: tempId,
+      module_id: selectedModuleId 
+    };
+
+    // Update local state first
+    const updatedModules = modules.map(module => {
+      if (module.id === selectedModuleId) {
+        const existingLessons = module.lessons || [];
+        let updatedLessons;
+        
+        if (editingLessonId) {
+          // Update existing lesson
+          updatedLessons = existingLessons.map(lesson => 
+            lesson.id === editingLessonId ? lessonToSave : lesson
+          );
+        } else {
+          // Add new lesson
+          updatedLessons = [...existingLessons, lessonToSave];
+        }
+        
+        return { ...module, lessons: updatedLessons };
+      }
+      return module;
     });
 
-    // Close the edit form
-    setEditingLesson(null);
+    dispatch({
+      type: 'UPDATE_FORM',
+      payload: { modules: updatedModules }
+    });
+
+    setIsAddingLesson(false);
+    setEditingLessonId(null);
+
+    // If we have the module ID from the API, save the lesson
+    const apiModuleId = moduleIds[selectedModuleId];
+    if (apiModuleId) {
+      try {
+        setSavingLessonId(tempId);
+        
+        // Prepare data for API
+        const lessonData = {
+          title: currentLesson.title,
+          description: currentLesson.description || '',
+          sequence_number: currentLesson.sequence_number,
+          duration_minutes: currentLesson.duration_minutes,
+          content_type: currentLesson.content_type,
+          content: currentLesson.content,
+          is_mandatory: currentLesson.is_mandatory,
+          module_id: apiModuleId,
+        };
+
+        // Call API to save lesson
+        const response = await courseWizardService.addLesson(apiModuleId, lessonData);
+        
+        // Store the API lesson ID in our context
+        dispatch({
+          type: 'ADD_LESSON_ID',
+          payload: { localId: tempId, apiId: response.id }
+        });
+
+        toast({
+          title: "Lesson saved",
+          description: "Lesson has been saved successfully to the API",
+        });
+      } catch (error) {
+        toast({
+          title: "Error saving lesson",
+          description: error instanceof Error ? error.message : "Failed to save lesson to the API",
+          variant: "destructive",
+        });
+        console.error("Error saving lesson:", error);
+      } finally {
+        setSavingLessonId(null);
+      }
+    } else {
+      toast({
+        title: "Module not saved to API",
+        description: "Cannot save lesson to API because the module hasn't been saved yet",
+        variant: "warning",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsAddingLesson(false);
+    setEditingLessonId(null);
   };
 
   const handleDeleteLesson = (lessonId: string) => {
-    if (!selectedModuleId) return;
-
-    const modules = [...(state.formData.modules || [])];
-    const moduleIndex = modules.findIndex(m => m.id === selectedModuleId);
-    if (moduleIndex === -1) return;
-
-    const lessons = modules[moduleIndex].lessons?.filter(l => l.id !== lessonId) || [];
-    // Reorder sequence numbers
-    lessons.forEach((lesson, index) => {
-      lesson.sequence_number = index + 1;
+    const updatedModules = modules.map(module => {
+      if (module.id === selectedModuleId) {
+        return {
+          ...module,
+          lessons: (module.lessons || []).filter(lesson => lesson.id !== lessonId)
+        };
+      }
+      return module;
     });
-
-    modules[moduleIndex] = {
-      ...modules[moduleIndex],
-      lessons
-    };
 
     dispatch({
       type: 'UPDATE_FORM',
-      payload: { modules }
+      payload: { modules: updatedModules }
     });
+
+    // TODO: Add API call to delete lesson if implemented
+  };
+
+  const handleToggleExpand = (id: string) => {
+    setExpandedLessons(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !selectedModuleId) return;
 
-    const modules = [...(state.formData.modules || [])];
-    const moduleIndex = modules.findIndex(m => m.id === selectedModuleId);
-    if (moduleIndex === -1) return;
+    if (over && active.id !== over.id) {
+      const updatedModules = modules.map(module => {
+        if (module.id === selectedModuleId) {
+          const lessons = [...(module.lessons || [])];
+          const oldIndex = lessons.findIndex(lesson => lesson.id === active.id);
+          const newIndex = lessons.findIndex(lesson => lesson.id === over.id);
+          
+          // Reorder and update sequence numbers
+          const reorderedLessons = arrayMove(lessons, oldIndex, newIndex).map((lesson, index) => ({
+            ...lesson,
+            sequence_number: index + 1,
+          }));
+          
+          return { ...module, lessons: reorderedLessons };
+        }
+        return module;
+      });
 
-    const lessons = [...(modules[moduleIndex].lessons || [])];
-    const oldIndex = lessons.findIndex(l => (l.id || `new-${l.sequence_number}`) === active.id);
-    const newIndex = lessons.findIndex(l => (l.id || `new-${l.sequence_number}`) === over.id);
-
-    const reorderedLessons = arrayMove(lessons, oldIndex, newIndex);
-    // Update sequence numbers
-    reorderedLessons.forEach((lesson, idx) => {
-      lesson.sequence_number = idx + 1;
-    });
-
-    modules[moduleIndex] = {
-      ...modules[moduleIndex],
-      lessons: reorderedLessons
-    };
-
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules }
-    });
+      dispatch({
+        type: 'UPDATE_FORM',
+        payload: { modules: updatedModules }
+      });
+    }
   };
 
-  const toggleLessonExpanded = (lessonId: string) => {
-    setExpandedLessons(prev => 
-      prev.includes(lessonId)
-        ? prev.filter(id => id !== lessonId)
-        : [...prev, lessonId]
-    );
+  const handleInputChange = (field: string, value: any) => {
+    setCurrentLesson(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleContentChange = (key: string, value: any) => {
+    setCurrentLesson(prev => ({
+      ...prev,
+      content: { ...prev.content, [key]: value }
+    }));
+  };
+
+  // Helper to check if a lesson has been saved to the API
+  const isLessonSavedToApi = (lessonId: string) => {
+    return Boolean(state.apiState.lessonIds[lessonId]);
   };
 
   if (!state.formData.modules?.length) {
@@ -388,9 +473,9 @@ export function ContentStep() {
         <>
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {currentLessons.length || 0} lessons
+              {currentModuleLessons.length || 0} lessons
             </div>
-            {!editingLesson && currentLessons.length > 0 && (
+            {!editingLessonId && currentModuleLessons.length > 0 && (
               <div className="text-sm text-muted-foreground">
                 Drag lessons to reorder
               </div>
@@ -403,19 +488,19 @@ export function ContentStep() {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={currentLessons.map(l => l.id || `lesson-${l.sequence_number}`)}
+              items={currentModuleLessons.map(l => l.id || `lesson-${l.sequence_number}`)}
               strategy={verticalListSortingStrategy}
             >
-              <div className={`space-y-4 transition-all duration-200 ${editingLesson ? 'opacity-50 pointer-events-none' : ''}`}>
-                {currentLessons.map((lesson) => (
+              <div className={`space-y-4 transition-all duration-200 ${editingLessonId ? 'opacity-50 pointer-events-none' : ''}`}>
+                {currentModuleLessons.map((lesson) => (
                   <SortableLessonItem
                     key={lesson.id || `lesson-${lesson.sequence_number}`}
                     lesson={lesson}
-                    isEditing={!!editingLesson}
-                    editingId={editingLesson?.id}
+                    isEditing={!!editingLessonId}
+                    editingId={editingLessonId}
                     onEdit={handleEditLesson}
                     onDelete={handleDeleteLesson}
-                    onToggleExpand={toggleLessonExpanded}
+                    onToggleExpand={handleToggleExpand}
                     isExpanded={expandedLessons.includes(lesson.id || '')}
                   />
                 ))}
@@ -427,7 +512,7 @@ export function ContentStep() {
 
       {/* Lesson Edit Form */}
       <AnimatePresence>
-        {editingLesson && (
+        {isAddingLesson && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -438,12 +523,12 @@ export function ContentStep() {
             <Card className="p-6 border-primary/50 shadow-lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">
-                  {editingLesson.id ? 'Edit Lesson' : 'Add Lesson'}
+                  {editingLessonId ? 'Edit Lesson' : 'Add Lesson'}
                 </h2>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setEditingLesson(null)}
+                  onClick={handleCancelEdit}
                 >
                   <FiX className="h-4 w-4" />
                 </Button>
@@ -454,11 +539,8 @@ export function ContentStep() {
                   <Label htmlFor="title">Lesson Title</Label>
                   <Input
                     id="title"
-                    value={editingLesson.title}
-                    onChange={(e) => setEditingLesson({
-                      ...editingLesson,
-                      title: e.target.value
-                    })}
+                    value={currentLesson.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Enter lesson title"
                   />
                 </div>
@@ -467,11 +549,8 @@ export function ContentStep() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={editingLesson.description || ''}
-                    onChange={(e) => setEditingLesson({
-                      ...editingLesson,
-                      description: e.target.value
-                    })}
+                    value={currentLesson.description || ''}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Describe what students will learn in this lesson"
                   />
                 </div>
@@ -479,12 +558,9 @@ export function ContentStep() {
                 <div>
                   <Label htmlFor="content_type">Content Type</Label>
                   <Select
-                    value={editingLesson.content_type}
+                    value={currentLesson.content_type}
                     onValueChange={(value: 'video' | 'text' | 'quiz' | 'assignment') => 
-                      setEditingLesson({
-                        ...editingLesson,
-                        content_type: value
-                      })
+                      handleInputChange('content_type', value)
                     }
                   >
                     <SelectTrigger>
@@ -505,11 +581,8 @@ export function ContentStep() {
                     id="duration_minutes"
                     type="number"
                     min="1"
-                    value={editingLesson.duration_minutes || ''}
-                    onChange={(e) => setEditingLesson({
-                      ...editingLesson,
-                      duration_minutes: parseInt(e.target.value) || undefined
-                    })}
+                    value={currentLesson.duration_minutes || ''}
+                    onChange={(e) => handleInputChange('duration_minutes', parseInt(e.target.value) || undefined)}
                     placeholder="e.g., 30"
                   />
                 </div>
@@ -518,24 +591,21 @@ export function ContentStep() {
                   <Label htmlFor="is_mandatory">Mandatory Lesson</Label>
                   <Switch
                     id="is_mandatory"
-                    checked={editingLesson.is_mandatory}
-                    onCheckedChange={(checked) => setEditingLesson({
-                      ...editingLesson,
-                      is_mandatory: checked
-                    })}
+                    checked={currentLesson.is_mandatory}
+                    onCheckedChange={(checked) => handleInputChange('is_mandatory', checked)}
                   />
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
                     variant="outline"
-                    onClick={() => setEditingLesson(null)}
+                    onClick={handleCancelEdit}
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveLesson}
-                    disabled={!editingLesson?.title || !selectedModuleId}
+                    disabled={!currentLesson.title || !selectedModuleId}
                   >
                     Save Lesson
                   </Button>

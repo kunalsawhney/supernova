@@ -1,7 +1,7 @@
 'use client';
 
 import { useRole } from '@/contexts/RoleContext';
-import { useSidebar } from '@/contexts/SidebarContext';
+import { useSidebar } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,18 @@ import {
   FiActivity, FiBookmark, FiHelpCircle, FiMessageSquare,
   FiChevronDown, FiVideo, FiPlay, FiPlus
 } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent
+} from '@/components/ui/sidebar';
 
 // Navigation items grouped by category
 const navigationConfig = {
@@ -201,13 +212,14 @@ const icons = {
 export function DashboardNavigation() {
   const pathname = usePathname();
   const { role } = useRole();
-  const { collapsed, closeSidebar } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = state === "collapsed";
   
   // Map super_admin and school_admin to admin navigation
   const effectiveRole = (role === 'super_admin' || role === 'school_admin') ? 'admin' : role;
   const navigationGroups = navigationConfig[effectiveRole];
 
-  // Track expanded categories (only relevant when sidebar is not collapsed)
+  // Track expanded categories
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   // Initialize expanded categories - all expanded by default
@@ -248,12 +260,12 @@ export function DashboardNavigation() {
     
     if (href === '/dashboard/admin/content/modules') {
       // Highlight modules for the modules path and its sub-paths
-      return pathname.startsWith(href);
+      return pathname.startsWith(href) && !pathname.includes('/courses') && !pathname.includes('/lessons');
     }
     
     if (href === '/dashboard/admin/content/lessons') {
       // Highlight lessons for the lessons path and its sub-paths
-      return pathname.startsWith(href);
+      return pathname.startsWith(href) && !pathname.includes('/courses') && !pathname.includes('/modules');
     }
 
     // Special handling for content-v2 section
@@ -275,100 +287,40 @@ export function DashboardNavigation() {
     return pathname.startsWith(href);
   };
 
-  // Handle link click - close sidebar on mobile
+  // Close mobile sidebar after navigation
   const handleLinkClick = () => {
     // Close sidebar on mobile view when clicking a link
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      closeSidebar();
+    if (isMobile) {
+      setOpenMobile(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-2">
+    <div className="px-2 py-1">
       {navigationGroups.map((group, groupIndex) => (
-        <div key={`${group.category}-${groupIndex}`} className="mb-4">
-          {/* Category Header - show only if not collapsed */}
-          <AnimatePresence initial={false}>
-            {!collapsed && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                onClick={() => toggleCategory(group.category)}
-                className="flex items-center justify-between px-3 py-2 mb-1 cursor-pointer group text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-background-secondary/50 overflow-hidden"
-              >
-                <h3 className="text-xs font-medium uppercase tracking-wider">
-                  {group.category}
-                </h3>
-                <motion.div 
-                  animate={{ 
-                    rotate: expandedCategories[group.category] ? 0 : -90 
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className="text-muted-foreground opacity-70 group-hover:opacity-100 transition-opacity"
-                >
-                  <FiChevronDown className="h-3 w-3" />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Navigation Items */}
-          <div className="space-y-1">
-            {group.items.map((item) => {
-              const active = isActive(item.href);
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={handleLinkClick}
-                  className={`
-                    flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} 
-                    py-2.5 rounded-md transition-all duration-200 relative
-                    ${active 
-                      ? 'bg-orange-100 text-primary font-medium shadow-sm dark:bg-primary/20' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background-secondary'
-                    }
-                    ${!collapsed && !expandedCategories[group.category] ? 'hidden' : ''}
-                  `}
-                  title={collapsed ? item.label : ''}
-                >
-                  {/* Active indicator bar */}
-                  {active && (
-                    <motion.span 
-                      layoutId="activeIndicator"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-2/3 bg-primary rounded-r-md"
-                    ></motion.span>
-                  )}
-                  
-                  {/* Icon with active styling */}
-                  <span className={`flex-shrink-0 ${active ? 'text-primary' : ''}`}>
-                    {icons[item.icon as keyof typeof icons]}
-                  </span>
-                  
-                  {/* Label - shown only when not collapsed */}
-                  <AnimatePresence initial={false}>
-                    {!collapsed && (
-                      <motion.span 
-                        key="label"
-                        initial={{ opacity: 0, width: 0, marginLeft: 0 }}
-                        animate={{ opacity: 1, width: 'auto', marginLeft: 12 }}
-                        exit={{ opacity: 0, width: 0, marginLeft: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-sm overflow-hidden whitespace-nowrap"
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <SidebarGroup key={`${group.category}-${groupIndex}`} className="mb-2">
+          <SidebarGroupLabel className="px-2 py-1 text-sm text-muted-foreground font-medium uppercase">
+            {group.category}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {group.items.map((item, itemIndex) => (
+                <SidebarMenuItem key={`${item.label}-${itemIndex}`}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={collapsed ? item.label : undefined}
+                  >
+                    <Link href={item.href} onClick={handleLinkClick} className="flex items-center gap-2 w-full">
+                      {icons[item.icon as keyof typeof icons]}
+                      <span className="truncate text-sm">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       ))}
     </div>
   );

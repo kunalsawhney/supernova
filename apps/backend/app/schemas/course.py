@@ -121,6 +121,7 @@ class CourseResponse(CourseBase, BaseSchema):
     currency: Optional[str] = None
     pricing_type: Optional[str] = None
     latest_version_id: Optional[UUID] = None
+    content_id: Optional[UUID] = None
 
     model_config = ConfigDict(
         from_attributes=True,

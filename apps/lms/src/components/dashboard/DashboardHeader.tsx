@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 // import { useTheme } from '@/contexts/ThemeContext';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSidebar } from '@/contexts/SidebarContext';
+import { useSidebar } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import Image from 'next/image';
 import NotificationsDropdown from '../NotificationsDropdown';
@@ -16,7 +16,8 @@ export function DashboardHeader() {
   // const { theme, toggleTheme } = useTheme();
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const { sidebarOpen, setSidebarOpen } = useSidebar();
+  const { open, setOpen, openMobile, setOpenMobile, isMobile, toggleSidebar } = useSidebar();
+  const sidebarOpen = isMobile ? openMobile : open;
   const [focusMode, setFocusMode] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -44,8 +45,12 @@ export function DashboardHeader() {
   };
 
   // Toggle sidebar visibility
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+  const handleToggleSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(!openMobile);
+    } else {
+      setOpen(!open);
+    }
   };
 
   // Generate initials for avatar if no profile image
@@ -58,12 +63,12 @@ export function DashboardHeader() {
 
   return (
     <header className="h-16 border-b border-border/30 bg-card/80 backdrop-blur-sm sticky top-0 z-20 px-4 md:px-6">
-      <div className="h-full flex items-center justify-between">
+      <div className="h-full flex items-center justify-between w-full">
         <div className="flex items-center gap-4">
           {/* Mobile menu toggle button with animation */}
           <button 
             className="lg:hidden p-2 rounded-full hover:bg-background-secondary transition-colors"
-            onClick={toggleSidebar}
+            onClick={handleToggleSidebar}
             aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
             {sidebarOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}

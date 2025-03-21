@@ -244,15 +244,16 @@ export const adminService = {
   getCourses: withCache(
     async (params?: PaginationParams & { status?: string, search?: string }): Promise<CourseViewModel[]> => {
       try {
+        console.log('Fetching courses', params);
         // Use trailing slash to avoid redirect
         const response = await api.get<any[]>('/courses/', { params });
-        
+        console.log('Courses fetched', response);
         // Normalize each course in the response
         const courses: Course[] = response.map(courseData => ({
           ...courseData,
           content_versions: courseData.content_versions || courseData.versions || []
         }));
-        
+        console.log('Courses transformed', courses);
         return courses.map(transformCourse);
       } catch (error) {
         throw handleApiError(error, 'Failed to fetch courses');

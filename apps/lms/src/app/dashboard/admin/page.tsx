@@ -25,6 +25,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  RadialBarChart,
+  RadialBar
 } from 'recharts';
 import { 
   ArrowUpIcon, 
@@ -88,6 +90,33 @@ const userGrowthData = [
   { name: 'Apr', Users: 205 },
   { name: 'May', Users: 245 },
   { name: 'Jun', Users: 280 },
+];
+
+const radialBarData = [
+  {
+    name: 'Students',
+    uv: 31.47,
+    pv: 2400,
+    fill: '#8884d8',
+  },
+  {
+    name: 'Teachers',
+    uv: 26.69,
+    pv: 4567,
+    fill: '#83a6ed',
+  },
+  {
+    name: 'School Admins',
+    uv: 15.69,
+    pv: 1398,
+    fill: '#8dd1e1',
+  },
+  {
+    name: 'Super Admins',
+    uv: 8.22,
+    pv: 9800,
+    fill: '#82ca9d',
+  }
 ];
 
 // Revenue data formatted for Recharts
@@ -367,26 +396,32 @@ export default function AdminOverview() {
               </CardHeader>
               <CardContent>
                 <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={userTypesData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        // label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {userTypesData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <ChartContainer config={chartConfig}>
+                    <RadialBarChart cx="50%" cy="50%" innerRadius="10%" outerRadius="100%" barSize={8} data={radialBarData}>
+                      <RadialBar
+                        label={{ 
+                          position: 'insideStart', 
+                          fill: '#fff' 
+                        }}
+                        // background
+                        // clockWise
+                        dataKey="uv"
+                        
+                      />
+                      <Legend 
+                        iconSize={10} 
+                        layout="vertical" 
+                        verticalAlign="middle" 
+                        wrapperStyle={{
+                          top: '100%',
+                          right: 0,
+                          transform: 'translate(0, -50%)',
+                          lineHeight: '24px',
+                          fontSize: '16px',
+                        }} 
+                      />
+                    </RadialBarChart>
+                  </ChartContainer>
                 </div>
               </CardContent>
             </Card>

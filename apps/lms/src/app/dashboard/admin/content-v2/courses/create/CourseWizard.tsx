@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
@@ -28,9 +28,29 @@ interface CourseWizardProps {
 export function CourseWizard({ isEditing = false, onComplete, onCancel }: CourseWizardProps) {
   const router = useRouter();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const { state } = useCourseWizard();
+  const { state, dispatch } = useCourseWizard();
 
   const currentStep = steps[currentStepIndex].id;
+
+  // Validate current step based on API state
+  useEffect(() => {
+    const { courseId, contentId, moduleIds } = state.apiState;
+    
+    // Automatically validate steps if they've been saved to the API
+    if (currentStepIndex === 0 && courseId) {
+      dispatch({
+        type: 'VALIDATE_STEP',
+        payload: { step: 1, isValid: true },
+      });
+    }
+    
+    if (currentStepIndex === 1 && Object.keys(moduleIds).length > 0) {
+      dispatch({
+        type: 'VALIDATE_STEP',
+        payload: { step: 2, isValid: true },
+      });
+    }
+  }, [currentStepIndex, state.apiState, dispatch]);
 
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
@@ -52,6 +72,9 @@ export function CourseWizard({ isEditing = false, onComplete, onCancel }: Course
   };
 
   const handleCancel = () => {
+    // Reset API state when canceling
+    dispatch({ type: 'RESET_API_STATE' });
+    
     if (onCancel) {
       onCancel();
     } else {
@@ -61,6 +84,22 @@ export function CourseWizard({ isEditing = false, onComplete, onCancel }: Course
 
   // Check if the current step is valid
   const isCurrentStepValid = state.metadata.validSteps.includes(currentStepIndex + 1);
+  
+  // Check if next step should be enabled based on API state
+  const isNextButtonEnabled = () => {
+    if (currentStepIndex === 0) {
+      // For step 1 (Course Details), enable only if step is valid
+      return isCurrentStepValid;
+    } else if (currentStepIndex === 1) {
+      // For step 2 (Curriculum), enable if valid OR if we have course API data
+      return isCurrentStepValid || Boolean(state.apiState.courseId);
+    } else if (currentStepIndex === 2) {
+      // For step 3 (Content), enable if valid OR if we have module API data
+      return isCurrentStepValid || Object.keys(state.apiState.moduleIds).length > 0;
+    }
+    
+    return true; // Review step is always enabled
+  };
 
   return (
     <div className="flex flex-col w-full">
@@ -147,7 +186,7 @@ export function CourseWizard({ isEditing = false, onComplete, onCancel }: Course
 
         <Button
           onClick={handleNext}
-          disabled={currentStepIndex < steps.length - 1 && !isCurrentStepValid}
+          disabled={!isNextButtonEnabled()}
           className="gap-2"
         >
           {currentStepIndex === steps.length - 1 ? (

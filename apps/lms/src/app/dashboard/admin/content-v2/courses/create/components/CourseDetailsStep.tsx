@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { DifficultyLevel } from '@/types/course';
-
+import { Button } from '@/components/ui/button';
+import { courseWizardService } from '@/services/courseWizardService';
+import { toast } from '@/hooks/use-toast';
+import { FiCheck, FiLoader } from 'react-icons/fi';
+import { CreateCourseData } from '@/types/course';
 const DIFFICULTY_LEVELS = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
@@ -45,6 +47,8 @@ const CURRENCIES = [
 export function CourseDetailsStep() {
   const { state, dispatch } = useCourseWizard();
   const { formData } = state;
+  const { isSubmitting, error } = state.metadata;
+  const { courseId } = state.apiState;
 
   // Validate the step when data changes
   useEffect(() => {
@@ -68,6 +72,68 @@ export function CourseDetailsStep() {
       type: 'UPDATE_FORM',
       payload: { [field]: value },
     });
+  };
+
+  const handleSubmitCourseDetails = async () => {
+    if (!formData.title || !formData.description || !formData.code) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      dispatch({ type: 'SET_SUBMITTING', payload: { isSubmitting: true } });
+      dispatch({ type: 'SET_ERROR', payload: { error: null } });
+
+      const courseData: CreateCourseData = {
+        title: formData.title,
+        description: formData.description,
+        code: formData.code,
+        status: 'draft',
+        difficulty_level: formData.difficulty_level || 'beginner',
+        grade_level: formData.grade_level || '',
+        academic_year: formData.academic_year || '',
+        estimated_duration: formData.estimated_duration,
+        base_price: formData.base_price,
+        currency: formData.currency,
+        pricing_type: formData.pricing_type,
+        sequence_number: formData.sequence_number || 1,
+        cover_image_url: formData.cover_image_url,
+        tags: formData.tags,
+      };
+
+      const response = await courseWizardService.createCourse(courseData);
+
+      dispatch({
+        type: 'SET_COURSE_IDS',
+        payload: {
+          courseId: response.id,
+          contentId: response.content_id,
+          versionId: response.version_id,
+        }
+      });
+
+      toast({
+        title: "Course created successfully",
+        description: "Your course details have been saved",
+      });
+    } catch (error) {
+      console.error("Failed to create course:", error);
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { error: error instanceof Error ? error.message : 'Failed to create course' }
+      });
+      toast({
+        title: "Error creating course",
+        description: error instanceof Error ? error.message : 'Failed to create course',
+        variant: "destructive",
+      });
+    } finally {
+      dispatch({ type: 'SET_SUBMITTING', payload: { isSubmitting: false } });
+    }
   };
 
   return (
@@ -112,6 +178,37 @@ export function CourseDetailsStep() {
                 className="h-32"
               />
             </div>
+
+            {/* API Submission Button */}
+            {/* <div className="mt-6">
+              <Button 
+                onClick={handleSubmitCourseDetails} 
+                disabled={isSubmitting || Boolean(courseId)}
+                className="w-full sm:w-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <FiLoader className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : courseId ? (
+                  <>
+                    <FiCheck className="mr-2 h-4 w-4" />
+                    Course Details Saved
+                  </>
+                ) : (
+                  'Save Course Details'
+                )}
+              </Button>
+              {error && (
+                <p className="text-sm text-destructive mt-2">{error}</p>
+              )}
+              {courseId && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Course ID: {courseId}
+                </p>
+              )}
+            </div> */}
           </div>
         </Card>
 
@@ -265,6 +362,36 @@ export function CourseDetailsStep() {
             <p className="text-muted-foreground">Thumbnail upload coming soon...</p>
           </div>
         </Card>
+
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleSubmitCourseDetails} 
+            disabled={isSubmitting || Boolean(courseId)}
+            className="w-full sm:w-auto"
+          >
+            {isSubmitting ? (
+              <>
+                <FiLoader className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : courseId ? (
+              <>
+                <FiCheck className="mr-2 h-4 w-4" />
+                Course Details Saved
+              </>
+            ) : (
+              'Save Course Details'
+            )}
+          </Button>
+          {error && (
+            <p className="text-sm text-destructive mt-2">{error}</p>
+          )}
+          {courseId && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Course ID: {courseId}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

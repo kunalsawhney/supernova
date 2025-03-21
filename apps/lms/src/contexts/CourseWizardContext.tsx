@@ -70,11 +70,23 @@ interface CourseMetadata {
   isDirty: boolean;
   lastSaved: string | null;
   validSteps: number[];
+  isSubmitting: boolean;
+  error: string | null;
+}
+
+// API related state
+interface ApiState {
+  courseId: string | null;
+  contentId: string | null;
+  versionId: string | null;
+  moduleIds: Record<string, string>; // Map from local id to API id
+  lessonIds: Record<string, string>; // Map from local id to API id
 }
 
 interface CourseWizardState {
   formData: Partial<CourseData>;
   metadata: CourseMetadata;
+  apiState: ApiState;
 }
 
 type CourseWizardAction =
@@ -82,91 +94,33 @@ type CourseWizardAction =
   | { type: 'SET_STEP'; payload: { step: number } }
   | { type: 'SET_DRAFT_ID'; payload: { draftId: string } }
   | { type: 'SET_SAVED'; payload: { timestamp: string } }
-  | { type: 'VALIDATE_STEP'; payload: { step: number; isValid: boolean } };
+  | { type: 'VALIDATE_STEP'; payload: { step: number; isValid: boolean } }
+  | { type: 'SET_SUBMITTING'; payload: { isSubmitting: boolean } }
+  | { type: 'SET_ERROR'; payload: { error: string | null } }
+  | { type: 'SET_COURSE_IDS'; payload: { courseId: string; contentId: string; versionId: string } }
+  | { type: 'ADD_MODULE_ID'; payload: { localId: string; apiId: string } }
+  | { type: 'ADD_LESSON_ID'; payload: { localId: string; apiId: string } }
+  | { type: 'RESET_API_STATE' };
 
 // Initial state
 const initialState: CourseWizardState = {
   formData: {
-    title: 'Block Based Programming',
-    description: 'Block Based Programming : A course for beginners to learn about block based programming.',
-    code: 'BCP-101',
+    title: '',
+    description: '',
+    code: '',
     status: 'draft',
     difficulty_level: 'beginner',
-    grade_level: 'elementary',
-    academic_year: '2024-2025',
+    grade_level: '',
+    academic_year: '',
     sequence_number: 1,
     version: '1.0.0',
     content_status: 'draft',
-    cover_image_url: 'https://via.placeholder.com/150',
-    estimated_duration: 20,
-    pricing_type: 'one-time',
-    base_price: 99.99,
-    currency: 'USD',
-    modules: [
-      {
-        id: '1',
-        title: 'Introduction to Block Based Programming',
-        description: 'Introduction to Block Based Programming',
-        sequence_number: 1,
-        status: 'draft',
-        is_mandatory: true,
-        lessons: [
-          {
-            id: '1',
-            title: 'What is Block Based Programming?',
-            description: 'What is Block Based Programming?',
-            sequence_number: 1,
-            content_type: 'video',
-            content: {
-              video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            },
-            is_mandatory: true,
-            completion_criteria: {
-              type: 'video_completion',
-              percentage: 100,
-            },
-            duration_minutes: 10,
-          },
-          {
-            id: '2',
-            title: 'Setting up the Block Editor',
-            description: 'Setting up the Block Editor',
-            sequence_number: 2,
-            content_type: 'video',
-            content: {
-              video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            },
-            is_mandatory: true,
-            completion_criteria: {
-              type: 'video_completion', 
-              percentage: 100,
-            },
-            duration_minutes: 10,
-          },
-        ],
-      },
-      {
-        id: '2',
-        title: 'Variables and Data Types',
-        description: 'Variables and Data Types',
-        sequence_number: 2,
-        status: 'draft',
-        is_mandatory: true,
-        lessons: [
-          {
-            id: '1',
-            title: 'Introduction to Variables',
-            description: 'Introduction to Variables',
-            sequence_number: 1,
-            content_type: 'video',
-            content: {
-              video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            },
-            is_mandatory: true,
-          }
-        ]
-      },
-    ],
+    cover_image_url: '',
+    estimated_duration: 0,
+    pricing_type: undefined,
+    base_price: 0,
+    currency: '',
+    modules: [],
   },
   metadata: {
     draftId: null,
@@ -174,7 +128,16 @@ const initialState: CourseWizardState = {
     isDirty: false,
     lastSaved: null,
     validSteps: [],
+    isSubmitting: false,
+    error: null
   },
+  apiState: {
+    courseId: null,
+    contentId: null,
+    versionId: null,
+    moduleIds: {},
+    lessonIds: {}
+  }
 };
 
 // Reducer
@@ -235,6 +198,71 @@ function courseWizardReducer(
         },
       };
     
+    case 'SET_SUBMITTING':
+      return {
+        ...state,
+        metadata: {
+          ...state.metadata,
+          isSubmitting: action.payload.isSubmitting,
+        },
+      };
+    
+    case 'SET_ERROR':
+      return {
+        ...state,
+        metadata: {
+          ...state.metadata,
+          error: action.payload.error,
+        },
+      };
+    
+    case 'SET_COURSE_IDS':
+      return {
+        ...state,
+        apiState: {
+          ...state.apiState,
+          courseId: action.payload.courseId,
+          contentId: action.payload.contentId,
+          versionId: action.payload.versionId,
+        },
+      };
+    
+    case 'ADD_MODULE_ID':
+      return {
+        ...state,
+        apiState: {
+          ...state.apiState,
+          moduleIds: {
+            ...state.apiState.moduleIds,
+            [action.payload.localId]: action.payload.apiId,
+          },
+        },
+      };
+    
+    case 'ADD_LESSON_ID':
+      return {
+        ...state,
+        apiState: {
+          ...state.apiState,
+          lessonIds: {
+            ...state.apiState.lessonIds,
+            [action.payload.localId]: action.payload.apiId,
+          },
+        },
+      };
+    
+    case 'RESET_API_STATE':
+      return {
+        ...state,
+        apiState: {
+          courseId: null,
+          contentId: null,
+          versionId: null,
+          moduleIds: {},
+          lessonIds: {}
+        },
+      };
+    
     default:
       return state;
   }
@@ -257,7 +285,8 @@ export function CourseWizardProvider({ children, initialData }: { children: Reac
             ...initialState.metadata,
             // Mark all steps as valid when in edit mode
             validSteps: [1, 2, 3, 4]
-          }
+          },
+          apiState: { ...initialState.apiState } // Include apiState to avoid type error
         }
       : initialState
   );

@@ -2,6 +2,7 @@
 
 import { ReactNode, Suspense, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useSidebar } from '@/components/ui/sidebar';
 
 // Import the HeaderSkeleton directly since it doesn't have hydration issues
 export function HeaderSkeleton() {
@@ -50,10 +51,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex w-full h-screen overflow-hidden">
+      {/* Sidebar */}
       {mounted && <DashboardSidebar />}
       
-      <div className="flex flex-col flex-1 w-full h-screen overflow-y-auto bg-background">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 h-full w-full">
         <Suspense fallback={<HeaderSkeleton />}>
           {mounted && <DashboardHeader />}
         </Suspense>
@@ -61,11 +64,11 @@ export function DashboardShell({ children }: DashboardShellProps) {
         {mounted ? (
           <DashboardContent>{children}</DashboardContent>
         ) : (
-          <main className="flex-1 p-4 md:p-6 overflow-y-auto bg-gradient-to-b from-transparent to-background-secondary">
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto">
             <div className="max-w-screen-2xl mx-auto">
               {children}
             </div>
-          </main>
+          </div>
         )}
       </div>
     </div>

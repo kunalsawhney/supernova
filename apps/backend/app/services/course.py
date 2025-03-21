@@ -79,6 +79,9 @@ class CourseService:
         db.add(course)
         await db.flush()
 
+        # Update course with content ID
+        course.content_id = content.id
+
         return course
 
     @staticmethod

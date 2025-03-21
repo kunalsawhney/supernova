@@ -8,9 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { FiPlus, FiChevronUp, FiChevronDown, FiEdit2, FiTrash2, FiX, FiMenu } from 'react-icons/fi';
+import { toast } from '@/hooks/use-toast';
+import { FiPlus, FiChevronUp, FiChevronDown, FiEdit2, FiTrash2, FiX, FiMenu, FiSave, FiLoader, FiCheck } from 'react-icons/fi';
 import { CourseStatus } from '@/types/course';
 import { AnimatePresence, motion } from 'framer-motion';
+import { courseWizardService } from '@/services/courseWizardService';
 import {
   DndContext,
   closestCenter,
@@ -174,10 +176,21 @@ function SortableModuleItem({
 
 export function CurriculumStep() {
   const { state, dispatch } = useCourseWizard();
-  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const { formData } = state;
+  const { contentId } = state.apiState;
+  const [modules, setModules] = useState<Module[]>(formData.modules || []);
+  const [isAddingModule, setIsAddingModule] = useState(false);
+  const [editingModuleId, setEditingModuleId] = useState<string | undefined>();
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const isEditingRef = useRef(false);
+  const [savingModuleId, setSavingModuleId] = useState<string | null>(null);
+  const [currentModule, setCurrentModule] = useState<Module>({
+    title: '',
+    description: '',
+    sequence_number: (modules.length || 0) + 1,
+    status: 'draft',
+    is_mandatory: true,
+    lessons: [],
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -186,162 +199,155 @@ export function CurriculumStep() {
     })
   );
 
-  // Focus title input only when starting to edit
+  // Update the global state when modules change
   useEffect(() => {
-    if (editingModule && !isEditingRef.current) {
-      titleInputRef.current?.focus();
-      isEditingRef.current = true;
-    } else if (!editingModule) {
-      isEditingRef.current = false;
-    }
-  }, [editingModule]);
+    dispatch({
+      type: 'UPDATE_FORM',
+      payload: { modules },
+    });
+  }, [modules, dispatch]);
 
-  // Handle keyboard shortcuts
+  // Validate the step - at least one module is required
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-      // Escape to cancel editing
-      if (e.key === 'Escape' && editingModule) {
-        setEditingModule(null);
-      }
-      // Enter + Cmd/Ctrl to save
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && editingModule?.title) {
-        handleSaveModule();
-      }
-      // N + Cmd/Ctrl to add new module when not editing
-      if (e.key === 'n' && (e.metaKey || e.ctrlKey) && !editingModule) {
-        e.preventDefault();
-        handleAddModule();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown as any);
-    return () => document.removeEventListener('keydown', handleKeyDown as any);
-  }, [editingModule]);
-
-  // Initialize modules from state or create empty array
-  useEffect(() => {
-    if (!state.formData.modules) {
-      dispatch({
-        type: 'UPDATE_FORM',
-        payload: { modules: [] }
-      });
-    }
-  }, [state.formData.modules, dispatch]);
-
-  // Validate step when modules change
-  useEffect(() => {
-    const isValid = Boolean(state.formData.modules && state.formData.modules.length > 0);
+    const isValid = modules.length > 0;
     dispatch({
       type: 'VALIDATE_STEP',
-      payload: { step: 2, isValid }
+      payload: { step: 2, isValid },
     });
-  }, [state.formData.modules, dispatch]);
+  }, [modules, dispatch]);
 
   const handleAddModule = () => {
-    isEditingRef.current = false; // Reset the ref when adding a new module
-    const newModule: Module = {
+    setCurrentModule({
       title: '',
-      sequence_number: (state.formData.modules?.length || 0) + 1,
+      description: '',
+      sequence_number: (modules.length || 0) + 1,
       status: 'draft',
       is_mandatory: true,
-      lessons: []
-    };
-    setEditingModule(newModule);
+      lessons: [],
+    });
+    setIsAddingModule(true);
   };
 
   const handleEditModule = (module: Module) => {
-    isEditingRef.current = false; // Reset the ref when starting a new edit
-    setEditingModule({ ...module });
+    setCurrentModule({ ...module });
+    setEditingModuleId(module.id);
   };
 
-  const handleSaveModule = () => {
-    if (!editingModule) return;
-
-    const modules = [...(state.formData.modules || [])];
-    const index = editingModule.id 
-      ? modules.findIndex(m => m.id === editingModule.id)
-      : -1;
-
-    if (index >= 0) {
-      modules[index] = editingModule;
-    } else {
-      modules.push(editingModule);
+  const handleSaveModule = async () => {
+    if (!currentModule.title) {
+      toast({
+        title: "Error",
+        description: "Module title is required",
+        variant: "destructive",
+      });
+      return;
     }
 
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules }
-    });
-    setEditingModule(null);
+    // Generate a temporary ID if one doesn't exist
+    const tempId = editingModuleId || `temp-${Date.now()}`;
+    const moduleToSave = { ...currentModule, id: tempId };
+
+    // If editing, update existing module, otherwise add new module
+    const updatedModules = editingModuleId
+      ? modules.map(m => (m.id === editingModuleId ? moduleToSave : m))
+      : [...modules, moduleToSave];
+
+    // Update local state
+    setModules(updatedModules);
+    setIsAddingModule(false);
+    setEditingModuleId(undefined);
+    console.log('contentId', contentId);
+    // If we have a content ID from the previous step, save module to API
+    if (contentId) {
+      try {
+        setSavingModuleId(tempId);
+        
+        // Prepare data for API
+        const moduleData = {
+          title: currentModule.title,
+          description: currentModule.description || '',
+          sequence_number: currentModule.sequence_number,
+          status: currentModule.status,
+          content_id: contentId,
+          // Additional fields as needed
+        };
+
+        // Call API to save module
+        const response = await courseWizardService.addModule(contentId, moduleData);
+        
+        // Store the API module ID in our context
+        dispatch({
+          type: 'ADD_MODULE_ID',
+          payload: { localId: tempId, apiId: response.id }
+        });
+
+        toast({
+          title: "Module saved",
+          description: "Module has been saved successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error saving module",
+          description: error instanceof Error ? error.message : "Failed to save module",
+          variant: "destructive",
+        });
+        console.error("Error saving module:", error);
+      } finally {
+        setSavingModuleId(null);
+      }
+    }
   };
 
-  const handleDeleteModule = (moduleId: string) => {
-    const modules = state.formData.modules?.filter(m => m.id !== moduleId) || [];
-    // Reorder sequence numbers
-    modules.forEach((module, index) => {
-      module.sequence_number = index + 1;
-    });
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules }
-    });
+  const handleCancelEdit = () => {
+    setIsAddingModule(false);
+    setEditingModuleId(undefined);
   };
 
-  const handleMoveModule = (moduleId: string, direction: 'up' | 'down') => {
-    const modules = [...(state.formData.modules || [])];
-    const index = modules.findIndex(m => m.id === moduleId);
-    if (index === -1) return;
-
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= modules.length) return;
-
-    // Swap modules
-    [modules[index], modules[newIndex]] = [modules[newIndex], modules[index]];
-    // Update sequence numbers
-    modules.forEach((module, idx) => {
-      module.sequence_number = idx + 1;
-    });
-
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules }
-    });
+  const handleDeleteModule = (id: string) => {
+    setModules(modules.filter(m => m.id !== id));
+    // TODO: Add API call to delete module if backend integration is implemented
   };
 
-  const toggleModuleExpanded = (moduleId: string) => {
-    setExpandedModules(prev => 
-      prev.includes(moduleId)
-        ? prev.filter(id => id !== moduleId)
-        : [...prev, moduleId]
+  const handleToggleExpand = (id: string) => {
+    setExpandedModules(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
 
-    const modules = [...(state.formData.modules || [])];
-    const oldIndex = modules.findIndex(m => (m.id || `new-${m.sequence_number}`) === active.id);
-    const newIndex = modules.findIndex(m => (m.id || `new-${m.sequence_number}`) === over.id);
+    if (over && active.id !== over.id) {
+      setModules(items => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        
+        // Update sequence numbers
+        const reordered = arrayMove(items, oldIndex, newIndex).map((item, index) => ({
+          ...item,
+          sequence_number: index + 1,
+        }));
+        
+        return reordered;
+      });
+    }
+  };
 
-    const reorderedModules = arrayMove(modules, oldIndex, newIndex);
-    // Update sequence numbers
-    reorderedModules.forEach((module, idx) => {
-      module.sequence_number = idx + 1;
-    });
+  const handleInputChange = (field: keyof Module, value: any) => {
+    setCurrentModule(prev => ({ ...prev, [field]: value }));
+  };
 
-    dispatch({
-      type: 'UPDATE_FORM',
-      payload: { modules: reorderedModules }
-    });
+  // Helper to check if a module has been saved to the API
+  const isModuleSavedToApi = (moduleId: string) => {
+    return Boolean(state.apiState.moduleIds[moduleId]);
   };
 
   return (
     <div className="space-y-6">
-      {!editingModule && (
+      {!editingModuleId && (
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-muted-foreground">
-            {state.formData.modules?.length || 0} modules
+            {modules?.length || 0} modules
           </div>
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">
@@ -361,19 +367,19 @@ export function CurriculumStep() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={(state.formData.modules || []).map(m => m.id || `new-${m.sequence_number}`)}
+          items={(modules || []).map(m => m.id || `new-${m.sequence_number}`)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-4">
-            {state.formData.modules?.map((module) => (
+            {modules?.map((module) => (
               <SortableModuleItem
                 key={module.id || module.sequence_number}
                 module={module}
-                isEditing={!!editingModule}
-                editingId={editingModule?.id}
+                isEditing={!!editingModuleId}
+                editingId={editingModuleId}
                 onEdit={handleEditModule}
                 onDelete={handleDeleteModule}
-                onToggleExpand={toggleModuleExpanded}
+                onToggleExpand={handleToggleExpand}
                 isExpanded={expandedModules.includes(module.id || '')}
               />
             ))}
@@ -388,7 +394,7 @@ export function CurriculumStep() {
 
       {/* Inline Module Edit Form */}
       <AnimatePresence>
-        {editingModule && (
+        {isAddingModule && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -399,7 +405,7 @@ export function CurriculumStep() {
             <Card className="p-6 border-primary/50 shadow-lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">
-                  {editingModule.id ? 'Edit Module' : 'Add Module'}
+                  {editingModuleId ? 'Edit Module' : 'Add Module'}
                 </h2>
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-muted-foreground">
@@ -408,7 +414,7 @@ export function CurriculumStep() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setEditingModule(null)}
+                    onClick={handleCancelEdit}
                   >
                     <FiX className="h-4 w-4" />
                   </Button>
@@ -419,13 +425,9 @@ export function CurriculumStep() {
                 <div>
                   <Label htmlFor="title">Module Title</Label>
                   <Input
-                    ref={titleInputRef}
                     id="title"
-                    value={editingModule.title}
-                    onChange={(e) => setEditingModule({
-                      ...editingModule,
-                      title: e.target.value
-                    })}
+                    value={currentModule.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Enter module title"
                   />
                 </div>
@@ -434,11 +436,8 @@ export function CurriculumStep() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={editingModule.description || ''}
-                    onChange={(e) => setEditingModule({
-                      ...editingModule,
-                      description: e.target.value
-                    })}
+                    value={currentModule.description || ''}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Describe what students will learn in this module"
                   />
                 </div>
@@ -449,11 +448,8 @@ export function CurriculumStep() {
                     id="duration_weeks"
                     type="number"
                     min="1"
-                    value={editingModule.duration_weeks || ''}
-                    onChange={(e) => setEditingModule({
-                      ...editingModule,
-                      duration_weeks: parseInt(e.target.value) || undefined
-                    })}
+                    value={currentModule.duration_weeks || ''}
+                    onChange={(e) => handleInputChange('duration_weeks', parseInt(e.target.value) || undefined)}
                     placeholder="e.g., 2"
                   />
                 </div>
@@ -462,24 +458,21 @@ export function CurriculumStep() {
                   <Label htmlFor="is_mandatory">Mandatory Module</Label>
                   <Switch
                     id="is_mandatory"
-                    checked={editingModule.is_mandatory}
-                    onCheckedChange={(checked) => setEditingModule({
-                      ...editingModule,
-                      is_mandatory: checked
-                    })}
+                    checked={currentModule.is_mandatory}
+                    onCheckedChange={(checked) => handleInputChange('is_mandatory', checked)}
                   />
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
                     variant="outline"
-                    onClick={() => setEditingModule(null)}
+                    onClick={handleCancelEdit}
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveModule}
-                    disabled={!editingModule.title}
+                    disabled={!currentModule.title}
                   >
                     Save Module
                   </Button>

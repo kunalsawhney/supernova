@@ -63,6 +63,7 @@ async def list_courses(
             db, current_user, skip=skip, limit=limit,
             status=status, search=search
         )
+        # print("Courses fetched", courses)
         return [CourseResponse.model_validate(course) for course in courses]
     except Exception as e:
         print(e)
@@ -267,6 +268,7 @@ async def add_lesson_to_module(
         await db.refresh(lesson)
         return LessonResponse.model_validate(lesson)
     except Exception as e:
+        print(e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 

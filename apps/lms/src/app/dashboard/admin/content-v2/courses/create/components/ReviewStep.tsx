@@ -1,15 +1,20 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCourseWizard } from '@/contexts/CourseWizardContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FiClock, FiBook, FiAward, FiDollarSign, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { useToast } from '@/hooks/use-toast';
+import { FiClock, FiBook, FiAward, FiDollarSign, FiCheckCircle, FiAlertCircle, FiDatabase, FiCheck, FiX } from 'react-icons/fi';
 
 export function ReviewStep() {
   const { state } = useCourseWizard();
   const { formData } = state;
+  const { courseId, contentId, moduleIds, lessonIds } = state.apiState;
+  const router = useRouter();
+  const { toast } = useToast();
 
   // Calculate total duration
   const totalDuration = formData.modules?.reduce((total, module) => {
@@ -23,7 +28,7 @@ export function ReviewStep() {
     total + (module.lessons?.length || 0), 0) || 0;
 
   // Check if any required fields are missing
-  const missingFields = [];
+  const missingFields: string[] = [];
   if (!formData.title) missingFields.push('Course Title');
   if (!formData.description) missingFields.push('Course Description');
   if (!formData.difficulty_level) missingFields.push('Difficulty Level');
@@ -31,6 +36,29 @@ export function ReviewStep() {
   if (!formData.academic_year) missingFields.push('Academic Year');
   if (!formData.modules?.length) missingFields.push('Modules');
   if (!totalLessons) missingFields.push('Lessons');
+
+  // Calculate API submission status
+  const apiSubmissionStatus = {
+    course: Boolean(courseId),
+    allModules: formData.modules?.every(module => Boolean(moduleIds[module.id || ''])) || false,
+    allLessons: formData.modules?.every(module => 
+      module.lessons?.every(lesson => Boolean(lessonIds[lesson.id || ''])) || false
+    ) || false
+  };
+
+  const handleFinish = () => {
+    if (missingFields.length > 0) {
+      toast({
+        title: "Incomplete Course",
+        description: `Please complete the following: ${missingFields.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Navigate to courses page
+    router.push('/dashboard/admin/content-v2/courses');
+  };
 
   return (
     <div className="space-y-8">
@@ -60,6 +88,66 @@ export function ReviewStep() {
           </div>
         </Card>
       </div>
+
+      {/* API Submission Status */}
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">API Submission Status</h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiDatabase className="h-4 w-4" />
+              <span>Course Details</span>
+            </div>
+            <div>
+              {apiSubmissionStatus.course ? (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <FiCheck className="h-3 w-3 mr-1" /> Submitted
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <FiX className="h-3 w-3 mr-1" /> Not Submitted
+                </Badge>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiDatabase className="h-4 w-4" />
+              <span>Modules</span>
+            </div>
+            <div>
+              {apiSubmissionStatus.allModules ? (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <FiCheck className="h-3 w-3 mr-1" /> All Submitted
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <FiX className="h-3 w-3 mr-1" /> Partially Submitted
+                </Badge>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiDatabase className="h-4 w-4" />
+              <span>Lessons</span>
+            </div>
+            <div>
+              {apiSubmissionStatus.allLessons ? (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <FiCheck className="h-3 w-3 mr-1" /> All Submitted
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <FiX className="h-3 w-3 mr-1" /> Partially Submitted
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Course Overview */}
       <Card className="p-6">
@@ -99,31 +187,41 @@ export function ReviewStep() {
                   <h3 className="font-medium">
                     {module.sequence_number.toString().padStart(2, '0')}. {module.title}
                   </h3>
-                  <Badge variant={module.is_mandatory ? 'default' : 'secondary'}>
-                    {module.is_mandatory ? 'Mandatory' : 'Optional'}
-                  </Badge>
+                  <div>
+                    {moduleIds[module.id || ''] ? (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        <FiCheck className="h-3 w-3 mr-1" /> API Saved
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                        <FiX className="h-3 w-3 mr-1" /> Not Saved
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 {module.description && (
                   <p className="text-sm text-muted-foreground">{module.description}</p>
                 )}
                 <div className="pl-6 space-y-2">
                   {module.lessons?.map((lesson, lessonIndex) => (
-                    <div key={lesson.id || lessonIndex} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">
-                          {lesson.sequence_number.toString().padStart(2, '0')}.
-                        </span>
-                        {lesson.title}
-                        <Badge variant="outline" className="ml-2">
-                          {lesson.content_type}
-                        </Badge>
+                    <div key={lesson.id || lessonIndex} className="flex items-center justify-between py-1">
+                      <div className="text-sm">
+                        {lesson.sequence_number.toString().padStart(2, '0')}. {lesson.title}
                       </div>
-                      {lesson.duration_minutes && (
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <FiClock className="h-3 w-3" />
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
                           {lesson.duration_minutes} min
                         </span>
-                      )}
+                        {lessonIds[lesson.id || ''] ? (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                            <FiCheck className="h-3 w-3 mr-1" /> API Saved
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                            <FiX className="h-3 w-3 mr-1" /> Not Saved
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -133,35 +231,23 @@ export function ReviewStep() {
         </div>
       </Card>
 
-      {/* Validation Summary */}
-      {missingFields.length > 0 && (
-        <Card className="p-6 border-destructive/50">
-          <div className="flex items-center gap-2 text-destructive mb-2">
-            <FiAlertCircle className="h-5 w-5" />
-            <h2 className="font-semibold">Missing Information</h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            The following information is required before publishing:
-          </p>
-          <ul className="list-disc list-inside text-sm space-y-1">
-            {missingFields.map((field) => (
-              <li key={field} className="text-destructive">{field}</li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      {/* Completion Button */}
+      <div className="flex justify-center pt-4">
+        <Button size="lg" onClick={handleFinish}>
+          Complete & Return to Courses
+        </Button>
+      </div>
 
-      {/* Ready to Publish */}
-      {missingFields.length === 0 && (
-        <Card className="p-6 border-primary/50">
-          <div className="flex items-center gap-2 text-primary mb-2">
-            <FiCheckCircle className="h-5 w-5" />
-            <h2 className="font-semibold">Ready to Publish</h2>
+      {missingFields.length > 0 && (
+        <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-md">
+          <FiAlertCircle className="h-5 w-5 text-amber-500" />
+          <div>
+            <p className="font-medium text-amber-700">Incomplete Course</p>
+            <p className="text-sm text-amber-600">
+              The following fields are missing: {missingFields.join(', ')}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            All required information has been provided. You can now publish your course.
-          </p>
-        </Card>
+        </div>
       )}
     </div>
   );

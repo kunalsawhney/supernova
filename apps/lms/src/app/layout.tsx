@@ -1,7 +1,7 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import RootLayoutClient from './RootLayoutClient';
-import { ToastContextProvider } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -24,11 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased min-h-screen bg-background text-foreground`}>
-        <ToastContextProvider>
-          <RootLayoutClient>
-            {children}
-          </RootLayoutClient>
-        </ToastContextProvider>
+        <RootLayoutClient>
+          {children}
+        </RootLayoutClient>
+        <Toaster />
       </body>
     </html>
   );

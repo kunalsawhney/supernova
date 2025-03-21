@@ -1,7 +1,8 @@
 'use client';
 
-import { SidebarProvider } from '@/contexts/SidebarContext';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 export default function DashboardLayout({
   children,
@@ -9,8 +10,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <DashboardShell>{children}</DashboardShell>
-    </SidebarProvider>
+    <div className="w-full overflow-hidden">
+      <TooltipProvider>
+        <SidebarProvider defaultOpen={true}>
+          <DashboardShell>{children}</DashboardShell>
+        </SidebarProvider>
+      </TooltipProvider>
+    </div>
   );
 } 

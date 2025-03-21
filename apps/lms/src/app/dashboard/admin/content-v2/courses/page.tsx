@@ -15,9 +15,10 @@ import {
   BookOpen,
   ArrowUpDown
 } from 'lucide-react';
-import { adminService } from '@/services/adminService';
+// import { adminService } from '@/services/adminService';
+import { courseService } from '@/services/courseService';
 import { Spinner } from '@/components/ui/spinner';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -42,7 +43,7 @@ export default function CoursesPage() {
       setError(null);
       
       // Fetch courses from the API
-      const data = await adminService.getCourses();
+      const data = await courseService.getCourses();
       setCourses(data);
     } catch (err) {
       console.error('Failed to fetch courses:', err);
@@ -71,7 +72,7 @@ export default function CoursesPage() {
     }
 
     try {
-      await adminService.deleteCourse(courseId);
+      await courseService.deleteCourse(courseId);
       toast({
         title: 'Success',
         description: 'Course deleted successfully',
@@ -182,7 +183,7 @@ export default function CoursesPage() {
           <div className="col-span-2 flex items-center gap-1 cursor-pointer" onClick={() => toggleSort('status')}>
             Status <ArrowUpDown className="h-3 w-3" />
           </div>
-          <div className="col-span-3">Modules</div>
+          <div className="col-span-3">Duration</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
 
@@ -203,7 +204,7 @@ export default function CoursesPage() {
               </div>
               <div className="col-span-3 flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <span>{course.modules?.length || 0} modules</span>
+                <span>{course.estimatedDuration || 0} minutes</span>
               </div>
               <div className="col-span-2 flex justify-end">
                 <DropdownMenu>

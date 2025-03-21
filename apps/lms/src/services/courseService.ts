@@ -22,14 +22,15 @@ export const courseService = {
    */
   getCourses: withCache(
     async (params?: SearchParams & { status?: string }): Promise<CourseViewModel[]> => {
+      console.log('Fetching courses', params);
       const response = await api.get<any[]>('/courses/', { params });
-      
+      console.log('Courses fetched', response);
       // Normalize each course in the response
       const courses: Course[] = response.map(courseData => ({
         ...courseData,
         content_versions: courseData.content_versions || courseData.versions || []
       }));
-      
+      console.log('Courses transformed', courses.map(transformCourse));
       return courses.map(transformCourse);
     },
     (params?: SearchParams & { status?: string }) => {
@@ -40,7 +41,7 @@ export const courseService = {
       const limitParam = params?.limit ? `limit_${params.limit}` : '';
       return `courses_list_${searchParam}_${statusParam}_${skipParam}_${limitParam}`.replace(/_{2,}/g, '_');
     },
-    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+    { ttl: 0.01 * 60 * 1000 } // 0.01 minutes cache
   ),
 
   /**
@@ -48,20 +49,31 @@ export const courseService = {
    * @returns Transformed course view model ready for UI display
    */
   getCourse: withCache(
-    async (id: string): Promise<CourseViewModel> => {
-      const response = await api.get<any>(`/courses/${id}`);
-      
+    async (id: string, with_content: boolean = false): Promise<CourseViewModel> => {
+      console.log('Fetching course', id, with_content);
+      const response = await api.get<any>(`/courses/${id}?with_content=${with_content}`);
+      console.log('Course fetched', response);
       // Normalize response structure
       const course: Course = {
         ...response,
         content_versions: response.content_versions || response.versions || []
       };
-      
+      console.log('Course transformed', transformCourse(course));
       return transformCourse(course);
     },
     (id: string) => `course_${id}`,
-    { ttl: 10 * 60 * 1000 } // 10 minutes cache
+    { ttl: 0.01 * 60 * 1000 } // 0.01 minutes cache
   ),
+
+  /**
+   * Delete a course
+   */
+  async deleteCourse(courseId: string): Promise<void> {
+    console.log('Deleting course', courseId);
+    await api.delete(`/courses/${courseId}/`);
+    clearCacheByPrefix(`course_${courseId}`);
+    console.log('Course deleted', courseId);
+  },
 
   /**
    * Enroll the current user in a course
