@@ -23,12 +23,13 @@ const rolePermissions: Record<Role, string[]> = {
     'access_support',
   ],
   instructor: [
-    'view_school_dashboard',
+    'view_instructor_dashboard',
     'view_student_progress',
     'view_class_analytics',
     'manage_student_access',
     'generate_reports',
     'contact_support',
+    'manage_courses',
   ],
   admin: [
     'manage_courses',
@@ -58,14 +59,6 @@ const rolePermissions: Record<Role, string[]> = {
   ],
 };
 
-const roleDashboardPaths: Record<Role, string> = {
-  student: '/dashboard/student',
-  instructor: '/dashboard/instructor',
-  admin: '/dashboard/admin',
-  super_admin: '/dashboard/admin',
-  school_admin: '/dashboard/admin',
-};
-
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
@@ -83,9 +76,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     if (process.env.NODE_ENV === 'development') {
       localStorage.setItem('devRole', newRole);
       
-      // The navigation will be handled by the DevRoleSwitcher component
-      // to avoid duplicate navigation when both context and component
-      // try to navigate at the same time
+      // Redirect to the unified dashboard route
+      if (window.location.pathname === '/dashboard') {
+        router.refresh();
+      }
     }
   };
 
@@ -95,10 +89,6 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       const savedRole = localStorage.getItem('devRole') as Role;
       if (savedRole && savedRole !== role) {
         setRoleState(savedRole);
-        // Only redirect if we're at the root dashboard
-        if (window.location.pathname === '/dashboard') {
-          router.push(roleDashboardPaths[savedRole]);
-        }
       }
     }
   }, []);

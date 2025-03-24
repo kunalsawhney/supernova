@@ -21,17 +21,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Handle role-based routing for authenticated users
+  // Check if user has access to the current route based on permissions
   if (path.startsWith('/dashboard') && userRole) {
-    // Get the base dashboard path for the user's role
-    const baseDashboardPath = getDashboardPath(userRole);
-    
-    // Redirect to role-specific dashboard if accessing generic /dashboard
-    if (path === '/dashboard') {
-      return NextResponse.redirect(new URL(baseDashboardPath, request.url));
-    }
-
-    // Check if user has access to the current route
     const allowedPaths = getAllowedPaths(userRole);
 
     const hasAccess = allowedPaths.some(allowedPath => {
@@ -40,7 +31,8 @@ export function middleware(request: NextRequest) {
     });
 
     if (!hasAccess) {
-      return NextResponse.redirect(new URL(baseDashboardPath, request.url));
+      // If not allowed, redirect to the main dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
@@ -70,20 +62,6 @@ function getUserRole(request: NextRequest): UserRole {
   }
 }
 
-function getDashboardPath(role: UserRole): string {
-  switch (role) {
-    case 'super_admin':
-    case 'school_admin':
-      return '/dashboard/admin';
-    case 'instructor':
-      return '/dashboard/instructor';
-    case 'student':
-      return '/dashboard/student';
-    default:
-      return '/dashboard';
-  }
-}
-
 function getAllowedPaths(role: UserRole): string[] {
   const basePaths = [
     '/dashboard',
@@ -92,17 +70,18 @@ function getAllowedPaths(role: UserRole): string[] {
   
   switch (role) {
     case 'student':
-      return [...basePaths, '/dashboard/student', '/dashboard/courses'];
+      return [...basePaths, '/dashboard/courses'];
     case 'instructor':
       return [...basePaths, '/dashboard/instructor', '/dashboard/courses'];
     case 'super_admin':
     case 'school_admin':
+    case 'admin':
       return [
         ...basePaths,
         '/dashboard/admin',
-        '/dashboard/admin/schools',
-        '/dashboard/admin/users',
-        '/dashboard/admin/components'
+        '/dashboard/schools',
+        '/dashboard/users',
+        '/dashboard/content'
       ];
     default:
       return basePaths;

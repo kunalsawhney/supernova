@@ -16,12 +16,13 @@ export function DashboardContent({ children }: DashboardContentProps) {
 
   return (
     <motion.main 
-      className="flex-1 w-full p-4 md:p-6 overflow-y-auto bg-gradient-to-b from-transparent to-background-secondary"
+      className="flex-1 w-full p-4 md:p-6"
+      style={{ border: 'none', borderRight: 'none' }}
       initial={mounted ? { opacity: 0.8 } : false}
       animate={mounted ? { opacity: 1 } : {}}
       transition={{ duration: 0.2 }}
     >
-      <div className="w-full max-w-screen-2xl mx-auto">
+      <div className="w-full mx-auto h-full" style={{ border: 'none', borderRight: 'none' }}>
         {children}
       </div>
     </motion.main>

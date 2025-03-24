@@ -65,20 +65,21 @@ export function DashboardSidebar({
     <div 
       style={{ 
         width: isCollapsed ? SIDEBAR_CONFIG.collapsedWidth : SIDEBAR_CONFIG.width,
-        transition: `width ${SIDEBAR_CONFIG.animationDuration} ease-linear`
+        transition: `width ${SIDEBAR_CONFIG.animationDuration} ease-linear`,
+        borderRight: 'none'
       }}
       className={`flex-shrink-0 h-screen overflow-hidden relative ${className}`}
     >
       <Sidebar 
         variant="sidebar"
         collapsible="icon"
-        className="h-screen border-r border-border shadow-sm bg-card"
+        className="h-screen border-r-0 shadow-sm bg-card"
       >
         <SidebarHeader className="px-4 py-4">
-          <div className="flex items-center h-16">
+          <div className="flex items-center h-14">
             {customLogo || (
               <>
-                <div className="relative w-9 h-9">
+                <div className="relative w-8 h-8">
                   <div className="absolute inset-0 bg-gradient-to-tr from-primary to-secondary rounded-lg shadow-sm"></div>
                   <div className="absolute inset-0.5 bg-card rounded-lg flex items-center justify-center">
                     <span className="text-sm font-bold text-primary">{SIDEBAR_CONFIG.logoInitials}</span>
@@ -86,7 +87,7 @@ export function DashboardSidebar({
                 </div>
                 
                 <div className={`${isCollapsed ? "hidden" : "ml-3 overflow-hidden whitespace-nowrap"}`}>
-                  <span className="heading-md block">{SIDEBAR_CONFIG.logoTextPrimary}</span>
+                  <span className="font-bold block">{SIDEBAR_CONFIG.logoTextPrimary}</span>
                   <span className="text-xs text-muted-foreground">{SIDEBAR_CONFIG.logoTextSecondary}</span>
                 </div>
               </>
@@ -98,8 +99,10 @@ export function DashboardSidebar({
           </SidebarTrigger>
         </SidebarHeader>
         
-        <SidebarContent className="flex-1 overflow-y-auto">
-          <DashboardNavigation />
+        <SidebarContent className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
+            <DashboardNavigation />
+          </div>
         </SidebarContent>
         
         <SidebarFooter className="px-3 py-2 border-t border-border/30">
