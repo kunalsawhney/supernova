@@ -160,13 +160,22 @@ body {
 /* Base styles */
 @layer base {
   h1 {
-    @apply text-4xl font-bold text-foreground tracking-tight;
+    @apply text-3xl font-bold tracking-tight text-foreground;
   }
   h2 {
-    @apply text-3xl font-semibold text-foreground tracking-tight;
+    @apply text-2xl font-semibold tracking-tight text-foreground;
   }
   h3 {
-    @apply text-2xl font-semibold text-foreground tracking-tight;
+    @apply text-xl font-semibold tracking-tight text-foreground;
+  }
+  h4 {
+    @apply text-lg font-medium text-foreground;
+  }
+  p {
+    @apply text-foreground;
+  }
+  small {
+    @apply text-sm text-muted-foreground;
   }
   a {
     @apply text-secondary hover:opacity-80 transition-opacity;
@@ -196,92 +205,42 @@ body {
 /* Component styles */
 @layer components {
   /* Typography system - refined for better visual hierarchy */
-  .heading {
-    @apply font-semibold leading-tight text-foreground tracking-tight;
-  }
-  
   .heading-sm {
-    @apply heading text-lg;
+    @apply text-lg font-semibold leading-tight text-foreground tracking-tight;
   }
   
   .heading-md {
-    @apply heading text-xl md:text-2xl;
+    @apply text-xl font-semibold leading-tight text-foreground tracking-tight md:text-2xl;
   }
   
   .heading-lg {
-    @apply heading text-2xl md:text-3xl font-bold;
+    @apply text-2xl font-bold leading-tight text-foreground tracking-tight md:text-3xl;
   }
   
   .heading-xl {
-    @apply heading text-3xl md:text-4xl font-bold;
+    @apply text-3xl font-bold leading-tight text-foreground tracking-tight md:text-4xl;
   }
   
-  /* Base text styles */
-  .text-base-style {
-    @apply font-normal leading-relaxed text-foreground;
+  /* Status badge styles consistent across the app */
+  .badge-active {
+    @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400;
   }
   
-  /* Text size variants that don't use @apply with the same class name */
-  .text-sm {
-    @apply text-base-style text-opacity-90;
-    font-size: 0.875rem;
+  .badge-inactive {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400;
   }
   
-  .text-md {
-    @apply text-base-style;
-    font-size: 1rem;
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
   }
   
-  .text-lg {
-    @apply text-base-style;
-    font-size: 1.125rem;
+  .badge-error {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
   }
   
-  /* Secondary text styles */
-  .text-secondary-base {
-    @apply font-normal leading-relaxed text-secondary;
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
   }
-  
-  .text-secondary-sm {
-    @apply text-secondary-base;
-    font-size: 0.875rem;
-  }
-  
-  .text-secondary-md {
-    @apply text-secondary-base;
-    font-size: 1rem;
-  }
-  
-  .display {
-    @apply font-bold leading-tight text-foreground tracking-tighter;
-  }
-  
-  .display-md {
-    @apply display text-3xl md:text-4xl;
-  }
-  
-  .display-lg {
-    @apply display text-4xl md:text-5xl;
-  }
-  
-  /* Card enhancement */
-  .card-hover {
-    @apply transition-all duration-200 hover:shadow-md hover:border-border/60;
-  }
-  
-  /* Button enhancements */
-  .btn-primary {
-    @apply bg-primary text-primary-foreground hover:opacity-90 transition-colors duration-200;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:opacity-90 transition-colors duration-200;
-  }
-  
-  .btn-ghost {
-    @apply bg-transparent hover:bg-background-secondary transition-colors duration-200;
-  }
-
 }
 
 @layer base {

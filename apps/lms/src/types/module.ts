@@ -1,7 +1,7 @@
 /**
  * Module type definitions
  */
-
+import { LessonViewModel } from './course';
 export interface Module {
   id: string;
   title: string;
@@ -27,6 +27,7 @@ export interface ModuleViewModel {
   createdAt?: string;
   updatedAt?: string;
   contentId?: string;
+  lessons: LessonViewModel[];
 }
 
 export interface CreateModuleData {
@@ -56,6 +57,7 @@ export function transformModule(module: Module): ModuleViewModel {
     status: module.status,
     createdAt: module.created_at,
     updatedAt: module.updated_at,
-    contentId: module.content_id
+    contentId: module.content_id,
+    lessons: []
   };
 } 

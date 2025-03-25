@@ -3,6 +3,7 @@
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
+from app.schemas.lesson import LessonResponse
 from pydantic import (
     BaseModel,
     Field,
@@ -79,7 +80,7 @@ class LessonSummary(BaseSchema):
     title: str
     duration_minutes: Optional[int] = None
     sequence_number: int
-    status: LessonStatus
+    # status: LessonStatus
     
     model_config = ConfigDict(
         from_attributes=True,
@@ -105,3 +106,8 @@ class ModuleResponse(ModuleInDB):
     def total_lesson_duration(self) -> int:
         """Calculate total duration of all lessons in minutes."""
         return sum(lesson.duration_minutes or 0 for lesson in self.lessons) 
+    
+
+class ModuleWithLessonsResponse(ModuleResponse):
+    """Schema for module response with lessons."""
+    lessons: List[LessonResponse] = Field(default_factory=list)

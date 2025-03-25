@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { 
   AlertCircle, 
@@ -198,10 +199,19 @@ export default function ModulesPage() {
       // Reset ref so manual fetches still work
       initialFetchRef.current = false;
       fetchData();
+      toast({
+        title: 'Module deleted',
+        description: 'Module deleted successfully',
+        variant: 'default',
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete module';
       setError(errorMessage);
-      console.error('Error deleting module:', err);
+      toast({
+        title: 'Error deleting module',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
     }
   }, [fetchData]);
   

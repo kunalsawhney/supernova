@@ -115,7 +115,12 @@ async def get_enrollment_progress(
     current_user: User = Depends(get_current_user)
 ) -> EnrollmentWithProgressResponse:
     """Get enrollment progress."""
-    enrollment = await EnrollmentService.get_enrollment_progress(
-        db, current_user, enrollment_id
-    )
-    return EnrollmentWithProgressResponse.model_validate(enrollment) 
+    try:
+        enrollment = await EnrollmentService.get_enrollment_progress(
+            db, current_user, enrollment_id
+        )
+        print(f"Enrollment: {enrollment}")
+        return EnrollmentWithProgressResponse.model_validate(enrollment)
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

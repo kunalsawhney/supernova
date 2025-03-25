@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -8,7 +8,7 @@ from app.api.dependencies.auth import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.models.enums import CourseStatus
-from app.schemas.module import ModuleResponse, ModuleUpdate, ModuleCreate
+from app.schemas.module import ModuleResponse, ModuleUpdate, ModuleCreate, ModuleWithLessonsResponse
 from app.services.course import CourseService
 from app.services.module import ModuleService
 
@@ -43,13 +43,14 @@ async def list_modules(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{module_id}", response_model=ModuleResponse)
+@router.get("/{module_id}", response_model=Union[ModuleResponse, ModuleWithLessonsResponse])
 async def get_module(
     module_id: UUID,
     *,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-) -> ModuleResponse:
+    current_user: User = Depends(get_current_user),
+    with_lessons: Optional[bool] = Query(False, description="Include lessons in the response")
+) -> Union[ModuleResponse, ModuleWithLessonsResponse]:
     """
     Get details for a specific module.
     
@@ -60,9 +61,13 @@ async def get_module(
     - Students can see modules for courses they are enrolled in
     """
     try:
-        module = await CourseService.get_module(db, current_user, module_id)
-        return ModuleResponse.model_validate(module)
+        module = await CourseService.get_module(db, current_user, module_id, with_lessons)
+        if with_lessons:
+            return ModuleWithLessonsResponse.model_validate(module)
+        else:
+            return ModuleResponse.model_validate(module)
     except Exception as e:
+        print(f"Error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{module_id}", response_model=ModuleResponse)

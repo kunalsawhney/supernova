@@ -74,7 +74,7 @@ export function DashboardSidebar({
         collapsible="icon"
         className="h-screen border-r border-border shadow-sm bg-card"
       >
-        <SidebarHeader className="px-4 py-4">
+        <SidebarHeader className="px-4 py-4 opacity-60">
           <div className="flex items-center h-16">
             {customLogo || (
               <>

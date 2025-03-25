@@ -21,7 +21,8 @@ import {
   School, 
   Save, 
   Trash2, 
-  Loader2 
+  Loader2,
+  X
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
@@ -35,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -106,6 +108,11 @@ export default function EditUserPage() {
       });
     } catch (err) {
       console.error('Error fetching user:', err);
+      toast({
+        title: 'Error fetching user',
+        description: 'Failed to fetch user data',
+        variant: 'destructive',
+      });
       setError('Failed to fetch user data');
       initialFetchRef.current = false; // Reset for retry
     } finally {
@@ -125,10 +132,19 @@ export default function EditUserPage() {
         role: formData.role,
         school_id: formData.school_id || undefined,
       });
+      toast({
+        title: 'User updated successfully',
+        description: 'User information has been updated',
+      });
       router.push('/dashboard/admin/users');
     } catch (err: any) {
       setError(err.message || 'Failed to update user');
       console.error('Error updating user:', err);
+      toast({
+        title: 'Error updating user',
+        description: 'Failed to update user',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -180,20 +196,40 @@ export default function EditUserPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="heading-lg mb-1">Edit User</h2>
-          <p className="text-muted-foreground">
-            Modify user information and access rights
-          </p>
-        </div>
         <Button
           variant="outline"
           onClick={() => router.push('/dashboard/admin/users')}
-          className="flex items-center gap-2"
+          size="md"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Users
         </Button>
+        <div className="flex flex-row gap-2">
+          <Button 
+            variant="outline"
+            size="md"
+            onClick={() => router.push('/dashboard/admin/users')}
+          >
+            <X className="h-4 w-4" />
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="edit-user-form"
+            disabled={loading}
+            size="md"
+          >
+            <Save className="h-4 w-4" />
+            {loading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col">
+        <h2 className="heading-lg mb-1">Edit User</h2>
+        <p className="text-muted-foreground">
+          Modify user information and access rights
+        </p>
       </div>
 
       {error && (

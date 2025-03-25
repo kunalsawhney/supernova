@@ -149,13 +149,13 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Enrolled Courses</p>
                 <h3 className="text-2xl font-bold mt-1">{learningStats.coursesEnrolled}</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-400">Active courses</p>
+                <p className="text-sm text-primary">Active courses</p>
               </div>
             </div>
           </CardContent>
@@ -164,13 +164,13 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-success" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Completed</p>
                 <h3 className="text-2xl font-bold mt-1">{learningStats.completedCourses}</h3>
-                <p className="text-sm text-green-600 dark:text-green-400">Finished courses</p>
+                <p className="text-sm text-success">Finished courses</p>
               </div>
             </div>
           </CardContent>
@@ -179,13 +179,13 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
-                <BarChart className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                <BarChart className="h-6 w-6 text-secondary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Average Score</p>
                 <h3 className="text-2xl font-bold mt-1">{learningStats.averageScore}</h3>
-                <p className="text-sm text-yellow-600 dark:text-yellow-400">Keep it up!</p>
+                <p className="text-sm text-secondary">Keep it up!</p>
               </div>
             </div>
           </CardContent>
@@ -194,13 +194,13 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-accent" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Learning Hours</p>
                 <h3 className="text-2xl font-bold mt-1">{learningStats.totalHours}h</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-400">Total time spent</p>
+                <p className="text-sm text-accent">Total time spent</p>
               </div>
             </div>
           </CardContent>
@@ -248,9 +248,9 @@ export default function StudentDashboard() {
                           <Badge 
                             variant="outline" 
                             className={`
-                              ${course.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30' : 
-                                course.status === 'in_progress' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30' : 
-                                'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/30'}
+                              ${course.status === 'completed' ? 'badge-active' : 
+                                course.status === 'in_progress' ? 'badge-info' : 
+                                'badge-warning'}
                             `}
                           >
                             {course.status === 'in_progress' ? 'In Progress' : 
@@ -267,8 +267,8 @@ export default function StudentDashboard() {
                           <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                             <div
                               className={`h-2 rounded-full ${
-                                course.progress < 20 ? 'bg-amber-500' :
-                                course.progress < 70 ? 'bg-blue-500' : 'bg-emerald-500'
+                                course.progress < 20 ? 'bg-accent' :
+                                course.progress < 70 ? 'bg-secondary' : 'bg-success'
                               }`}
                               style={{ width: `${course.progress}%` }}
                             ></div>

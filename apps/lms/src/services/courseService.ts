@@ -22,15 +22,12 @@ export const courseService = {
    */
   getCourses: withCache(
     async (params?: SearchParams & { status?: string }): Promise<CourseViewModel[]> => {
-      console.log('Fetching courses', params);
       const response = await api.get<any[]>('/courses/', { params });
-      console.log('Courses fetched', response);
       // Normalize each course in the response
       const courses: Course[] = response.map(courseData => ({
         ...courseData,
         content_versions: courseData.content_versions || courseData.versions || []
       }));
-      console.log('Courses transformed', courses.map(transformCourse));
       return courses.map(transformCourse);
     },
     (params?: SearchParams & { status?: string }) => {
@@ -50,15 +47,12 @@ export const courseService = {
    */
   getCourse: withCache(
     async (id: string, with_content: boolean = false): Promise<CourseViewModel> => {
-      console.log('Fetching course', id, with_content);
       const response = await api.get<any>(`/courses/${id}?with_content=${with_content}`);
-      console.log('Course fetched', response);
       // Normalize response structure
       const course: Course = {
         ...response,
         content_versions: response.content_versions || response.versions || []
       };
-      console.log('Course transformed', transformCourse(course));
       return transformCourse(course);
     },
     (id: string) => `course_${id}`,

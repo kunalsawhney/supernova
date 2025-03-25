@@ -180,6 +180,27 @@ const navigationConfig = {
   ],
 } as const;
 
+const getContextualItems = (role: string, currentPath: string) => {
+  const baseItems = navigationConfig[role] || [];
+  
+  // Add contextual items based on current path
+  if (currentPath.includes('/courses/')) {
+    return [
+      ...baseItems,
+      {
+        category: 'Current Course',
+        items: [
+          { label: 'Course Overview', href: `${currentPath}/overview`, icon: 'FiBook' },
+          { label: 'Resources', href: `${currentPath}/resources`, icon: 'FiBox' },
+          { label: 'Discussion', href: `${currentPath}/discussion`, icon: 'FiMessageSquare' },
+        ]
+      }
+    ];
+  }
+  
+  return baseItems;
+}; 
+
 // Map icon strings to React Icon components
 const icons = {
   FiHome: <FiHome />,
@@ -304,8 +325,8 @@ export function DashboardNavigation() {
                     tooltip={collapsed ? item.label : undefined}
                   >
                     <Link href={item.href} onClick={handleLinkClick} className="flex items-center gap-2 w-full">
-                      {icons[item.icon as keyof typeof icons]}
-                      <span className="truncate text-sm">{item.label}</span>
+                      <span className="text-muted-foreground">{icons[item.icon as keyof typeof icons]}</span>
+                      <span className="truncate text-sm text-foreground">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -25,7 +25,7 @@ export const enrollmentService = {
     course_id?: string; 
     status?: string; 
   }): Promise<EnrollmentViewModel[]> {
-    const enrollments = await api.get<Enrollment[]>('/enrollments', { params });
+    const enrollments = await api.get<Enrollment[]>('/enrollments/', { params });
     return enrollments.map(transformEnrollment);
   },
 
@@ -61,7 +61,7 @@ export const enrollmentService = {
    * @returns Transformed enrollment progress view model ready for UI display
    */
   async getOverallProgress(enrollmentId: string): Promise<EnrollmentProgressViewModel> {
-    const progress = await api.get<EnrollmentProgress>(`/enrollments/${enrollmentId}/overall-progress`);
+    const progress = await api.get<EnrollmentProgress>(`/enrollments/${enrollmentId}/progress`);
     return transformEnrollmentProgress(progress);
   },
 

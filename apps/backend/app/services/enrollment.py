@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
-
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundException, ValidationError, PermissionError
 from app.models.course import (
     Course
@@ -190,7 +190,7 @@ class EnrollmentService:
 
     @staticmethod
     async def list_enrollments(
-        db: Session,
+        db: AsyncSession,
         current_user: User,
         course_id: Optional[UUID] = None,
         status: Optional[EnrollmentStatus] = None,
@@ -198,41 +198,55 @@ class EnrollmentService:
         limit: int = 100
     ) -> List[CourseEnrollment]:
         """List enrollments based on user role and filters."""
-        query = db.query(CourseEnrollment)
-
+        query = select(CourseEnrollment)
+        
         # Apply filters
         if course_id:
-            query = query.filter(CourseEnrollment.course_id == course_id)
+            query = query.where(CourseEnrollment.course_id == course_id)
         if status:
-            query = query.filter(CourseEnrollment.status == status)
+            query = query.where(CourseEnrollment.status == status)
 
         # Apply role-based filtering
         if current_user.role == UserRole.SUPER_ADMIN:
             pass  # Can see all enrollments
         elif current_user.role in [UserRole.SCHOOL_ADMIN, UserRole.TEACHER]:
             # Can only see enrollments in their school
-            query = query.join(User, CourseEnrollment.student_id == User.id).filter(
+            query = query.join(User, CourseEnrollment.student_id == User.id).where(
                 User.school_id == current_user.school_id
             )
         elif current_user.role == UserRole.STUDENT:
             # Can only see own enrollments
-            query = query.filter(CourseEnrollment.student_id == current_user.id)
+            query = query.where(CourseEnrollment.student_id == current_user.id)
         else:  # Individual user
             # Can only see own D2C enrollments
-            query = query.filter(CourseEnrollment.individual_user_id == current_user.id)
+            query = query.where(CourseEnrollment.individual_user_id == current_user.id)
 
-        return query.offset(skip).limit(limit).all()
+        result = await db.execute(query.offset(skip).limit(limit))
+        enrollments = result.scalars().all()
+        # for enrollment in enrollments:
+        #     if with_progress:
+        #         enrollment.progress = enrollment.lesson_progresses.all()
+        return enrollments
 
     @staticmethod
     async def get_enrollment_progress(
-        db: Session,
+        db: AsyncSession,
         current_user: User,
         enrollment_id: UUID
     ) -> Tuple[CourseEnrollment, List[UserProgress]]:
         """Get detailed progress for an enrollment."""
-        enrollment = db.query(CourseEnrollment).filter(
-            CourseEnrollment.id == enrollment_id
-        ).first()
+
+        # Fetch enrollment with related data eagerly
+        result = await db.execute(
+            select(CourseEnrollment)
+            .where(CourseEnrollment.id == enrollment_id)
+            .options(
+                joinedload(CourseEnrollment.student),  # Ensure student info is preloaded
+                selectinload(CourseEnrollment.lesson_progresses)  # Preload progress records
+            )
+        )
+        enrollment = result.scalar_one_or_none()
+        
         if not enrollment:
             raise NotFoundException("Enrollment not found")
 
@@ -240,18 +254,11 @@ class EnrollmentService:
         if current_user.role == UserRole.SUPER_ADMIN:
             pass  # Can access any enrollment
         elif current_user.role in [UserRole.SCHOOL_ADMIN, UserRole.TEACHER]:
-            # Can access enrollments in their school
-            student = db.query(User).filter(User.id == enrollment.student_id).first()
-            if not student or student.school_id != current_user.school_id:
+            if not enrollment.student or enrollment.student.school_id != current_user.school_id:
                 raise PermissionError("Cannot access enrollments outside your school")
         elif enrollment.student_id == current_user.id or enrollment.individual_user_id == current_user.id:
             pass  # Can access own enrollment
         else:
             raise PermissionError("Cannot access this enrollment")
 
-        # Get progress records
-        progress = db.query(UserProgress).filter(
-            UserProgress.enrollment_id == enrollment_id
-        ).all()
-
-        return enrollment, progress 
+        return enrollment

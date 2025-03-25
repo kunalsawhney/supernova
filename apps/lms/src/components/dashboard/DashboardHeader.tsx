@@ -166,14 +166,14 @@ export function DashboardHeader() {
                 <div className="py-1">
                   <Link
                     href="/dashboard/profile"
-                    className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors"
+                    className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors text-muted-foreground"
                   >
                     <FiUser className="w-4 h-4 mr-3 text-muted-foreground" />
                     My Profile
                   </Link>
                   <Link
                     href="/dashboard/settings"
-                    className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors"
+                    className="flex items-center px-4 py-2.5 text-sm hover:bg-background-secondary transition-colors text-muted-foreground"
                   >
                     <FiSettings className="w-4 h-4 mr-3 text-muted-foreground" />
                     Settings

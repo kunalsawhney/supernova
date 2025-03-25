@@ -148,6 +148,7 @@ export interface Module {
   is_active: boolean;
   is_deleted: boolean;
   deleted_at?: string;
+  lessons?: Lesson[];
 }
 
 export interface ModuleViewModel {
@@ -165,17 +166,35 @@ export interface ModuleViewModel {
   isActive: boolean;
   isDeleted: boolean;
   deletedAt?: string;
+  lessons?: LessonViewModel[];
+}
+
+export interface Lesson {
+  id: string;
+  module_id: string;
+  title: string;
+  description?: string;
+  sequence_number: number;
+  content_type: string;
+  content: any;
+  duration_minutes: number;
+  is_mandatory: boolean;
+  completion_criteria: any;
+  status: string;
 }
 
 export interface LessonViewModel {
   id: string;
   title: string;
   description?: string;
-  order: number;
-  type: string;
+  moduleId: string;
+  contentType: string;
   content: any;
-  duration?: number;
-  hasQuiz: boolean;
+  durationMinutes: number;
+  isMandatory: boolean;
+  completionCriteria: any;
+  status: string;
+  sequenceNumber: number;
 }
 
 export interface ResourceViewModel {
@@ -293,4 +312,20 @@ export const transformModule = (module: Module): ModuleViewModel => ({
   isActive: module.is_active,
   isDeleted: module.is_deleted,
   deletedAt: module.deleted_at,
+  lessons: module.lessons?.map(transformLesson) || [],
+});
+
+
+export const transformLesson = (lesson: Lesson): LessonViewModel => ({
+  id: lesson.id,
+  title: lesson.title,
+  description: lesson.description,
+  moduleId: lesson.module_id,
+  contentType: lesson.content_type,
+  content: lesson.content,
+  durationMinutes: lesson.duration_minutes,
+  isMandatory: lesson.is_mandatory,
+  completionCriteria: lesson.completion_criteria,
+  status: lesson.status,
+  sequenceNumber: lesson.sequence_number,
 });

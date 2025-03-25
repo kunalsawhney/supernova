@@ -135,3 +135,23 @@ class ModuleProgressResponse(BaseSchema):
         from_attributes=True,
         extra="forbid"
     ) 
+
+
+class UserProgressResponse(BaseSchema):
+    """Schema for user progress response."""
+    id: UUID
+    enrollment_id: UUID
+    content_type: str
+    content_id: UUID
+    status: str
+    progress: float
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_interaction: Optional[datetime] = None
+    time_spent_seconds: int
+    progress_metadata: Optional[Dict[str, Any]] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid"
+    )

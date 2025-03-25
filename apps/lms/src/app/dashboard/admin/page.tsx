@@ -293,28 +293,28 @@ export default function AdminOverview() {
         </Card>
 
         {/* Revenue Stat */}
-        <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/20 hover:shadow-xl transition-all duration-300">
+        <Card className="overflow-hidden border shadow-md hover:shadow-lg transition-all duration-300">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="heading-sm">Total Revenue</CardTitle>
-              <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
+              <CardTitle className="text-lg font-semibold">Total Revenue</CardTitle>
+              <div className="p-2 rounded-full bg-success/10 text-success">
                 <DollarSign className="h-5 w-5" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="mt-2">
-              <p className="display-md">{platformStats.totalRevenue}</p>
+              <p className="text-3xl font-bold">{platformStats.totalRevenue}</p>
               <div className="mt-3">
                 <div className="flex items-center space-x-1">
-                  <span className="flex items-center text-green-600 dark:text-green-500">
+                  <span className="flex items-center text-success">
                     <ArrowUpIcon className="h-4 w-4" />
                     <span className="text-sm font-medium ml-1">8%</span>
                   </span>
-                  <span className="text-secondary-sm">vs last month</span>
+                  <span className="text-sm text-muted-foreground">vs last month</span>
                 </div>
-                <div className="w-full bg-emerald-200 dark:bg-emerald-800/50 rounded-full h-1.5 mt-3">
-                  <div className="bg-emerald-600 h-1.5 rounded-full" style={{ width: '8%' }}></div>
+                <div className="w-full bg-success/20 rounded-full h-1.5 mt-3">
+                  <div className="bg-success h-1.5 rounded-full" style={{ width: '8%' }}></div>
                 </div>
               </div>
             </div>
@@ -322,28 +322,28 @@ export default function AdminOverview() {
         </Card>
 
         {/* Active Users Stat */}
-        <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/40 dark:to-purple-900/20 hover:shadow-xl transition-all duration-300">
+        <Card className="overflow-hidden border shadow-md hover:shadow-lg transition-all duration-300">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="heading-sm">Active Users</CardTitle>
-              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
+              <CardTitle className="text-lg font-semibold">Active Users</CardTitle>
+              <div className="p-2 rounded-full bg-secondary/10 text-secondary">
                 <Activity className="h-5 w-5" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="mt-2">
-              <p className="display-md">{platformStats.activeUsers}</p>
+              <p className="text-3xl font-bold">{platformStats.activeUsers}</p>
               <div className="mt-3">
                 <div className="flex items-center space-x-1">
-                  <span className="flex items-center text-green-600 dark:text-green-500">
+                  <span className="flex items-center text-success">
                     <ArrowUpIcon className="h-4 w-4" />
                     <span className="text-sm font-medium ml-1">5%</span>
                   </span>
-                  <span className="text-secondary-sm">vs last month</span>
+                  <span className="text-sm text-muted-foreground">vs last month</span>
                 </div>
-                <div className="w-full bg-purple-200 dark:bg-purple-800/50 rounded-full h-1.5 mt-3">
-                  <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '5%' }}></div>
+                <div className="w-full bg-secondary/20 rounded-full h-1.5 mt-3">
+                  <div className="bg-secondary h-1.5 rounded-full" style={{ width: '5%' }}></div>
                 </div>
               </div>
             </div>
@@ -473,12 +473,12 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <CardTitle>Server Status</CardTitle>
                   {systemHealth.serverStatus === 'Operational' || systemHealth.serverStatus === 'healthy' ? (
-                    <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                    <Badge variant="outline" className="badge-active">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Operational
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+                    <Badge variant="outline" className="badge-error">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {systemHealth.serverStatus}
                     </Badge>
@@ -489,7 +489,7 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-secondary-md">Uptime</span>
+                    <span className="text-sm">Uptime</span>
                   </div>
                   <span className="font-medium">{systemHealth.uptime}</span>
                 </div>
@@ -497,7 +497,7 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-secondary-md">Response Time</span>
+                    <span className="text-sm">Response Time</span>
                   </div>
                   <span className="font-medium">{systemHealth.responseTime}</span>
                 </div>
@@ -505,7 +505,7 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-secondary-md">Active Connections</span>
+                    <span className="text-sm">Active Connections</span>
                   </div>
                   <span className="font-medium">{systemHealth.activeConnections}</span>
                 </div>
@@ -513,7 +513,7 @@ export default function AdminOverview() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-secondary-md">Last Backup</span>
+                    <span className="text-sm">Last Backup</span>
                   </div>
                   <span className="font-medium">
                     {new Date(systemHealth.lastBackup).toLocaleDateString()}
@@ -530,14 +530,14 @@ export default function AdminOverview() {
               <CardContent className="space-y-8">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-secondary-md font-medium">CPU Usage</span>
+                    <span className="text-sm font-medium">CPU Usage</span>
                     <span className="font-bold">{systemHealth.cpuUsage}</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div className="w-full bg-muted rounded-full h-2.5">
                     <div 
                       className={`h-2.5 rounded-full ${
-                        getCpuUsageValue() > 80 ? 'bg-red-500' : 
-                        getCpuUsageValue() > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                        getCpuUsageValue() > 80 ? 'bg-destructive' : 
+                        getCpuUsageValue() > 50 ? 'bg-accent' : 'bg-success'
                       }`}
                       style={{ width: systemHealth.cpuUsage }}
                     ></div>
@@ -546,14 +546,14 @@ export default function AdminOverview() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-secondary-md font-medium">Memory Usage</span>
+                    <span className="text-sm font-medium">Memory Usage</span>
                     <span className="font-bold">{systemHealth.memoryUsage}</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div className="w-full bg-muted rounded-full h-2.5">
                     <div 
                       className={`h-2.5 rounded-full ${
-                        getMemoryUsageValue() > 80 ? 'bg-red-500' : 
-                        getMemoryUsageValue() > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                        getMemoryUsageValue() > 80 ? 'bg-destructive' : 
+                        getMemoryUsageValue() > 50 ? 'bg-accent' : 'bg-success'
                       }`}
                       style={{ width: systemHealth.memoryUsage }}
                     ></div>
@@ -562,14 +562,14 @@ export default function AdminOverview() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-secondary-md font-medium">Storage Used</span>
+                    <span className="text-sm font-medium">Storage Used</span>
                     <span className="font-bold">{systemHealth.storageUsed}</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div className="w-full bg-muted rounded-full h-2.5">
                     <div 
                       className={`h-2.5 rounded-full ${
-                        getStorageUsedValue() > 80 ? 'bg-red-500' : 
-                        getStorageUsedValue() > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                        getStorageUsedValue() > 80 ? 'bg-destructive' : 
+                        getStorageUsedValue() > 50 ? 'bg-accent' : 'bg-success'
                       }`}
                       style={{ width: systemHealth.storageUsed }}
                     ></div>
@@ -599,10 +599,10 @@ export default function AdminOverview() {
                       <div className="h-2 w-2 bg-primary rounded-full mt-2 mr-3"></div>
                       <div className="flex-1">
                         <div className="flex justify-between">
-                          <p className="font-medium text-md">{activity.event}</p>
-                          <span className="text-secondary-sm">{activity.time}</span>
+                          <p className="font-medium">{activity.event}</p>
+                          <span className="text-sm text-muted-foreground">{activity.time}</span>
                         </div>
-                        <p className="text-secondary-sm">{activity.user}</p>
+                        <p className="text-sm text-muted-foreground">{activity.user}</p>
                       </div>
                     </div>
                   ))}

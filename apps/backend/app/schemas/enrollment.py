@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 
+from app.schemas.progress import LessonProgressResponse, ModuleProgressResponse, UserProgressResponse
 from pydantic import (
     BaseModel, 
     Field, 
@@ -195,19 +196,15 @@ class EnrollmentResponse(EnrollmentBase, BaseSchema):
 
 class EnrollmentWithProgressResponse(EnrollmentResponse):
     """Schema for enrollment response with detailed progress."""
-    lesson_progresses: List['LessonProgressResponse'] = []
-    completion_percentage: float = Field(0.0, ge=0.0, le=100.0)
-    total_time_spent_seconds: int = Field(0, ge=0)
-    last_activity_at: Optional[datetime] = None
-    module_progresses: List['ModuleProgressResponse'] = []
-    
+    lesson_progresses: List[UserProgressResponse] = []
+    # user_progresses: List[UserProgressResponse] = []
+    # completion_percentage: float = Field(0.0, ge=0.0, le=100.0)
+    # total_time_spent_seconds: int = Field(0, ge=0)
+    # last_activity_at: Optional[datetime] = None
+    # module_progresses: List['ModuleProgressResponse'] = []
+    # course_progress: List[CourseProgressResponse] = []
+
     model_config = ConfigDict(
         from_attributes=True,
         extra="forbid"
     )
-
-
-# Forward references - these will be imported in the actual implementation from progress.py
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from app.schemas.progress import LessonProgressResponse, ModuleProgressResponse 

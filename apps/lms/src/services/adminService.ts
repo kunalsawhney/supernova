@@ -6,6 +6,8 @@ import {
   transformCourse,
   CreateCourseData,
   UpdateCourseData,
+  LessonViewModel,
+  transformLesson,
 } from '@/types/course';
 import { 
   PlatformStats, 
@@ -27,7 +29,8 @@ import { PaginationParams, ApiError } from '@/types/api';
 import { mockApi, mockCourses } from '@/utils/mockData';
 import { handleApiError } from '@/utils/errorHandling';
 import { withCache, clearCacheByPrefix } from '@/utils/caching';
-import { ModuleViewModel, CreateModuleData, Module, transformModule } from '@/types/module';
+import { CreateModuleData } from '@/types/module';
+import { ModuleViewModel, Module, transformModule } from '@/types/course';
 import { ContentStats, ContentStatsViewModel, transformContentStats } from '@/types/content';
 /**
  * Service for admin-related API calls
@@ -244,10 +247,6 @@ export const adminService = {
   getCourses: withCache(
     async (params?: PaginationParams & { status?: string, search?: string, with_content?: boolean }): Promise<CourseViewModel[]> => {
       try {
-        // Single console log for debugging, can be removed in production
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Fetching courses', params);
-        }
         
         // Use trailing slash to avoid redirect
         const response = await api.get<any[]>('/courses/', { params });
@@ -457,10 +456,6 @@ export const adminService = {
     search?: string;
   }): Promise<ModuleViewModel[]> {
     try {
-      // Single console log for debugging, can be removed in production
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Fetching modules', params);
-      }
       
       const response = await api.get<any[]>('/modules/', { params });
       
@@ -474,10 +469,14 @@ export const adminService = {
   /**
    * Get a specific module by ID
    */
-  async getModule(id: string): Promise<any> {
+  async getModule(id: string, with_lessons: boolean = false): Promise<any> {
     try {
-      const response = await api.get(`/modules/${id}`);
-      return response;
+      const response = await api.get<any>(`/modules/${id}?with_lessons=${with_lessons}`);
+      const module: Module = {
+        ...response,
+        lessons: response.lessons || []
+      };
+      return transformModule(module);
     } catch (error) {
       throw handleApiError(error, `Failed to fetch module ${id}`);
     }
@@ -488,7 +487,6 @@ export const adminService = {
    */
   async addModule(data: CreateModuleData): Promise<ModuleViewModel> {
     try {
-      console.log('Adding module to course content:', data);
       const module = await api.post<Module>(`/courses/content/${data.content_id}/modules`, data);
       return transformModule(module);
     } catch (error) {
@@ -501,10 +499,8 @@ export const adminService = {
    */
   async deleteModule(moduleId: string): Promise<void> {
     try {
-      console.log('Deleting module', moduleId);
       await api.delete(`/courses/modules/${moduleId}/`);
       clearCacheByPrefix(`course_${moduleId}`);
-      console.log('Module deleted', moduleId);
     } catch (error) {
       throw handleApiError(error, `Failed to delete module ${moduleId}`);
     }
@@ -520,10 +516,10 @@ export const adminService = {
     module_id?: string;
     lesson_type?: string;
     search?: string;
-  }): Promise<any[]> {
+  }): Promise<LessonViewModel[]> {
     try {
       const response = await api.get<any[]>('/lessons', { params });
-      return response;
+      return response.map(transformLesson);
     } catch (error) {
       throw handleApiError(error, 'Failed to fetch lessons');
     }
@@ -532,10 +528,10 @@ export const adminService = {
   /**
    * Get a specific lesson by ID
    */
-  async getLesson(id: string): Promise<any> {
+  async getLesson(id: string): Promise<LessonViewModel> {
     try {
-      const response = await api.get(`/lessons/${id}`);
-      return response;
+      const response = await api.get<any>(`/lessons/${id}`);
+      return transformLesson(response);
     } catch (error) {
       throw handleApiError(error, `Failed to fetch lesson ${id}`);
     }
@@ -558,9 +554,7 @@ export const adminService = {
    */
   async deleteLesson(lessonId: string): Promise<void> {
     try {
-      console.log('Deleting lesson', lessonId);
       await api.delete(`/courses/lessons/${lessonId}/`);
-      console.log('Lesson deleted', lessonId);
     } catch (error) {
       throw handleApiError(error, `Failed to delete lesson ${lessonId}`);
     }

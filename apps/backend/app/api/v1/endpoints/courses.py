@@ -64,9 +64,6 @@ async def list_courses(
             db, current_user, skip=skip, limit=limit,
             status=status, search=search, with_content=with_content
         )
-        print("Courses fetched", courses)
-        for course in courses:
-            print("Course: ", course.__dict__)
         
         if with_content:
             return [CourseWithContentResponse.model_validate(course) for course in courses]

@@ -28,34 +28,22 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { LessonViewModel } from '@/types/course';
 
-interface LessonData {
-  id: string;
-  title: string;
-  description: string | null;
-  module_id: string;
-  sequence_number: number;
-  content_type: 'text' | 'pdf' | 'presentation' | 'video' | 'audio';
-  content: Record<string, any>;
-  duration_minutes: number | null;
-  is_mandatory: boolean;
-  completion_criteria: Record<string, any> | null;
-  status: 'draft' | 'published' | 'archived';
-}
 
 export default function LessonEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const lessonId = resolvedParams.id;
   const router = useRouter();
   
-  const [lesson, setLesson] = useState<LessonData | null>(null);
+  const [lesson, setLesson] = useState<LessonViewModel | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [contentType, setContentType] = useState<'text' | 'pdf' | 'presentation' | 'video' | 'audio'>('text');
   const [content, setContent] = useState<Record<string, any>>({});
   const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
   const [isMandatory, setIsMandatory] = useState(true);
-  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [status, setStatus] = useState<string>('draft');
   const [moduleId, setModuleId] = useState('');
   const [sequenceNumber, setSequenceNumber] = useState(1);
   
@@ -73,49 +61,18 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
       setLoading(true);
       setError(null);
       
-      // This would be a real API call in production
-      // For now, let's mock the data
-      const mockLesson: LessonData = {
-        id: lessonId,
-        title: 'Introduction to Numbers',
-        description: 'Learn about different types of numbers and basic operations.',
-        module_id: 'module-123',
-        sequence_number: 1,
-        content_type: 'text',
-        content: { 
-          text: `<h2>Introduction to Numbers</h2>
-<p>In mathematics, we work with different types of numbers:</p>
-<ul>
-  <li><strong>Natural Numbers</strong>: 1, 2, 3, 4, ...</li>
-  <li><strong>Whole Numbers</strong>: 0, 1, 2, 3, ...</li>
-  <li><strong>Integers</strong>: ..., -3, -2, -1, 0, 1, 2, 3, ...</li>
-  <li><strong>Rational Numbers</strong>: Numbers that can be expressed as fractions</li>
-  <li><strong>Irrational Numbers</strong>: Numbers that cannot be expressed as fractions</li>
-</ul>
-<p>Basic operations with numbers include:</p>
-<ul>
-  <li>Addition (+)</li>
-  <li>Subtraction (-)</li>
-  <li>Multiplication (×)</li>
-  <li>Division (÷)</li>
-</ul>` 
-        },
-        duration_minutes: 15,
-        is_mandatory: true,
-        completion_criteria: null,
-        status: 'draft'
-      };
+      const lessonData = await adminService.getLesson(lessonId);
       
-      setLesson(mockLesson);
-      setTitle(mockLesson.title);
-      setDescription(mockLesson.description || '');
-      setContentType(mockLesson.content_type);
-      setContent(mockLesson.content);
-      setDurationMinutes(mockLesson.duration_minutes);
-      setIsMandatory(mockLesson.is_mandatory);
-      setStatus(mockLesson.status);
-      setModuleId(mockLesson.module_id);
-      setSequenceNumber(mockLesson.sequence_number);
+      setLesson(lessonData);
+      setTitle(lessonData.title);
+      setDescription(lessonData.description || '');
+      setContentType(lessonData.contentType as 'text' | 'pdf' | 'presentation' | 'video' | 'audio');
+      setContent(lessonData.content);
+      setDurationMinutes(lessonData.durationMinutes);
+      setIsMandatory(lessonData.isMandatory);
+      setStatus(lessonData.status);
+      setModuleId(lessonData.moduleId);
+      setSequenceNumber(lessonData.sequenceNumber);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch lesson data';
@@ -130,17 +87,17 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
     try {
       setIsSaved(false);
       
-      const updatedLesson: LessonData = {
+      const updatedLesson: LessonViewModel = {
         id: lessonId,
         title,
         description,
-        module_id: moduleId,
-        sequence_number: sequenceNumber,
-        content_type: contentType,
+        moduleId: moduleId,
+        sequenceNumber: sequenceNumber,
+        contentType: contentType,
         content,
-        duration_minutes: durationMinutes,
-        is_mandatory: isMandatory,
-        completion_criteria: lesson?.completion_criteria || null,
+        durationMinutes: durationMinutes || 0,
+        isMandatory: isMandatory,
+        completionCriteria: lesson?.completionCriteria || null,
         status
       };
       
@@ -176,7 +133,7 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
     }
   };
   
-  const renderContentEditor = () => {
+  const renderContentEditor = (contentType: string, content: Record<string, any>) => {
     switch (contentType) {
       case 'text':
         return (
@@ -207,7 +164,7 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                 Video URL
               </label>
               <Input
-                value={content.videoUrl || ''}
+                value={content.video_url || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
                   setContent({ ...content, videoUrl: e.target.value })
                 }
@@ -220,9 +177,9 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                 Video Description
               </label>
               <Textarea
-                value={content.description || ''}
+                value={content.transcript || ''}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => 
-                  setContent({ ...content, description: e.target.value })
+                  setContent({ ...content, transcript: e.target.value })
                 }
                 rows={3}
                 placeholder="Enter a brief description of the video"
@@ -380,7 +337,7 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size="md"
             onClick={() => router.back()}
             className="gap-1"
           >
@@ -406,6 +363,8 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
           <Button 
             onClick={handleSave}
             className="gap-1"
+            size="md"
+            // variant="outline"
           >
             <Save className="h-4 w-4" />
             Save
@@ -421,11 +380,11 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
         </Link>
         <span>•</span>
         <span>Module:</span>
-        <Link href={`/dashboard/admin/content/modules/${lesson.module_id}`} className="text-primary hover:underline">
+        <Link href={`/dashboard/admin/content/modules/${lesson.moduleId}`} className="text-primary hover:underline">
           {lesson.title}
         </Link>
         <span>•</span>
-        <span>Lesson {lesson.sequence_number}</span>
+        <span>Lesson {lesson.sequenceNumber}</span>
       </div>
       
       {/* Lesson Type Indicator */}
@@ -505,7 +464,7 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
               <CardDescription>Create and edit the lesson content</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderContentEditor()}
+              {renderContentEditor(lesson.contentType, lesson.content)}
             </CardContent>
           </Card>
         </TabsContent>
@@ -552,53 +511,28 @@ export default function LessonEditorPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Access Settings</h3>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="status">Status</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Whether this lesson is published or archived
-                    </p>
-                  </div>
-                  <Select
-                    value={status}
-                    onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
               <div className="tab-content space-y-4">
+                <h3 className="text-lg font-medium">Access Settings</h3>
                 <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="status">Status</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Whether this lesson is published or archived
-                    </p>
-                  </div>
-                  <Select
-                    value={status}
-                    onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="status">Status</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Whether this lesson is published or archived
+                      </p>
+                    </div>
+                    <Select
+                      value={status}
+                      onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
                 </div>
                 
                 <div className="flex flex-col space-y-2">

@@ -46,22 +46,22 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { LessonViewModel } from '@/types/course';
+import { LessonViewModel, ModuleViewModel } from '@/types/course';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface ModuleData {
-  id: string;
-  title: string;
-  description: string;
-  content_id: string;
-  sequence_number: number;
-  duration_weeks: number | null;
-  status: 'draft' | 'published' | 'archived';
-  is_mandatory: boolean;
-  completion_criteria: Record<string, any> | null;
-  lessons: LessonViewModel[];
-}
+// interface ModuleData {
+//   id: string;
+//   title: string;
+//   description: string;
+//   content_id: string;
+//   sequence_number: number;
+//   duration_weeks: number | null;
+//   status: 'draft' | 'published' | 'archived';
+//   is_mandatory: boolean;
+//   completion_criteria: Record<string, any> | null;
+//   lessons: LessonViewModel[];
+// }
 
 interface SortableLessonProps {
   lesson: LessonViewModel;
@@ -172,7 +172,7 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
   const moduleId = resolvedParams.id;
   const router = useRouter();
   
-  const [module, setModule] = useState<ModuleData | null>(null);
+  const [module, setModule] = useState<ModuleViewModel | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [lessons, setLessons] = useState<LessonViewModel[]>([]);
@@ -199,57 +199,13 @@ export default function ModuleEditorPage({ params }: { params: Promise<{ id: str
     try {
       setLoading(true);
       setError(null);
+
+      const ModuleData = await adminService.getModule(moduleId, true);
       
-      // This would be a real API call in production
-      // For now, let's mock the data
-      const mockModule: ModuleData = {
-        id: moduleId,
-        title: 'Introduction to Mathematics',
-        description: 'This module covers the fundamental concepts of mathematics including numbers, operations, and basic algebra.',
-        content_id: 'course-123',
-        sequence_number: 1,
-        duration_weeks: 4,
-        status: 'draft',
-        is_mandatory: true,
-        completion_criteria: null,
-        lessons: [
-          {
-            id: 'l1',
-            title: 'Numbers and Operations',
-            description: 'Learn about different types of numbers and basic operations.',
-            order: 1,
-            type: 'video',
-            content: { videoUrl: 'https://example.com/video1.mp4' },
-            duration: 15,
-            hasQuiz: true
-          },
-          {
-            id: 'l2',
-            title: 'Fractions and Decimals',
-            description: 'Understanding fractions, decimals, and their operations.',
-            order: 2,
-            type: 'text',
-            content: { text: 'Fractions represent parts of a whole...' },
-            duration: 20,
-            hasQuiz: false
-          },
-          {
-            id: 'l3',
-            title: 'Introduction to Algebra',
-            description: 'Learn about variables, expressions, and equations.',
-            order: 3,
-            type: 'presentation',
-            content: { slides: [] },
-            duration: 25,
-            hasQuiz: true
-          }
-        ]
-      };
-      
-      setModule(mockModule);
-      setTitle(mockModule.title);
-      setDescription(mockModule.description);
-      setLessons(mockModule.lessons);
+      setModule(ModuleData);
+      setTitle(ModuleData.title);
+      setDescription(ModuleData.description);
+      setLessons(ModuleData.lessons);
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch module data';

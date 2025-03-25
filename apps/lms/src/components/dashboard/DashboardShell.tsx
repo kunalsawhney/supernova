@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, Suspense, useState, useEffect } from 'react';
+import { ReactNode, Suspense, useState, useEffect, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSidebar } from '@/components/ui/sidebar';
 
@@ -45,6 +45,11 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children }: DashboardShellProps) {
   const [mounted, setMounted] = useState(false);
+
+  const MemoizedSidebar = memo(DashboardSidebar);
+  const MemoizedHeader = memo(DashboardHeader);
+  const MemoizedContent = memo(DashboardContent);
+
   
   useEffect(() => {
     setMounted(true);
@@ -53,16 +58,16 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <div className="flex w-full h-screen overflow-hidden">
       {/* Sidebar */}
-      {mounted && <DashboardSidebar />}
+      {mounted && <MemoizedSidebar />}
       
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 h-full w-full">
         <Suspense fallback={<HeaderSkeleton />}>
-          {mounted && <DashboardHeader />}
+          {mounted && <MemoizedHeader />}
         </Suspense>
         
         {mounted ? (
-          <DashboardContent>{children}</DashboardContent>
+          <MemoizedContent>{children}</MemoizedContent>
         ) : (
           <div className="flex-1 p-4 md:p-6 overflow-y-auto">
             <div className="max-w-screen-2xl mx-auto">

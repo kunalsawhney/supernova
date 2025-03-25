@@ -28,18 +28,8 @@ import {
   BarChart4
 } from 'lucide-react';
 import { ModuleViewModel, CourseViewModel } from '@/types';
-
-// Sample data interfaces
-interface LessonViewModel {
-  id: string;
-  title: string;
-  description?: string;
-  moduleId: string;
-  type: 'text' | 'video' | 'quiz' | 'presentation';
-  duration: number;
-  status: 'draft' | 'published' | 'archived';
-  sequenceNumber: number;
-}
+import { LessonViewModel } from '@/types/course';
+import { toast } from '@/hooks/use-toast';
 
 // interface ModuleBasicInfo {
 //   id: string;
@@ -115,11 +105,11 @@ function LessonCard({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <CardTitle className="flex items-center gap-2">
-                {getLessonTypeIcon(lesson.type)}
+                {getLessonTypeIcon(lesson.contentType)}
                 {lesson.title}
               </CardTitle>
               {getStatusBadge(lesson.status)}
-              {getTypeBadge(lesson.type)}
+              {/* {getTypeBadge(lesson.contentType)} */}
             </div>
             <CardDescription>{lesson.description}</CardDescription>
           </div>
@@ -146,7 +136,7 @@ function LessonCard({
         </div>
       </CardHeader>
       <CardContent className="pb-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
             <div>
@@ -169,7 +159,14 @@ function LessonCard({
             <Clock className="h-4 w-4 text-primary" />
             <div>
               <p className="text-sm font-medium">Duration</p>
-              <p className="text-sm text-muted-foreground">{lesson.duration} minutes</p>
+              <p className="text-sm text-muted-foreground">{lesson.durationMinutes} minutes</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Content Type</p>
+              <p className="text-sm text-muted-foreground">{lesson.contentType}</p>
             </div>
           </div>
         </div>
@@ -218,7 +215,7 @@ export default function LessonsPage() {
   // Filtered modules based on selected course
   const filteredModuleOptions = courseFilter === 'all' 
     ? modules 
-    : modules.filter(module => module.courseId === courseFilter);
+    : modules.filter(module => module.contentId === courseFilter);
   
   const fetchData = async () => {
     try {
@@ -233,11 +230,16 @@ export default function LessonsPage() {
       
       setLessons(lessonsData);
       // Cast the modules data to the expected type before setting state
-      setModules(modulesData as unknown as ModuleBasicInfo[]);
+      setModules(modulesData as unknown as ModuleViewModel[]);
       setCourses(coursesData);
       setFilteredLessons(lessonsData);
       
     } catch (err) {
+      toast({
+        title: 'Error fetching data',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
       console.error('Error fetching data:', err);
@@ -256,15 +258,14 @@ export default function LessonsPage() {
     } else if (courseFilter !== 'all') {
       // If no module is selected but a course is, filter by course
       const moduleIds = modules
-        .filter(module => module.courseId === courseFilter)
+        .filter(module => module.contentId === courseFilter)
         .map(module => module.id);
-      
       filtered = filtered.filter(lesson => moduleIds.includes(lesson.moduleId));
     }
     
     // Apply type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(lesson => lesson.type === typeFilter);
+      filtered = filtered.filter(lesson => lesson.contentType === typeFilter);
     }
     
     // Apply status filter
@@ -288,10 +289,27 @@ export default function LessonsPage() {
     router.push(`/dashboard/admin/content/lessons/${lessonId}`);
   };
   
-  const handleDeleteLesson = (lessonId: string) => {
+  const handleDeleteLesson = async (lessonId: string) => {
     // This would open a confirmation dialog in a real app
     // For now, we'll just remove it from the list
-    setLessons(lessons.filter(lesson => lesson.id !== lessonId));
+    // setLessons(lessons.filter(lesson => lesson.id !== lessonId));
+    console.log("Deleting lesson:", lessonId);
+    try {
+      await adminService.deleteLesson(lessonId);
+      setLessons(lessons.filter(lesson => lesson.id !== lessonId));
+      toast({
+        title: 'Lesson deleted',
+        description: 'Lesson deleted successfully',
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error deleting lesson:', error);
+      toast({
+        title: 'Error deleting lesson',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
   };
   
   if (loading) {

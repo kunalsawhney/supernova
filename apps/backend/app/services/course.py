@@ -261,6 +261,10 @@ class CourseService:
                     # Also set the content_id from the latest version's content_id
                     setattr(course, 'content_id', latest_version.content_id)
             else:
+                query = query.options(
+                    selectinload(Course.versions),
+                )
+
                 # Simple course query without content
                 result = await db.execute(query)
                 course = result.scalar_one_or_none()
@@ -603,16 +607,18 @@ class CourseService:
     async def get_module(
         db: AsyncSession,
         current_user: User,
-        module_id: UUID
+        module_id: UUID,
+        with_lessons: Optional[bool] = False
     ) -> Module:
         """Get module details."""
         query = select(Module).where(Module.id == module_id)
-        result = await db.execute(query)
-        module = result.scalar_one_or_none()
         
-        if not module:
-            raise NotFoundException("Module not found")
-            
+        if with_lessons:
+            query = query.options(selectinload(Module.lessons))
+
+        result = await db.execute(query)
+        module = result.unique().scalar_one_or_none()
+
         # Check permissions
         if current_user.role == UserRole.SUPER_ADMIN:
             # Super admins can access any module
