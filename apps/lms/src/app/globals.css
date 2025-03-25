@@ -130,12 +130,12 @@
 }
 html {
   height: 100%;
-  overflow: hidden;
 }
 body {
   @apply bg-background text-foreground transition-colors duration-300;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Custom scrollbar styling */
