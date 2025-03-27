@@ -1,6 +1,11 @@
-import Hero from "@/components/Hero";
-import Curriculum from "@/components/Curriculum";
-import Features from "@/components/Features";
+import Hero from "@/components/sections/Hero";
+import Features from "@/components/sections/Features";
+import Curriculum from "@/components/sections/Curriculum";
+import Pricing from "@/components/sections/Pricing";
+import Testimonials from "@/components/sections/Testimonials";
+import Faq from "@/components/sections/Faq";
+import Cta from "@/components/sections/Cta";
+
 
 export default function Home() {
     return (
@@ -8,6 +13,10 @@ export default function Home() {
             <Hero />
             <Features />
             <Curriculum />
+            <Pricing />
+            <Testimonials />
+            <Faq />
+            <Cta />
         </div>
     );
 }
