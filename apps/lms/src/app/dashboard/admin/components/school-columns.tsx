@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, School } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, School, CheckCircle, Clock } from "lucide-react";
 
 // Define School type
 export interface School {
@@ -42,17 +42,42 @@ export type SchoolActionHandlers = {
 const getStatusBadge = (status: School['subscriptionStatus']) => {
   switch (status) {
     case 'active':
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>;
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" />
+          Active
+        </Badge>
+      );
     case 'trial':
-      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Trial</Badge>;
+      return (
+        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Trial
+        </Badge>
+      );
     case 'past_due':
-      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Past Due</Badge>;
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Past Due
+        </Badge>
+      );
     case 'expired':
-      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Expired</Badge>;
+      return (
+        <Badge className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Expired
+        </Badge>
+      );
     case 'cancelled':
-      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>;
+      return (
+        <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Cancelled
+        </Badge>
+      );
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return <Badge variant="outline" className="flex items-center gap-1">{status}</Badge>;
   }
 };
 
@@ -64,7 +89,7 @@ export const columns = (actionHandlers: SchoolActionHandlers): ColumnDef<School>
       const school = row.original;
       
       return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 py-2">
           <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
             <School className="h-4 w-4 text-primary" />
           </div>
@@ -108,7 +133,11 @@ export const columns = (actionHandlers: SchoolActionHandlers): ColumnDef<School>
     accessorKey: "subscriptionStatus",
     header: "Status",
     cell: ({ row }) => {
-      return getStatusBadge(row.getValue("subscriptionStatus"));
+      return (
+        <div className="flex items-center gap-2">
+          {getStatusBadge(row.getValue("subscriptionStatus"))}
+        </div>
+      );
     },
   },
   {

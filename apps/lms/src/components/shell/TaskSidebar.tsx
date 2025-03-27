@@ -270,7 +270,7 @@ export function TaskSidebar({ role }: { role: string }) {
                   </h3>
                 )}
                 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {visibleItems.map((item) => {
                     const active = isActive(item.href);
                     

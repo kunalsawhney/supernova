@@ -62,8 +62,8 @@ const mockNotifications = [
 export function HeaderActions() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
-  const { setCompactView } = useShell();
-  const [focusMode, setFocusMode] = useState(false);
+  // const { setCompactView } = useShell();
+  // const [focusMode, setFocusMode] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
   const [mounted, setMounted] = useState(false);
 
@@ -72,11 +72,11 @@ export function HeaderActions() {
     setMounted(true);
   }, []);
 
-  // Toggle focus mode
-  const toggleFocusMode = () => {
-    setFocusMode(!focusMode);
-    setCompactView(!focusMode);
-  };
+  // // Toggle focus mode
+  // const toggleFocusMode = () => {
+  //   setFocusMode(!focusMode);
+  //   setCompactView(!focusMode);
+  // };
 
   // Mark notification as read
   const markAsRead = (id: number) => {
@@ -197,7 +197,7 @@ export function HeaderActions() {
       </Button>
 
       {/* Focus Mode Toggle */}
-      <Button
+      {/* <Button
         variant="ghost"
         size="icon"
         className="h-9 w-9"
@@ -207,7 +207,7 @@ export function HeaderActions() {
           <Target className="h-5 w-5 text-primary" /> : 
           <Eye className="h-5 w-5" />
         }
-      </Button>
+      </Button> */}
 
       {/* User Profile Dropdown */}
       <DropdownMenu>

@@ -220,7 +220,7 @@ body {
   .heading-xl {
     @apply text-3xl font-bold leading-tight text-foreground tracking-tight md:text-4xl;
   }
-  
+
   /* Status badge styles consistent across the app */
   .badge-active {
     @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400;

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/adminService';
 import { ContentStatsViewModel } from '@/types/content';
-
+import { useRouter } from 'next/navigation';
 interface RecentContentItem {
   id: number;
   action: string;
@@ -25,6 +25,8 @@ interface RecentContentItem {
 }
 
 export default function ContentManagementPage() {
+  const router = useRouter();
+
   const [contentStats, setContentStats] = useState<ContentStatsViewModel>({
     totalCourses: 0,
     publishedCourses: 0,
@@ -152,6 +154,42 @@ export default function ContentManagementPage() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Common content management tasks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/dashboard/admin/content/courses/create" className="w-full">
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <Plus className="h-4 w-4" />
+                Create New Course
+              </Button>
+            </Link>
+            <Link href="/dashboard/admin/content/courses" className="w-full">
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <BookOpen className="h-4 w-4" />
+                View Courses
+              </Button>
+            </Link>
+            <Link href="/dashboard/admin/content/modules" className="w-full">
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <FileEdit className="h-4 w-4" />
+                Manage Modules
+              </Button>
+            </Link>
+            <Link href="/dashboard/admin/content/lessons" className="w-full">
+              <Button variant="outline" className="w-full justify-start gap-2">
+                <BookOpen className="h-4 w-4" />
+                Browse Lessons
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Recent Activity */}
       <Card>
@@ -179,35 +217,6 @@ export default function ContentManagementPage() {
         </CardContent>
       </Card>
       
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common content management tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href="/dashboard/admin/content/courses/add" className="w-full">
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <Plus className="h-4 w-4" />
-                Create New Course
-              </Button>
-            </Link>
-            <Link href="/dashboard/admin/content/modules" className="w-full">
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <FileEdit className="h-4 w-4" />
-                Manage Modules
-              </Button>
-            </Link>
-            <Link href="/dashboard/admin/content/lessons" className="w-full">
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <BookOpen className="h-4 w-4" />
-                Browse Lessons
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 } 

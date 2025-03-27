@@ -1,11 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import { CoursePlayerShell } from '@/components/course-player/ui/CoursePlayerShell';
 import { NavigationPanel } from '@/components/course-player/ui/NavigationPanel';
-import { ContentDetector } from '@/components/course-player/ContentDetector';
 import { NoteTakingPanel } from '@/components/course-player/note-taking/NoteTakingPanel';
 import { CoursePlayerProvider, useCoursePlayer } from '@/contexts/CoursePlayerContext';
+import { Loader2 } from 'lucide-react';
+
+// Define types for course structure
+type ContentType = 'video' | 'reading' | 'quiz' | 'project' | 'discussion';
+
+interface Lesson {
+  id: string;
+  title: string;
+  type: ContentType;
+  duration?: string;
+}
+
+interface Module {
+  id: string;
+  title: string;
+  lessons: Lesson[];
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  instructor: string;
+  modules: Module[];
+}
+
+// Lazy loading content components for better performance
+const ContentDetector = lazy(() => import('@/components/course-player/ContentDetector').then(mod => ({ default: mod.ContentDetector })));
 
 // Mock data - to be replaced with API calls
 import { MOCK_COURSE } from './mockData';
@@ -27,12 +54,19 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
     toggleNotes, 
     currentLessonId, 
     setCurrentLessonId,
-    lessonProgress
+    lessonProgress,
+    preloadNextLesson,
+    nextLessonId,
+    isPreloading,
+    notePosition,
+    addBookmark
   } = useCoursePlayer();
   
   // State
-  const [course, setCourse] = useState(MOCK_COURSE);
+  const [course, setCourse] = useState<Course>(MOCK_COURSE as Course);
   const [currentContent, setCurrentContent] = useState<any>(null);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [preloadedContent, setPreloadedContent] = useState<Record<string, any>>({});
   
   // Initialize with lesson from URL or first lesson
   useEffect(() => {
@@ -56,19 +90,81 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
       
       // Load content for current lesson
       loadLessonContent(currentLessonId);
+      
+      // Determine and preload next lesson
+      const nextLesson = findNextLesson(currentLessonId);
+      if (nextLesson) {
+        preloadNextLesson(nextLesson.id);
+        preloadLessonContent(nextLesson.id);
+      }
     }
   }, [currentLessonId, courseId, router, searchParams]);
   
   // Handler for lesson selection
   const handleLessonSelect = (lessonId: string) => {
-    setCurrentLessonId(lessonId);
+    // If we've preloaded this content, it will be available immediately
+    if (preloadedContent[lessonId]) {
+      setCurrentLessonId(lessonId);
+    } else {
+      setIsLoadingContent(true);
+      setCurrentLessonId(lessonId);
+    }
   };
   
-  // Load lesson content
-  const loadLessonContent = (lessonId: string) => {
-    // In a real app, this would fetch from the API
-    // For now, we'll use mock data based on the lesson type
+  // Find the next lesson in sequence
+  const findNextLesson = (currentLessonId: string) => {
+    let foundCurrent = false;
+    let nextLesson = null;
     
+    // Iterate through modules and lessons to find the next one
+    for (const module of course.modules) {
+      for (let i = 0; i < module.lessons.length; i++) {
+        const lesson = module.lessons[i];
+        
+        if (foundCurrent) {
+          // This is the next lesson after the current one
+          nextLesson = lesson;
+          return nextLesson;
+        }
+        
+        if (lesson.id === currentLessonId) {
+          foundCurrent = true;
+          
+          // If this is the last lesson in the module, the next one will be in the next iteration
+          if (i === module.lessons.length - 1) {
+            continue;
+          }
+          
+          // Otherwise, the next lesson is the next one in this module
+          nextLesson = module.lessons[i + 1];
+          return nextLesson;
+        }
+      }
+    }
+    
+    return nextLesson;
+  };
+  
+  // Preload content for a lesson
+  const preloadLessonContent = (lessonId: string) => {
+    // If we've already preloaded this content, skip
+    if (preloadedContent[lessonId]) return;
+    
+    // In a real app, this would make a low-priority API call to fetch the content
+    // For now, we'll simulate it with a mock content load
+    setTimeout(() => {
+      const content = createMockContent(lessonId);
+      
+      // Store the preloaded content
+      setPreloadedContent(prev => ({
+        ...prev,
+        [lessonId]: content
+      }));
+    }, 1000); // Simulate a network delay
+  };
+  
+  // Find lesson details 
+  const findLessonDetails = (lessonId: string) => {
     let foundLesson = null;
     let moduleTitle = '';
     
@@ -82,7 +178,14 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
       }
     }
     
-    if (!foundLesson) return;
+    return { foundLesson, moduleTitle };
+  };
+  
+  // Create mock content based on lesson type
+  const createMockContent = (lessonId: string) => {
+    const { foundLesson, moduleTitle } = findLessonDetails(lessonId);
+    
+    if (!foundLesson) return null;
     
     // Create mock content based on lesson type
     let content: any;
@@ -182,10 +285,27 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
     }
     
     // Set the content with module title
-    setCurrentContent({
+    return {
       ...content,
       moduleTitle
-    });
+    };
+  };
+  
+  // Load lesson content
+  const loadLessonContent = (lessonId: string) => {
+    setIsLoadingContent(true);
+    
+    // Check if we have preloaded this content
+    if (preloadedContent[lessonId]) {
+      setCurrentContent(preloadedContent[lessonId]);
+      setIsLoadingContent(false);
+      return;
+    }
+    
+    // Create mock content based on lesson type
+    const content = createMockContent(lessonId);
+    setCurrentContent(content);
+    setIsLoadingContent(false);
   };
   
   // Calculate overall progress
@@ -199,14 +319,41 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
     videoTimeRef.current = time;
   };
   
+  // Add bookmark at current position for video content
+  const handleAddBookmark = (label: string) => {
+    if (!currentLessonId) return;
+    
+    // For video content, use the current time
+    if (contentType === 'video') {
+      addBookmark(currentLessonId, {
+        position: videoTimeRef.current,
+        label: label || `Bookmark at ${formatTime(videoTimeRef.current)}`
+      });
+    } 
+    // For reading content, use scroll position (would need to be implemented)
+    else if (contentType === 'reading') {
+      // Mock scroll position
+      const mockScrollPosition = 0.5; // 50% through the content
+      addBookmark(currentLessonId, {
+        position: mockScrollPosition,
+        label: label || `Bookmark at position ${Math.round(mockScrollPosition * 100)}%`
+      });
+    }
+  };
+  
+  // Format time for display (seconds to MM:SS)
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+  
   return (
     <CoursePlayerShell
       contentType={contentType}
       title={currentContent?.title || ''}
       moduleTitle={currentContent?.moduleTitle}
       progress={calculateProgress()}
-      showNotes={showNotes}
-      onToggleNotes={toggleNotes}
       sidebarContent={
         <NavigationPanel
           course={course}
@@ -214,20 +361,43 @@ function CoursePlayerContent({ courseId }: EnhancedCoursePlayerProps) {
           onLessonSelect={handleLessonSelect}
         />
       }
+      notesContent={
+        currentLessonId && (
+          <NoteTakingPanel
+            lessonId={currentLessonId}
+            contentType={contentType}
+            currentTime={contentType === 'video' ? videoTimeRef.current : undefined}
+            position={notePosition}
+          />
+        )
+      }
     >
-      {currentContent && currentLessonId && (
-        <ContentDetector
-          content={currentContent}
-          lessonId={currentLessonId}
-        />
+      {isLoadingContent ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+          <span className="ml-3 text-muted-foreground">Loading content...</span>
+        </div>
+      ) : (
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary/70" />
+          </div>
+        }>
+          {currentContent && currentLessonId && (
+            <ContentDetector
+              content={currentContent}
+              lessonId={currentLessonId}
+              onVideoTimeUpdate={handleVideoTimeUpdate}
+            />
+          )}
+        </Suspense>
       )}
       
-      {showNotes && currentLessonId && (
-        <NoteTakingPanel
-          lessonId={currentLessonId}
-          contentType={contentType}
-          currentTime={contentType === 'video' ? videoTimeRef.current : undefined}
-        />
+      {/* Next lesson preloading indicator - only shown during development */}
+      {process.env.NODE_ENV === 'development' && isPreloading && (
+        <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs px-3 py-1 rounded-full">
+          Preloading next lesson...
+        </div>
       )}
     </CoursePlayerShell>
   );

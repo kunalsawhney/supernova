@@ -29,7 +29,12 @@ import {
   FileText, 
   MessageSquare, 
   Key,
-  Keyboard
+  Keyboard,
+  PlusCircle,
+  Edit,
+  CheckSquare,
+  Upload,
+  Download
 } from 'lucide-react';
 
 interface QuickAction {
@@ -102,44 +107,147 @@ export function CommandPalette({ openShortcutsDialog }: CommandPaletteProps) {
     ],
   };
 
-  // Quick actions
-  const quickActions: QuickAction[] = [
-    { 
-      name: 'Resume Last Course', 
-      shortcut: '⌘+R',
-      icon: <Play className="mr-2 h-4 w-4" />,
-      action: () => router.push('/dashboard/student/last-course')
-    },
-    { 
-      name: 'View Documentation', 
-      icon: <FileText className="mr-2 h-4 w-4" />,
-      action: () => window.open('/documentation', '_blank')
-    },
-    { 
-      name: 'Get Help', 
-      icon: <LifeBuoy className="mr-2 h-4 w-4" />,
-      action: () => router.push('/help')
-    },
-    { 
-      name: 'Keyboard Shortcuts', 
-      icon: <Keyboard className="mr-2 h-4 w-4" />,
-      action: () => {
-        if (openShortcutsDialog) {
-          openShortcutsDialog();
-        } else {
-          // Fallback if openShortcutsDialog is not provided
-          setOpen(false); // Close command palette
-          // Use keyboard shortcut to trigger shortcuts dialog
-          const event = new KeyboardEvent('keydown', {
-            key: '?',
-            shiftKey: true,
-            bubbles: true
-          });
-          document.dispatchEvent(event);
+  // Role-based quick actions
+  const quickActionsMap: Record<string, QuickAction[]> = {
+    student: [
+      { 
+        name: 'Resume Last Course', 
+        shortcut: '⌘+R',
+        icon: <Play className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/student/last-course')
+      },
+      { 
+        name: 'Download Notes', 
+        icon: <Download className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/student/notes/download')
+      },
+      { 
+        name: 'Join Study Group', 
+        icon: <Users className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/student/groups/join')
+      },
+      { 
+        name: 'View Documentation', 
+        icon: <FileText className="mr-2 h-4 w-4" />,
+        action: () => window.open('/documentation', '_blank')
+      },
+      { 
+        name: 'Get Help', 
+        icon: <LifeBuoy className="mr-2 h-4 w-4" />,
+        action: () => router.push('/help')
+      },
+      { 
+        name: 'Keyboard Shortcuts', 
+        icon: <Keyboard className="mr-2 h-4 w-4" />,
+        action: () => {
+          if (openShortcutsDialog) {
+            openShortcutsDialog();
+          } else {
+            setOpen(false);
+            const event = new KeyboardEvent('keydown', {
+              key: '?',
+              shiftKey: true,
+              bubbles: true
+            });
+            document.dispatchEvent(event);
+          }
         }
       }
-    }
-  ];
+    ],
+    instructor: [
+      { 
+        name: 'Create New Course', 
+        shortcut: '⌘+N',
+        icon: <PlusCircle className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/instructor/courses/create')
+      },
+      { 
+        name: 'Grade Assignments', 
+        icon: <CheckSquare className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/instructor/assignments/grade')
+      },
+      { 
+        name: 'Upload Course Materials', 
+        icon: <Upload className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/instructor/courses/upload')
+      },
+      { 
+        name: 'Edit Course Content', 
+        icon: <Edit className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/instructor/courses/edit')
+      },
+      { 
+        name: 'View Documentation', 
+        icon: <FileText className="mr-2 h-4 w-4" />,
+        action: () => window.open('/documentation', '_blank')
+      },
+      { 
+        name: 'Keyboard Shortcuts', 
+        icon: <Keyboard className="mr-2 h-4 w-4" />,
+        action: () => {
+          if (openShortcutsDialog) {
+            openShortcutsDialog();
+          } else {
+            setOpen(false);
+            const event = new KeyboardEvent('keydown', {
+              key: '?',
+              shiftKey: true,
+              bubbles: true
+            });
+            document.dispatchEvent(event);
+          }
+        }
+      }
+    ],
+    admin: [
+      { 
+        name: 'Add New User', 
+        shortcut: '⌘+U',
+        icon: <PlusCircle className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/admin/users/create')
+      },
+      { 
+        name: 'System Settings', 
+        icon: <Settings className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/admin/settings/system')
+      },
+      { 
+        name: 'Manage Permissions', 
+        icon: <Key className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/admin/users/permissions')
+      },
+      { 
+        name: 'Export Analytics', 
+        icon: <Download className="mr-2 h-4 w-4" />,
+        action: () => router.push('/dashboard/admin/analytics/export')
+      },
+      { 
+        name: 'View Documentation', 
+        icon: <FileText className="mr-2 h-4 w-4" />,
+        action: () => window.open('/documentation', '_blank')
+      },
+      { 
+        name: 'Keyboard Shortcuts', 
+        icon: <Keyboard className="mr-2 h-4 w-4" />,
+        action: () => {
+          if (openShortcutsDialog) {
+            openShortcutsDialog();
+          } else {
+            setOpen(false);
+            const event = new KeyboardEvent('keydown', {
+              key: '?',
+              shiftKey: true,
+              bubbles: true
+            });
+            document.dispatchEvent(event);
+          }
+        }
+      }
+    ],
+  };
+
+  // Get quick actions based on role
+  const quickActions = quickActionsMap[role] || quickActionsMap.student;
 
   // Mode switching actions
   const modeActions = availableModes.map((availableMode) => ({
@@ -168,6 +276,7 @@ export function CommandPalette({ openShortcutsDialog }: CommandPaletteProps) {
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
+
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Type a command or search..." />
         <CommandList>
