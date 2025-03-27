@@ -29,7 +29,7 @@ const CONTACT_US: CONTACT_US[] = [
     },
     {
         icon: <FaLocationPin />,
-        text: '123 Innovation Way, San Francisco, CA',
+        text: '1 Innovation Way, San Francisco, CA',
     },
 ]
 

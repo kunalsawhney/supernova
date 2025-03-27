@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +38,7 @@ const FEATURES: Feature[] = [
 export default function Features() {
     const controls = useAnimation();
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: false, amount: 0.2 });
-    const [activeIndex, setActiveIndex] = useState(0);
+    const isInView = useInView(ref, { once: true, amount: 0.2 });
 
     // Animation variants
     const containerVariants = {
@@ -62,76 +61,24 @@ export default function Features() {
         }
     };
 
-    // Feature card hover animation
-    const cardVariants = {
-        hover: {
-            y: -10,
-            boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.1)",
-            transition: { duration: 0.3 }
-        }
-    };
-
-    // Auto-rotate active feature
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setActiveIndex(prev => (prev + 1) % FEATURES.length);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, []);
-
-    // Trigger animations when in view
+    // Trigger animations when in view (only once)
     useEffect(() => {
         if (isInView) {
             controls.start("visible");
-        } else {
-            controls.start("hidden");
         }
     }, [isInView, controls]);
 
     return (
         <section id="features" className="section-container relative overflow-hidden py-20" ref={ref}>
-            {/* Animated background elements */}
-            <motion.div 
-                className="absolute w-full h-full top-0 left-0 -z-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1 }}
-            >
-                {/* Moving gradient orbs */}
-                <motion.div 
-                    className="absolute h-60 w-60 rounded-full bg-primary/10 blur-3xl"
-                    animate={{ 
-                        x: [0, 30, 0], 
-                        y: [0, 50, 0],
-                        opacity: [0.4, 0.2, 0.4] 
-                    }}
-                    transition={{ 
-                        duration: 15, 
-                        repeat: Infinity,
-                        repeatType: "reverse" 
-                    }}
-                    style={{ top: '10%', left: '5%' }}
-                />
-                
-                <motion.div 
-                    className="absolute h-40 w-40 rounded-full bg-secondary/10 blur-3xl"
-                    animate={{ 
-                        x: [0, -20, 0], 
-                        y: [0, 30, 0],
-                        opacity: [0.3, 0.1, 0.3] 
-                    }}
-                    transition={{ 
-                        duration: 10, 
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        delay: 2 
-                    }}
-                    style={{ bottom: '15%', right: '10%' }}
-                />
+            {/* Background elements */}
+            <div className="absolute w-full h-full top-0 left-0 -z-10">
+                {/* Static gradient orbs */}
+                <div className="absolute h-60 w-60 rounded-full bg-primary/10 blur-3xl opacity-30" style={{ top: '10%', left: '5%' }} />
+                <div className="absolute h-40 w-40 rounded-full bg-secondary/10 blur-3xl opacity-30" style={{ bottom: '15%', right: '10%' }} />
                 
                 <Image src="/vectors/vector1.svg" alt="" width={100} height={100} className="absolute top-10 left-10 opacity-50" />
                 <Image src="/vectors/vector4.svg" alt="" width={100} height={100} className="absolute bottom-10 right-10 opacity-50" />
-            </motion.div>
+            </div>
           
             <div className="container mx-auto">
                 <motion.div 
@@ -170,34 +117,17 @@ export default function Features() {
                 >
                     {FEATURES.map((feature, index) => (
                         <motion.div key={index} variants={itemVariants}>
-                            <motion.div
-                                variants={cardVariants}
-                                whileHover="hover"
-                                animate={activeIndex === index ? "hover" : ""}
-                                transition={{ duration: 0.3 }}
-                                onClick={() => setActiveIndex(index)}
-                                className="cursor-pointer h-full"
-                            >
-                                <Card className="border-none shadow-lg bg-gradient-to-b from-background to-muted/30 backdrop-blur-sm h-full transition-all duration-300">
-                                    <CardHeader className="pb-2">
-                                        <motion.div 
-                                            className="mb-4 rounded-full bg-primary/10 p-3 w-fit"
-                                            whileHover={{ 
-                                                scale: 1.1, 
-                                                backgroundColor: "var(--primary)",
-                                                color: "white"
-                                            }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            {feature.icon}
-                                        </motion.div>
-                                        <CardTitle>{feature.title}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <CardDescription className="text-base">{feature.description}</CardDescription>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
+                            <Card className="h-full border shadow-md bg-gradient-to-b from-background to-muted/30 backdrop-blur-sm transition-all duration-300 hover:shadow-lg">
+                                <CardHeader className="pb-2">
+                                    <div className="mb-4 rounded-full bg-primary/10 p-3 w-fit">
+                                        {feature.icon}
+                                    </div>
+                                    <CardTitle>{feature.title}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <CardDescription className="text-base">{feature.description}</CardDescription>
+                                </CardContent>
+                            </Card>
                         </motion.div>
                     ))}
                 </motion.div>
@@ -210,7 +140,7 @@ export default function Features() {
                             animate={isInView ? { opacity: 1, x: 0 } : {}}
                             transition={{ duration: 0.7, delay: 0.3 }}
                         >
-                            <div className="relative z-10 overflow-hidden rounded-2xl border shadow-xl bg-primary-foreground p-2 shadow-primary/20">
+                            <div className="relative z-10  rounded-2xl border shadow-xl bg-primary-foreground p-2 shadow-primary/20">
                                 <Image
                                     src="/placeholder.svg"
                                     width={500}
@@ -219,14 +149,10 @@ export default function Features() {
                                     className="w-full h-full rounded-xl"
                                 />
                                 
-                                {/* Floating decorative elements */}
-                                <motion.div
-                                    className="absolute -right-6 -top-6 bg-gradient-to-br from-primary to-purple-600 p-3 rounded-full shadow-lg"
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                >
+                                {/* Static decorative element */}
+                                <div className="absolute -right-6 -top-6 bg-gradient-to-br from-primary to-purple-600 p-3 rounded-full shadow-lg">
                                     <FaLightbulb className="h-8 w-8 text-white" />
-                                </motion.div>
+                                </div>
                             </div>
                             <div className="absolute -bottom-6 -right-6 z-0 h-full w-full rounded-2xl bg-primary/80"></div>
                         </motion.div>
@@ -238,7 +164,7 @@ export default function Features() {
                             animate={controls}
                         >
                             <motion.h2 
-                                className="text-3xl md:text-4xl font-bold tracking-tight"
+                                className="text-4xl md:text-5xl font-bold tracking-tight"
                                 variants={itemVariants}
                             >
                                 Learn at Your Own Pace
@@ -270,17 +196,12 @@ export default function Features() {
                                         key={index} 
                                         className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
                                         variants={itemVariants}
-                                        whileHover={{ x: 5 }}
                                     >
-                                        <motion.div 
-                                            className="rounded-full bg-primary/10 p-1"
-                                            whileHover={{ scale: 1.1, backgroundColor: "var(--primary)" }}
-                                            transition={{ duration: 0.2 }}
-                                        >
+                                        <div className="rounded-full bg-primary/10 p-1">
                                             <svg className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
-                                        </motion.div>
+                                        </div>
                                         <div>
                                             <h3 className="font-medium">{item.title}</h3>
                                             <p className="text-muted-foreground">{item.description}</p>

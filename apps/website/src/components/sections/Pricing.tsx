@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FaCheck, FaCrown } from "react-icons/fa6";
@@ -66,8 +66,7 @@ const pricingTiers: PricingTier[] = [
 export default function Pricing() {
   const controls = useAnimation();
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.2 });
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   // Animation variants
   const containerVariants = {
@@ -90,7 +89,7 @@ export default function Pricing() {
     }
   };
 
-  // Card hover animations
+  // Card animations
   const cardVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: { 
@@ -102,28 +101,10 @@ export default function Pricing() {
         damping: 24,
         duration: 0.5
       }
-    },
-    hover: { 
-      y: -15,
-      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-      transition: { duration: 0.3 }
     }
   };
 
-  // Feature item animations
-  const featureVariants = {
-    hidden: { opacity: 0, x: -10 },
-    visible: (i: number) => ({ 
-      opacity: 1, 
-      x: 0,
-      transition: { 
-        delay: 0.5 + i * 0.1,
-        duration: 0.3 
-      }
-    })
-  };
-
-  // Trigger animations when in view
+  // Trigger animations when in view (only once)
   useEffect(() => {
     if (isInView) {
       controls.start("visible");
@@ -155,28 +136,14 @@ export default function Pricing() {
           transition={{ duration: 1.5, delay: 0.3 }}
         />
         
-        {/* Animated patterns */}
-        {[...Array(3)].map((_, i) => (
-          <motion.div
-            key={`pattern-${i}`}
-            className="absolute h-64 w-64 opacity-5"
-            style={{
-              backgroundImage: "radial-gradient(circle, var(--primary) 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
-              top: `${20 + i * 30}%`,
-              left: `${i * 40}%`,
-            }}
-            animate={{
-              opacity: [0.05, 0.1, 0.05],
-              rotate: [0, 10],
-            }}
-            transition={{
-              duration: 10 + i * 2,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          />
-        ))}
+        {/* Simple pattern background */}
+        <div
+          className="absolute h-full w-full opacity-5"
+          style={{
+            backgroundImage: "radial-gradient(circle, var(--primary) 1px, transparent 1px)",
+            backgroundSize: "20px 20px"
+          }}
+        />
       </div>
 
       <div className="container mx-auto">
@@ -219,43 +186,24 @@ export default function Pricing() {
             <motion.div
               key={index}
               variants={cardVariants}
-              whileHover={tier.popular ? {} : "hover"}
               custom={index}
-              onHoverStart={() => setHoveredCard(index)}
-              onHoverEnd={() => setHoveredCard(null)}
               className="flex"
             >
               <Card 
-                className={`flex flex-col h-full w-full relative overflow-hidden backdrop-blur-sm transition-all duration-500
-                  ${tier.popular ? 'border-primary shadow-xl shadow-primary/10 z-10 scale-105' : 'border-muted hover:border-primary/50'}
-                  ${hoveredCard === index && !tier.popular ? 'border-primary/50' : ''}
+                className={`flex flex-col h-full w-full relative overflow-hidden backdrop-blur-sm
+                  ${tier.popular ? 'border-primary shadow-xl shadow-primary/10 z-10 scale-105' : 'border-muted'}
                 `}
               >
                 {tier.popular && (
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"
-                    animate={{
-                      background: [
-                        "linear-gradient(to bottom right, rgba(var(--primary-rgb), 0.05), transparent, rgba(var(--secondary-rgb), 0.05))",
-                        "linear-gradient(to bottom right, rgba(var(--primary-rgb), 0.1), transparent, rgba(var(--secondary-rgb), 0.1))",
-                        "linear-gradient(to bottom right, rgba(var(--primary-rgb), 0.05), transparent, rgba(var(--secondary-rgb), 0.05))"
-                      ]
-                    }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
                 )}
                 
                 {tier.popular && (
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <motion.div
-                      className="flex items-center justify-center rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-medium"
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 1, duration: 0.5 }}
-                    >
+                    <div className="flex items-center justify-center rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
                       <FaCrown className="mr-1 h-3 w-3" />
                       Most Popular
-                    </motion.div>
+                    </div>
                   </div>
                 )}
                 
@@ -263,13 +211,9 @@ export default function Pricing() {
                   <CardTitle className="text-2xl">{tier.name}</CardTitle>
                   <CardDescription>{tier.description}</CardDescription>
                   <div className="mt-4 flex items-baseline">
-                    <motion.span 
-                      className="text-4xl font-bold tracking-tight"
-                      animate={hoveredCard === index ? { scale: 1.05 } : { scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                    >
+                    <span className="text-4xl font-bold tracking-tight">
                       {tier.price}
-                    </motion.span>
+                    </span>
                     {tier.name !== "School" && (
                       <span className="ml-1 text-muted-foreground">/month</span>
                     )}
@@ -278,23 +222,15 @@ export default function Pricing() {
                 <CardContent className="flex-grow">
                   <ul className="space-y-3">
                     {tier.features.map((feature, i) => (
-                      <motion.li 
+                      <li 
                         key={i} 
                         className="flex items-start gap-2"
-                        custom={i}
-                        variants={featureVariants}
-                        initial="hidden"
-                        animate={hoveredCard === index ? "visible" : ""}
                       >
-                        <motion.div
-                          className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${tier.popular ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}
-                          whileHover={{ scale: 1.2 }}
-                          transition={{ duration: 0.2 }}
-                        >
+                        <div className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${tier.popular ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
                           <FaCheck className="h-3 w-3" />
-                        </motion.div>
+                        </div>
                         <span>{feature}</span>
-                      </motion.li>
+                      </li>
                     ))}
                   </ul>
                 </CardContent>
@@ -302,7 +238,7 @@ export default function Pricing() {
                   <Button 
                     variant={tier.popular ? "default" : "outline"} 
                     size="lg" 
-                    className={`w-full rounded-full transition-all duration-300 ${tier.popular ? 'bg-primary hover:bg-primary/90' : 'hover:border-primary hover:text-primary'}`}
+                    className={`w-full ${tier.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
                   >
                     {tier.buttonText}
                   </Button>
@@ -318,16 +254,12 @@ export default function Pricing() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.8 }}
         >
-          <motion.div
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 backdrop-blur-sm px-6 py-3"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 backdrop-blur-sm px-6 py-3">
             <p className="text-muted-foreground">
               All plans include a <span className="font-medium text-foreground">14-day free trial</span>. 
               No credit card required.
             </p>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
     </section>

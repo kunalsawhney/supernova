@@ -1,80 +1,43 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { motion, useAnimation, Variants } from "framer-motion";
-
-// Animated shape component
-const AnimatedShape = ({ 
-  className, 
-  variants, 
-  initial, 
-  animate,
-  transition 
-}: { 
-  className: string; 
-  variants?: Variants;
-  initial?: any;
-  animate?: any;
-  transition?: any;
-}) => (
-  <motion.div 
-    className={className}
-    variants={variants}
-    initial={initial}
-    animate={animate}
-    transition={transition}
-  />
-);
+import { motion, useAnimation, useInView } from "framer-motion";
 
 export default function Cta() {
-  const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.2 });
   const controls = useAnimation();
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          controls.start("visible");
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
-  }, [controls]);
-
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
+        staggerChildren: 0.1,
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.5,
+        duration: 0.4,
       }
     }
   };
+
+  // Trigger animations when in view (only once)
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
 
   return (
     <section 
@@ -84,74 +47,24 @@ export default function Cta() {
       {/* Background gradients and vectors */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/20 to-background/50" />
       
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-        animate={isVisible ? { opacity: 0.3, scale: 1, rotate: 0 } : {}}
-        transition={{ duration: 1.5 }}
-      >
-        <Image src="/vectors/vector2.svg" alt="" width={150} height={150} className="absolute top-10 left-10 -z-10" />
-      </motion.div>
+      <div className="absolute top-10 left-10 -z-10 opacity-30">
+        <Image src="/vectors/vector2.svg" alt="" width={150} height={150} />
+      </div>
       
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-        animate={isVisible ? { opacity: 0.3, scale: 1, rotate: 0 } : {}}
-        transition={{ duration: 1.5, delay: 0.2 }}
-      >
-        <Image src="/vectors/vector4.svg" alt="" width={200} height={200} className="absolute bottom-10 right-10 -z-10" />
-      </motion.div>
+      <div className="absolute bottom-10 right-10 -z-10 opacity-30">
+        <Image src="/vectors/vector4.svg" alt="" width={200} height={200} />
+      </div>
       
       <div className="container mx-auto">
         <motion.div 
           className="relative rounded-2xl bg-primary p-8 md:p-12 lg:p-16 overflow-hidden"
           initial={{ opacity: 0, y: 40 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7 }}
         >
-          {/* Animated background gradients */}
-          <AnimatedShape 
-            className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-secondary opacity-50 blur-xl"
-            initial={{ x: -20, y: -20, opacity: 0.2 }}
-            animate={isVisible ? { x: 0, y: 0, opacity: 0.5 } : {}}
-            transition={{ 
-              duration: 3,
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
-          />
-          
-          <AnimatedShape 
-            className="absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-accent opacity-50 blur-xl"
-            initial={{ x: 20, y: 20, opacity: 0.2 }}
-            animate={isVisible ? { x: 0, y: 0, opacity: 0.5 } : {}}
-            transition={{ 
-              duration: 3.5, 
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: 0.5 
-            }}
-          />
-          
-          {/* Floating particles */}
-          {[...Array(5)].map((_, i) => (
-            <AnimatedShape 
-              key={i}
-              className={`absolute h-4 w-4 rounded-full bg-primary-foreground/30 blur-sm`}
-              initial={{ 
-                x: Math.random() * 500 - 250, 
-                y: Math.random() * 300 - 150,
-                opacity: 0 
-              }}
-              animate={isVisible ? { 
-                y: [0, -30, 0],
-                opacity: [0, 0.4, 0]
-              } : {}}
-              transition={{ 
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.5
-              }}
-            />
-          ))}
+          {/* Static background gradients */}
+          <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-secondary opacity-50 blur-xl" />
+          <div className="absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-accent opacity-50 blur-xl" />
           
           <div className="relative">
             <motion.div 
@@ -182,16 +95,15 @@ export default function Cta() {
                 <Button 
                   size="xl" 
                   variant="secondary"
-                  className="rounded-full relative overflow-hidden group"
+                  className=""
                 >
-                  <span className="relative z-10">Start Your Free Trial</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-secondary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  Start Your Free Trial
                 </Button>
                 
                 <Button 
                   size="xl" 
                   variant="ghost"
-                  className="text-primary-foreground/90 hover:text-primary-foreground rounded-full"
+                  className="bg-white"
                 >
                   Schedule a Demo
                 </Button>
@@ -231,8 +143,6 @@ export default function Cta() {
               key={index} 
               className="text-center p-6 rounded-xl bg-background/50 backdrop-blur-sm border border-primary/10 shadow-sm"
               variants={itemVariants}
-              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              transition={{ duration: 0.2 }}
             >
               <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
               <p className="text-muted-foreground">{item.description}</p>

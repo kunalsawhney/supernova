@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { FaChevronDown, FaQuestion } from "react-icons/fa6";
 import React from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
@@ -48,7 +48,8 @@ export default function Faq() {
   const [openItem, setOpenItem] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: false, amount: 0.3 });
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+  const controls = useAnimation();
 
   const filteredItems = faqItems.filter(item =>
     item.question.toLowerCase().includes(searchTerm.toLowerCase())
@@ -74,6 +75,13 @@ export default function Faq() {
     }
   };
 
+  // Trigger animations when in view (only once)
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
+
   return (
     <section 
       id="faq" 
@@ -82,18 +90,8 @@ export default function Faq() {
     >
       {/* Background elements */}
       <div className="absolute inset-0 -z-10">
-        <motion.div 
-          className="absolute top-0 right-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 1 }}
-        />
-        <motion.div 
-          className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-secondary/5 blur-3xl"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-        />
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl opacity-50" />
+        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-secondary/5 blur-3xl opacity-50" />
       </div>
 
       <div className="container mx-auto">
@@ -104,13 +102,9 @@ export default function Faq() {
           transition={{ duration: 0.6 }}
         >
           <div className="flex items-center justify-center mb-4">
-            <motion.div 
-              className="bg-primary/10 p-3 rounded-full text-primary"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-            >
+            <div className="bg-primary/10 p-3 rounded-full text-primary">
               <FaQuestion className="h-6 w-6" />
-            </motion.div>
+            </div>
           </div>
           
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
@@ -151,7 +145,7 @@ export default function Faq() {
           className="max-w-3xl mx-auto"
           variants={containerVariants}
           initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
+          animate={controls}
         >
           <AnimatePresence>
             {filteredItems.length === 0 ? (
@@ -169,7 +163,6 @@ export default function Faq() {
                   <motion.div 
                     key={index} 
                     variants={itemVariants}
-                    layout
                   >
                     <Accordion 
                       type="single"
@@ -183,28 +176,17 @@ export default function Faq() {
                           onClick={() => setOpenItem(openItem === index ? null : index)}
                           className="px-6 py-4 flex w-full items-center justify-between text-left"
                         >
-                          <motion.h3 
-                            className="text-lg font-medium"
-                            layout
-                          >
+                          <h3 className="text-lg font-medium">
                             {item.question}
-                          </motion.h3>
-                          <motion.div
-                            animate={{ rotate: openItem === index ? 180 : 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
+                          </h3>
+                          {/* <div>
                             <FaChevronDown className="h-4 w-4 text-muted-foreground" />
-                          </motion.div>
+                          </div> */}
                         </AccordionTrigger>
                         <AccordionContent className="px-6 pb-4">
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                          >
+                          <div>
                             <p className="text-base text-muted-foreground">{item.answer}</p>
-                          </motion.div>
+                          </div>
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>
@@ -222,13 +204,9 @@ export default function Faq() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <p className="text-muted-foreground">
-            Still have questions? <motion.span 
-              className="font-medium text-primary cursor-pointer inline-block"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            Still have questions? <span className="font-medium text-primary cursor-pointer">
               Contact our support team
-            </motion.span>
+            </span>
           </p>
         </motion.div>
       </div>

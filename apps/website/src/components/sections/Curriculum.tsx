@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { FaBrain, FaCode, FaHeart, FaLightbulb, FaChevronRight } from "react-icons/fa6";
@@ -90,8 +90,7 @@ const ageGroups: AgeGroup[] = [
 export default function Curriculum() {
     const controls = useAnimation();
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: false, amount: 0.2 });
-    const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+    const isInView = useInView(ref, { once: true, amount: 0.2 });
 
     // Animation variants
     const containerVariants = {
@@ -114,12 +113,10 @@ export default function Curriculum() {
       }
     };
 
-    // Trigger animations when in view
+    // Trigger animations when in view (only once)
     useEffect(() => {
       if (isInView) {
         controls.start("visible");
-      } else {
-        controls.start("hidden");
       }
     }, [isInView, controls]);
 
@@ -142,16 +139,16 @@ export default function Curriculum() {
         </div>
         
         <motion.div 
-          initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-          animate={isInView ? { opacity: 0.3, scale: 1, rotate: 0 } : {}}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isInView ? { opacity: 0.3, scale: 1 } : {}}
           transition={{ duration: 1.5 }}
         >
           <Image src="/vectors/vector2.svg" alt="" width={100} height={100} className="absolute top-10 right-10 -z-10" />
         </motion.div>
         
         <motion.div 
-          initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-          animate={isInView ? { opacity: 0.3, scale: 1, rotate: 0 } : {}}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isInView ? { opacity: 0.3, scale: 1 } : {}}
           transition={{ duration: 1.5, delay: 0.2 }}
         >
           <Image src="/vectors/vector3.svg" alt="" width={100} height={100} className="absolute bottom-10 left-10 -z-10" />
@@ -196,29 +193,13 @@ export default function Curriculum() {
               <motion.div 
                 key={index} 
                 variants={itemVariants}
-                onHoverStart={() => setHoveredCard(index)}
-                onHoverEnd={() => setHoveredCard(null)}
-                whileHover={{ 
-                  y: -10, 
-                  transition: { duration: 0.2 }
-                }}
+                className="h-full"
               >
-                <Card className="overflow-hidden h-full border border-muted bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
+                <Card className="overflow-hidden h-full border border-muted bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-md">
                   <CardHeader className={`${group.bgColor} flex flex-row items-center gap-4`}>
-                    <motion.div 
-                      className={`rounded-full bg-background/80 p-2.5 ${group.color}`}
-                      whileHover={{ scale: 1.1 }}
-                      animate={hoveredCard === index ? { 
-                        y: [0, -5, 0],
-                        transition: { 
-                          duration: 1, 
-                          repeat: Infinity,
-                          repeatType: "loop" 
-                        }
-                      } : {}}
-                    >
+                    <div className={`rounded-full bg-background/80 p-2.5 ${group.color}`}>
                       {group.icon}
-                    </motion.div>
+                    </div>
                     <div>
                       <CardTitle>{group.title}</CardTitle>
                       <CardDescription>{group.ageRange}</CardDescription>
@@ -232,16 +213,13 @@ export default function Curriculum() {
                       </h3>
                       <ul className="space-y-2 pl-4">
                         {group.techTrack.map((item, i) => (
-                          <motion.li 
+                          <li 
                             key={i}
                             className="flex items-start gap-2 text-muted-foreground"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={hoveredCard === index ? { opacity: 1, x: 0 } : {}}
-                            transition={{ duration: 0.3, delay: i * 0.1 }}
                           >
                             <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
                             <span>{item}</span>
-                          </motion.li>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -252,16 +230,13 @@ export default function Curriculum() {
                       </h3>
                       <ul className="space-y-2 pl-4">
                         {group.personalTrack.map((item, i) => (
-                          <motion.li 
+                          <li 
                             key={i}
                             className="flex items-start gap-2 text-muted-foreground"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={hoveredCard === index ? { opacity: 1, x: 0 } : {}}
-                            transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
                           >
                             <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
                             <span>{item}</span>
-                          </motion.li>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -277,17 +252,8 @@ export default function Curriculum() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.5 }}
           >
-            <motion.div 
-              className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 backdrop-blur-sm border border-primary/10"
-              whileHover={{ 
-                boxShadow: "0 0 30px rgba(var(--primary-rgb), 0.2)",
-                scale: 1.02,
-                transition: { duration: 0.3 }
-              }}
-            >
-              <motion.div 
-                className="text-center"
-              >
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 backdrop-blur-sm border border-primary/10">
+              <div className="text-center">
                 <motion.h3 
                   className="text-2xl font-semibold mb-4"
                   initial={{ opacity: 0, y: 10 }}
@@ -305,8 +271,8 @@ export default function Curriculum() {
                   Our specialized bridging modules quickly cover foundational concepts, 
                   allowing students to join at any level and catch up seamlessly.
                 </motion.p>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>

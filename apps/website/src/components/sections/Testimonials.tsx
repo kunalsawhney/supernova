@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { motion, useAnimation, useInView } from "framer-motion";
 import { FaQuoteLeft, FaStar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
@@ -48,33 +47,8 @@ const testimonials: Testimonial[] = [
 export default function Testimonials() {
   const controls = useAnimation();
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.2 });
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
-  // Auto rotate testimonials
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isAutoPlaying) {
-      interval = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % testimonials.length);
-      }, 5000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isAutoPlaying]);
-
-  // Pause auto-rotation on hover
-  const handleMouseEnter = () => setIsAutoPlaying(false);
-  const handleMouseLeave = () => setIsAutoPlaying(true);
-
-  // Control animations based on scroll position
-  useEffect(() => {
-    if (isInView) {
-      controls.start("visible");
-    }
-  }, [isInView, controls]);
 
   // Animation variants
   const containerVariants = {
@@ -82,7 +56,7 @@ export default function Testimonials() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2
+        staggerChildren: 0.1
       }
     }
   };
@@ -92,19 +66,24 @@ export default function Testimonials() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6 }
+      transition: { duration: 0.5 }
     }
   };
+
+  // Trigger animations when in view (only once)
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
 
   // Navigation functions
   const goToPrev = () => {
     setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-    setIsAutoPlaying(false);
   };
 
   const goToNext = () => {
     setActiveIndex((prev) => (prev + 1) % testimonials.length);
-    setIsAutoPlaying(false);
   };
 
   return (
@@ -115,20 +94,8 @@ export default function Testimonials() {
     >
       {/* Background elements */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/30 to-background" />
-      
-      <motion.div 
-        className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 1 }}
-      />
-      
-      <motion.div 
-        className="absolute bottom-20 right-10 w-72 h-72 rounded-full bg-secondary/5 blur-3xl"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 1, delay: 0.3 }}
-      />
+      <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl opacity-60" />
+      <div className="absolute bottom-20 right-10 w-72 h-72 rounded-full bg-secondary/5 blur-3xl opacity-60" />
 
       <div className="container mx-auto">
         <motion.div 
@@ -162,30 +129,16 @@ export default function Testimonials() {
 
         <motion.div 
           className="relative max-w-4xl mx-auto"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
           {/* Featured testimonial */}
-          <motion.div 
-            className="relative bg-background z-10 rounded-2xl shadow-xl overflow-hidden border border-primary/10"
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
-            layout
-          >
+          <div className="relative bg-background z-10 rounded-2xl shadow-xl overflow-hidden border border-primary/10">
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-secondary/5 backdrop-blur-sm" />
             
             <div className="p-8 md:p-12 relative flex flex-col md:flex-row gap-8">
-              <motion.div 
-                className="relative"
-                animate={{ opacity: 1, x: 0 }}
-                initial={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.5 }}
-                key={`image-${activeIndex}`}
-              >
+              <div className="relative">
                 <div className="w-24 h-24 md:w-32 md:h-32 relative mx-auto md:mx-0">
                   <div className="w-full h-full overflow-hidden rounded-full border-4 border-primary/10">
                     <Image 
@@ -198,13 +151,9 @@ export default function Testimonials() {
                   </div>
                   
                   {/* Quote icon */}
-                  <motion.div 
-                    className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full"
-                    animate={{ rotate: [0, 10, 0] }}
-                    transition={{ duration: 6, repeat: Infinity }}
-                  >
+                  <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-full">
                     <FaQuoteLeft className="h-4 w-4" />
-                  </motion.div>
+                  </div>
                 </div>
                 
                 {/* Rating */}
@@ -216,66 +165,49 @@ export default function Testimonials() {
                     />
                   ))}
                 </div>
-              </motion.div>
+              </div>
               
               <div className="flex-1 flex flex-col justify-center text-center md:text-left">
-                <motion.p 
-                  className="text-lg md:text-xl italic mb-6"
-                  animate={{ opacity: 1, y: 0 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.5 }}
-                  key={`quote-${activeIndex}`}
-                >
+                <p className="text-lg md:text-xl italic mb-6">
                   "{testimonials[activeIndex].quote}"
-                </motion.p>
+                </p>
                 
-                <motion.div
-                  animate={{ opacity: 1 }}
-                  initial={{ opacity: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  key={`author-${activeIndex}`}
-                >
+                <div>
                   <h4 className="text-lg font-semibold">{testimonials[activeIndex].author}</h4>
                   <p className="text-muted-foreground">{testimonials[activeIndex].role}</p>
-                </motion.div>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
           
           {/* Navigation controls */}
           <div className="flex justify-between mt-8">
             <div className="flex gap-2">
               {testimonials.map((_, index) => (
-                <motion.button
+                <button
                   key={index}
                   className={`h-2.5 rounded-full transition-all duration-300 ${
                     activeIndex === index ? 'bg-primary w-8' : 'bg-muted w-2.5'
                   }`}
                   onClick={() => setActiveIndex(index)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
                 />
               ))}
             </div>
             
             <div className="flex gap-2">
-              <motion.button
+              <button
                 className="p-2 rounded-full bg-background border border-border hover:bg-muted transition-colors"
                 onClick={goToPrev}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
               >
                 <FaChevronLeft className="h-4 w-4" />
-              </motion.button>
+              </button>
               
-              <motion.button
+              <button
                 className="p-2 rounded-full bg-background border border-border hover:bg-muted transition-colors"
                 onClick={goToNext}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
               >
                 <FaChevronRight className="h-4 w-4" />
-              </motion.button>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -284,18 +216,11 @@ export default function Testimonials() {
           className="mt-12 text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
         >
-          <motion.div 
-            className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-6 py-3 text-sm font-medium text-primary"
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: "0 0 20px rgba(var(--primary-rgb), 0.3)"
-            }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-6 py-3 text-sm font-medium text-primary">
             <span>Join over 10,000+ happy students worldwide</span>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
     </section>

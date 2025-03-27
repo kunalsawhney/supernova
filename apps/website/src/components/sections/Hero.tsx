@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { FaLightbulb, FaRocket, FaGraduationCap } from "react-icons/fa6";
 
 // Feature Card Component
@@ -55,57 +55,10 @@ const AnimatedText = ({ text, className = "" }: { text: string; className?: stri
   );
 };
 
-// Particle Element
-const Particle = ({ 
-  size, 
-  color, 
-  duration, 
-  left, 
-  delay 
-}: { 
-  size: number; 
-  color: string; 
-  duration: number; 
-  left: number;
-  delay: number;
-}) => {
-  return (
-    <motion.div
-      className={`absolute rounded-full ${color}`}
-      style={{ 
-        width: size, 
-        height: size,
-        left: `${left}%`,
-        top: '-20px',
-      }}
-      initial={{ y: 0, opacity: 0 }}
-      animate={{ 
-        y: ['0%', '100vh'],
-        opacity: [0, 1, 0.8, 0]
-      }}
-      transition={{ 
-        duration, 
-        repeat: Infinity, 
-        delay,
-        ease: "linear"
-      }}
-    />
-  );
-};
 
 export default function Hero() {
-  const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Generate random particles
-  const particles = Array.from({ length: 15 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 8 + 2,
-    color: i % 3 === 0 ? 'bg-primary/40' : i % 3 === 1 ? 'bg-secondary/40' : 'bg-accent/40',
-    duration: Math.random() * 15 + 10,
-    left: Math.random() * 100,
-    delay: Math.random() * 5
-  }));
+  const isInView = useInView(containerRef, { once: true, amount: 0.1 });
 
   // Features data
   const features = [
@@ -126,38 +79,8 @@ export default function Hero() {
     }
   ];
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-background to-background/95" ref={containerRef}>
-      {/* Floating particles background */}
-      {particles.map((particle) => (
-        <Particle
-          key={particle.id}
-          size={particle.size}
-          color={particle.color}
-          duration={particle.duration}
-          left={particle.left}
-          delay={particle.delay}
-        />
-      ))}
 
       {/* Main hero section */}
       <div className="container mx-auto px-4 py-20 min-h-[90vh] flex flex-col justify-center relative z-10">
@@ -166,14 +89,14 @@ export default function Hero() {
           <motion.div 
             className="lg:col-span-6 space-y-8"
             initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -50 }}
+            animate={{ opacity: isInView ? 1 : 0, x: isInView ? 0 : -50 }}
             transition={{ duration: 0.7 }}
           >
             <div>
               <motion.div 
                 className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4"
                 initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : -20 }}
+                animate={{ opacity: isInView ? 1 : 0, y: isInView ? 0 : -20 }}
                 transition={{ duration: 0.5 }}
               >
                 The future of K-12 education
@@ -194,7 +117,7 @@ export default function Hero() {
             <motion.p 
               className="text-lg text-muted-foreground"
               initial={{ opacity: 0 }}
-              animate={{ opacity: isVisible ? 1 : 0 }}
+              animate={{ opacity: isInView ? 1 : 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               Empowering K-12 students with cutting-edge technology courses designed to spark creativity, critical thinking, and prepare them for the digital future.
@@ -203,21 +126,20 @@ export default function Hero() {
             <motion.div 
               className="flex flex-wrap gap-3"
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              animate={{ opacity: isInView ? 1 : 0, y: isInView ? 0 : 20 }}
               transition={{ duration: 0.5, delay: 0.8 }}
             >
               <Button 
-                size="lg" 
-                className="rounded-full group relative overflow-hidden"
+                size="xl" 
+                className=""
               >
-                <span className="relative z-10">Get Started</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-primary to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                Get Started
               </Button>
               
               <Button 
                 variant="outline" 
-                size="lg"
-                className="rounded-full group"
+                size="xl"
+                className=""
               >
                 <span className="mr-2">▶</span> Watch Demo
               </Button>
@@ -227,12 +149,12 @@ export default function Hero() {
             <motion.div 
               className="grid grid-cols-3 gap-4 pt-6 border-t border-border"
               initial={{ opacity: 0 }}
-              animate={{ opacity: isVisible ? 1 : 0 }}
+              animate={{ opacity: isInView ? 1 : 0 }}
               transition={{ duration: 0.5, delay: 1 }}
             >
               {[
-                { value: "20+", label: "Courses" },
-                { value: "10000+", label: "Students" },
+                { value: "200+", label: "Courses" },
+                { value: "50k+", label: "Students" },
                 { value: "95%", label: "Success Rate" }
               ].map((stat, i) => (
                 <div key={i} className="text-center">
@@ -248,13 +170,13 @@ export default function Hero() {
             <motion.div 
               className="relative"
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.9 }}
+              animate={{ opacity: isInView ? 1 : 0, scale: isInView ? 1 : 0.9 }}
               transition={{ duration: 0.7 }}
             >
-              {/* Main image with glow effect */}
-              <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
+              {/* Main image */}
+              <div className="relative z-10 rounded-2xl shadow-2xl">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-purple-600 opacity-75 blur-sm rounded-2xl" />
-                <div className="relative rounded-2xl overflow-hidden border border-white/10">
+                <div className="relative rounded-2xl  border border-white/10">
                   <Image
                     src="/hero.png"
                     width={600}
@@ -264,17 +186,12 @@ export default function Hero() {
                   />
                 </div>
                 
-                {/* Floating elements */}
-                <motion.div 
-                  className="absolute -right-4 -top-4 z-20 bg-gradient-to-br from-primary to-purple-600 p-3 rounded-full shadow-lg"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <div className="absolute -right-4 -top-4 z-20 bg-gradient-to-br from-primary to-purple-600 p-3 rounded-full shadow-lg z-10">
                   <FaLightbulb className="h-8 w-8 text-white" />
-                </motion.div>
+                </div>
               </div>
               
-              {/* Feature cards */}
+              {/* Feature cards (showing by default) */}
               {/* <div className="grid gap-4 mt-6">
                 {features.map((feature, i) => (
                   <FeatureCard 
