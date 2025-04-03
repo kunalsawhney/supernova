@@ -1,10 +1,9 @@
 'use client';
 
-import { useRef, useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { FaChevronDown, FaQuestion } from "react-icons/fa6";
+import { useRef, useState } from "react";
+import { FaQuestion } from "react-icons/fa6";
 import React from "react";
-import { motion, AnimatePresence, useInView, useAnimation } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Accordion,
   AccordionContent,
@@ -49,44 +48,19 @@ export default function Faq() {
   const [searchTerm, setSearchTerm] = useState("");
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
-  const controls = useAnimation();
 
   const filteredItems = faqItems.filter(item =>
     item.question.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Scroll animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  // Trigger animations when in view (only once)
-  useEffect(() => {
-    if (isInView) {
-      controls.start("visible");
-    }
-  }, [isInView, controls]);
-
   return (
-    <section 
+    <motion.section 
       id="faq" 
-      className="section-container py-20 relative overflow-hidden"
+      className="section-container relative overflow-hidden"
       ref={sectionRef}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isInView ? 1 : 0 }}
+      transition={{ duration: 1 }}
     >
       {/* Background elements */}
       <div className="absolute inset-0 -z-10">
@@ -95,11 +69,8 @@ export default function Faq() {
       </div>
 
       <div className="container mx-auto">
-        <motion.div 
+        <div 
           className="max-w-2xl mx-auto text-center space-y-4 mb-12"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
         >
           <div className="flex items-center justify-center mb-4">
             <div className="bg-primary/10 p-3 rounded-full text-primary">
@@ -113,14 +84,11 @@ export default function Faq() {
           <p className="text-xl text-muted-foreground">
             Find answers to common questions about our platform, curriculum, and approach.
           </p>
-        </motion.div>
+        </div>
 
         {/* Search */}
-        <motion.div 
+        <div 
           className="max-w-lg mx-auto mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="relative">
             <input
@@ -139,30 +107,23 @@ export default function Faq() {
               </button>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          className="max-w-3xl mx-auto"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
+        <div 
+          className="max-w-6xl mx-auto"
         >
           <AnimatePresence>
             {filteredItems.length === 0 ? (
-              <motion.div 
+              <div 
                 className="text-center py-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
               >
                 <p className="text-muted-foreground">No matching questions found.</p>
-              </motion.div>
+              </div>
             ) : (
               <div className="space-y-4">
                 {filteredItems.map((item, index) => (
-                  <motion.div 
+                  <div 
                     key={index} 
-                    variants={itemVariants}
                   >
                     <Accordion 
                       type="single"
@@ -190,26 +151,23 @@ export default function Faq() {
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
-        <motion.div 
+        <div 
           className="mt-12 text-center"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.5 }}
         >
           <p className="text-muted-foreground">
             Still have questions? <span className="font-medium text-primary cursor-pointer">
               Contact our support team
             </span>
           </p>
-        </motion.div>
+        </div>
       </div>
-    </section>
+    </motion.section>
   );
 } 

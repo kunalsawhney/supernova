@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useAnimation, useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { FaQuoteLeft, FaStar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 interface Testimonial {
@@ -45,37 +45,9 @@ const testimonials: Testimonial[] = [
 ];
 
 export default function Testimonials() {
-  const controls = useAnimation();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const [activeIndex, setActiveIndex] = useState(0);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  // Trigger animations when in view (only once)
-  useEffect(() => {
-    if (isInView) {
-      controls.start("visible");
-    }
-  }, [isInView, controls]);
 
   // Navigation functions
   const goToPrev = () => {
@@ -87,51 +59,46 @@ export default function Testimonials() {
   };
 
   return (
-    <section 
+    <motion.section 
       id="testimonials" 
       className="section-container py-20 relative overflow-hidden"
       ref={ref}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isInView ? 1 : 0 }}
+      transition={{ duration: 1 }}
     >
       {/* Background elements */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-muted/30 to-background" />
-      <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-primary/5 blur-3xl opacity-60" />
-      <div className="absolute bottom-20 right-10 w-72 h-72 rounded-full bg-secondary/5 blur-3xl opacity-60" />
+      <Image src="/vectors/vector7.svg" alt="" width={100} height={100} className="absolute top-0 left-0 -z-10 -rotate-90" />
+      <Image src="/vectors/vector7.svg" alt="" width={100} height={100} className="absolute top-0 right-0 -z-10" />
+      <Image src="/vectors/vector7.svg" alt="" width={100} height={100} className="absolute bottom-0 left-0 -z-10 rotate-180" />
+      <Image src="/vectors/vector7.svg" alt="" width={100} height={100} className="absolute bottom-0 right-0 -z-10 rotate-90" />
 
       <div className="container mx-auto">
-        <motion.div 
+        <div 
           className="max-w-2xl mx-auto text-center mb-12"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
         >
-          <motion.div 
+          <div 
             className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full mb-4 text-sm font-medium"
-            variants={itemVariants}
           >
             Testimonials
-          </motion.div>
+          </div>
           
-          <motion.h2 
+          <h2 
             className="text-4xl md:text-5xl font-bold tracking-tight mb-4"
-            variants={itemVariants}
           >
             What Our Community Says
-          </motion.h2>
+          </h2>
           
-          <motion.p 
+          <p 
             className="text-xl text-muted-foreground"
-            variants={itemVariants}
           >
             Students, parents, and educators love our unique approach to learning 
             that balances technology with personal growth.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
 
-        <motion.div 
+        <div 
           className="relative max-w-4xl mx-auto"
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.2 }}
         >
           {/* Featured testimonial */}
           <div className="relative bg-background z-10 rounded-2xl shadow-xl overflow-hidden border border-primary/10">
@@ -210,19 +177,16 @@ export default function Testimonials() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
+        <div 
           className="mt-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.8 }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary/10 px-6 py-3 text-sm font-medium text-primary">
             <span>Join over 10,000+ happy students worldwide</span>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </section>
+    </motion.section>
   );
 } 

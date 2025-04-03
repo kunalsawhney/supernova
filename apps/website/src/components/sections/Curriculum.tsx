@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { FaBrain, FaCode, FaHeart, FaLightbulb, FaChevronRight } from "react-icons/fa6";
-import { motion, useAnimation, useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
 interface AgeGroup {
   title: string;
@@ -88,193 +88,128 @@ const ageGroups: AgeGroup[] = [
 ];
 
 export default function Curriculum() {
-    const controls = useAnimation();
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, amount: 0.2 });
 
-    // Animation variants
-    const containerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          staggerChildren: 0.1,
-          delayChildren: 0.3
-        }
-      }
-    };
-
-    const itemVariants = {
-      hidden: { opacity: 0, y: 20 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.5 }
-      }
-    };
-
-    // Trigger animations when in view (only once)
-    useEffect(() => {
-      if (isInView) {
-        controls.start("visible");
-      }
-    }, [isInView, controls]);
-
+  
     return (
-      <section id="curriculum" className="section-container relative py-20 overflow-hidden" ref={ref}>
+      <motion.section 
+        id="curriculum" 
+        className="section-container relative py-20 overflow-hidden" 
+        ref={ref}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isInView ? 1 : 0 }}
+        transition={{ duration: 1 }}
+      >
         {/* Background elements */}
-        <div className="absolute inset-0 -z-10">
-          <motion.div 
-            className="absolute top-0 right-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 1 }}
-          />
-          <motion.div 
-            className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-secondary/5 blur-3xl"
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-          />
-        </div>
         
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={isInView ? { opacity: 0.3, scale: 1 } : {}}
-          transition={{ duration: 1.5 }}
-        >
-          <Image src="/vectors/vector2.svg" alt="" width={100} height={100} className="absolute top-10 right-10 -z-10" />
-        </motion.div>
-        
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={isInView ? { opacity: 0.3, scale: 1 } : {}}
-          transition={{ duration: 1.5, delay: 0.2 }}
-        >
-          <Image src="/vectors/vector3.svg" alt="" width={100} height={100} className="absolute bottom-10 left-10 -z-10" />
-        </motion.div>
+        {/* <Image src="/vectors/vector2.svg" alt="" width={100} height={100} className="absolute top-10 right-10 -z-10 opacity-50" /> */}
+        {/* <Image src="/vectors/vector3.svg" alt="" width={100} height={100} className="absolute bottom-10 left-10 -z-10 opacity-50" /> */}
         
         <div className="container mx-auto space-y-16">
-          <motion.div 
+          <div 
             className="max-w-3xl mx-auto text-center space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate={controls}
           >
-            <motion.div 
+            <div 
               className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full mb-4 text-sm font-medium"
-              variants={itemVariants}
             >
               Age-Appropriate Learning
-            </motion.div>
+            </div>
             
-            <motion.h2 
+            <h2 
               className="text-4xl md:text-5xl font-bold tracking-tight mb-4"
-              variants={itemVariants}
             >
               Curriculum for Every Stage of Growth
-            </motion.h2>
+            </h2>
             
-            <motion.p 
+            <p 
               className="text-xl text-muted-foreground"
-              variants={itemVariants}
             >
               From early childhood to high school, our curriculum fosters both technical expertise and emotional intelligence.
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
           
-          <motion.div 
-            className="grid gap-8 md:grid-cols-2 lg:grid-cols-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate={controls}
-          >
-            {ageGroups.map((group, index) => (
-              <motion.div 
-                key={index} 
-                variants={itemVariants}
-                className="h-full"
-              >
-                <Card className="overflow-hidden h-full border border-muted bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-md">
-                  <CardHeader className={`${group.bgColor} flex flex-row items-center gap-4`}>
-                    <div className={`rounded-full bg-background/80 p-2.5 ${group.color}`}>
-                      {group.icon}
-                    </div>
-                    <div>
-                      <CardTitle>{group.title}</CardTitle>
-                      <CardDescription>{group.ageRange}</CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${group.color.replace('text', 'bg')}`}></span>
-                        Tech Education
-                      </h3>
-                      <ul className="space-y-2 pl-4">
-                        {group.techTrack.map((item, i) => (
-                          <li 
-                            key={i}
-                            className="flex items-start gap-2 text-muted-foreground"
-                          >
-                            <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                        <span className={`h-2 w-2 rounded-full ${group.color.replace('text', 'bg')}`}></span>
-                        Personal Development
-                      </h3>
-                      <ul className="space-y-2 pl-4">
-                        {group.personalTrack.map((item, i) => (
-                          <li 
-                            key={i}
-                            className="flex items-start gap-2 text-muted-foreground"
-                          >
-                            <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-          
-          <motion.div 
-            className="max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.5 }}
-          >
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-8 backdrop-blur-sm border border-primary/10">
-              <div className="text-center">
-                <motion.h3 
-                  className="text-2xl font-semibold mb-4"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.6 }}
+          <div className="flex flex-col gap-8 bg-primary/20 rounded-2xl p-8">
+            <div 
+              className="grid gap-8 md:grid-cols-2 lg:grid-cols-4"
+            >
+              {ageGroups.map((group, index) => (
+                <div 
+                  key={index} 
+                  className="h-full hover:scale-105 transition-all duration-300"
                 >
-                  Bridging Modules for Late Joiners
-                </motion.h3>
-                <motion.p 
-                  className="text-muted-foreground"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                >
-                  Our specialized bridging modules quickly cover foundational concepts, 
-                  allowing students to join at any level and catch up seamlessly.
-                </motion.p>
+                  <Card className="overflow-hidden h-full border border-muted bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-md">
+                    <CardHeader className={`${group.bgColor} flex flex-row items-center gap-4`}>
+                      <div className={`rounded-full bg-background/80 p-2.5 ${group.color}`}>
+                        {group.icon}
+                      </div>
+                      <div>
+                        <CardTitle>{group.title}</CardTitle>
+                        <CardDescription>{group.ageRange}</CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6 bg-background h-full">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full ${group.color.replace('text', 'bg')}`}></span>
+                          Tech Education
+                        </h3>
+                        <ul className="space-y-2 pl-4">
+                          {group.techTrack.map((item, i) => (
+                            <li 
+                              key={i}
+                              className="flex items-start gap-2 text-muted-foreground"
+                            >
+                              <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full ${group.color.replace('text', 'bg')}`}></span>
+                          Personal Development
+                        </h3>
+                        <ul className="space-y-2 pl-4">
+                          {group.personalTrack.map((item, i) => (
+                            <li 
+                              key={i}
+                              className="flex items-start gap-2 text-muted-foreground"
+                            >
+                              <FaChevronRight className={`h-3 w-3 mt-1.5 flex-shrink-0 ${group.color}`} />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
+            
+            <div 
+              className="max-w-3xl mx-auto"
+            >
+              <div className="bg-background rounded-2xl p-8 backdrop-blur-sm border border-primary/10">
+                <div className="text-center">
+                  <h3 
+                    className="text-2xl font-semibold mb-4"
+                  >
+                    Bridging Modules for Late Joiners
+                  </h3>
+                  <p 
+                    className="text-muted-foreground"
+                  >
+                    Our specialized bridging modules quickly cover foundational concepts, 
+                    allowing students to join at any level and catch up seamlessly.
+                  </p>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
-      </section>
+      </motion.section>
     );
 }

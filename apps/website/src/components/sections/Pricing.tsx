@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FaCheck, FaCrown } from "react-icons/fa6";
-import { motion, useAnimation, useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import Image from "next/image";
 
 interface PricingTier {
@@ -64,76 +64,30 @@ const pricingTiers: PricingTier[] = [
 ];
 
 export default function Pricing() {
-  const controls = useAnimation();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  // Card animations
-  const cardVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 24,
-        duration: 0.5
-      }
-    }
-  };
-
-  // Trigger animations when in view (only once)
-  useEffect(() => {
-    if (isInView) {
-      controls.start("visible");
-    }
-  }, [isInView, controls]);
-
   return (
-    <section id="pricing" className="section-container relative py-20 overflow-hidden" ref={ref}>
+    <motion.section 
+      id="pricing" 
+      className="section-container relative py-20 overflow-hidden bg-primary/10" 
+      ref={ref}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isInView ? 1 : 0 }}
+      transition={{ duration: 1 }}
+    >
       {/* Background elements */}
       <div className="absolute inset-0 -z-10">
-        <motion.div 
+        <div 
           className="absolute h-screen w-screen bg-gradient-to-b from-background to-muted/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
         />
         
-        <motion.div 
+        <div 
           className="absolute top-1/4 left-10 h-80 w-80 rounded-full bg-primary/5 blur-3xl"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 0.6 } : { opacity: 0 }}
-          transition={{ duration: 1.5 }}
         />
         
-        <motion.div 
+        <div 
           className="absolute bottom-1/4 right-10 h-80 w-80 rounded-full bg-secondary/5 blur-3xl"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 0.6 } : { opacity: 0 }}
-          transition={{ duration: 1.5, delay: 0.3 }}
         />
         
         {/* Simple pattern background */}
@@ -147,46 +101,35 @@ export default function Pricing() {
       </div>
 
       <div className="container mx-auto">
-        <motion.div 
+        <div 
           className="max-w-2xl mx-auto text-center space-y-4 mb-16"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
         >
-          <motion.div 
+          <div 
             className="inline-block bg-primary/10 text-primary px-4 py-1 rounded-full mb-4 text-sm font-medium"
-            variants={itemVariants}
           >
             Pricing
-          </motion.div>
+          </div>
           
-          <motion.h2 
+          <h2 
             className="text-4xl md:text-5xl font-bold tracking-tight mb-4"
-            variants={itemVariants}
           >
             Simple, Transparent Pricing
-          </motion.h2>
+          </h2>
           
-          <motion.p 
+          <p 
             className="text-xl text-muted-foreground"
-            variants={itemVariants}
           >
             Choose the plan that fits your needs, whether you're an individual student, 
             a family, or a school looking for a comprehensive solution.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
 
-        <motion.div 
+        <div 
           className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mt-20"
-          variants={containerVariants}
-          initial="hidden"
-          animate={controls}
         >
           {pricingTiers.map((tier, index) => (
-            <motion.div
+            <div
               key={index}
-              variants={cardVariants}
-              custom={index}
               className="flex"
             >
               <Card 
@@ -244,15 +187,12 @@ export default function Pricing() {
                   </Button>
                 </CardFooter>
               </Card>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div 
+        <div 
           className="mt-16 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.8 }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 backdrop-blur-sm px-6 py-3">
             <p className="text-muted-foreground">
@@ -260,8 +200,8 @@ export default function Pricing() {
               No credit card required.
             </p>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </section>
+    </motion.section>
   );
 } 
